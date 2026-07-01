@@ -121,8 +121,57 @@ function emptyResponse(id) {
 
 function sendCwmpXml(res, xml) {
   res.set('Content-Type', 'text/xml; charset=utf-8');
-  res.set('Connection', 'close');
   return res.send(xml);
+}
+
+async function processInformBackground(deviceKey, info, clientIp) {
+  try {
+    const paramUpdates = paramUpdatesFromMap(info.parameters);
+
+    const device = await Device.findOneAndUpdate(
+      { deviceId: deviceKey },
+      {
+        $set: {
+          deviceId: deviceKey,
+          serialNumber: info.serialNumber,
+          oui: info.oui,
+          productClass: info.productClass,
+          manufacturer: info.manufacturer,
+          model: info.model,
+          softwareVersion: info.softwareVersion,
+          hardwareVersion: info.hardwareVersion,
+          connectionRequestUrl: info.connectionRequestUrl,
+          ipAddress: clientIp,
+          lastInform: new Date(),
+          isOnline: true,
+          source: 'myacs',
+          events: info.events,
+          ...paramUpdates,
+        },
+      },
+      { upsert: true, new: true },
+    );
+
+    if (isBootEvent(info.events) && device) {
+      await applyPresetsForDevice(device);
+      const completedRunning = await completeRebootTasksOnBoot(deviceKey);
+      const completedPending = await completePendingRebootTasksOnBoot(deviceKey);
+      const totalCompleted = completedRunning + completedPending;
+      if (totalCompleted > 0) {
+        console.log(`[cwmp] ${deviceKey} BOOT — marked ${totalCompleted} reboot task(s) completed`);
+      }
+    }
+
+    await releaseStaleRunningTasks(deviceKey);
+
+    const pendingCount = await countPendingTasks(deviceKey);
+    await CwmpSession.updateOne(
+      { deviceId: deviceKey },
+      { awaitingDispatch: pendingCount > 0 },
+    );
+  } catch (err) {
+    console.error(`[cwmp] ${deviceKey} inform background error:`, err.message);
+  }
 }
 
 async function shouldDispatchAfterEmptyPost(deviceKey) {
@@ -144,12 +193,12 @@ async function finishEmptyPost(deviceKey, res, requestId) {
     return dispatchNextTask(deviceKey, res, requestId);
   }
 
+  sendCwmpXml(res, emptyResponse(requestId));
+
   if (deviceKey) {
-    await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
+    CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false }).catch(() => {});
     console.log(`[cwmp] empty POST from ${deviceKey} — sesi selesai (tanpa task)`);
   }
-
-  return sendCwmpXml(res, emptyResponse(requestId));
 }
 
 function isEmptyCwmpPost(body) {
@@ -297,65 +346,28 @@ export async function handleCwmpRequest(req, res) {
   if (body?.Inform) {
     const deviceKey = extractDeviceId(envelope);
     const info = parseInform(envelope);
-    let pendingCount = 0;
+    const startedAt = Date.now();
+
+    console.log(`[cwmp] inform received from ${clientIp} (${raw.length} bytes)`);
 
     if (deviceKey && info) {
-      pendingCount = await countPendingTasks(deviceKey);
+      const pendingCount = await countPendingTasks(deviceKey);
+      const sessionId = await createSession(deviceKey, clientIp);
 
-      const paramUpdates = paramUpdatesFromMap(info.parameters);
-
-      const device = await Device.findOneAndUpdate(
+      await CwmpSession.updateOne(
         { deviceId: deviceKey },
-        {
-          $set: {
-            deviceId: deviceKey,
-            serialNumber: info.serialNumber,
-            oui: info.oui,
-            productClass: info.productClass,
-            manufacturer: info.manufacturer,
-            model: info.model,
-            softwareVersion: info.softwareVersion,
-            hardwareVersion: info.hardwareVersion,
-            connectionRequestUrl: info.connectionRequestUrl,
-            ipAddress: clientIp,
-            lastInform: new Date(),
-            isOnline: true,
-            source: 'myacs',
-            events: info.events,
-            ...paramUpdates,
-          },
-        },
-        { upsert: true, new: true },
+        { awaitingDispatch: pendingCount > 0 },
       );
 
-      const sessionId = await createSession(deviceKey, clientIp);
       setCwmpCookie(res, sessionId);
-
-      if (isBootEvent(info.events) && device) {
-        await applyPresetsForDevice(device);
-        const completedRunning = await completeRebootTasksOnBoot(deviceKey);
-        const completedPending = await completePendingRebootTasksOnBoot(deviceKey);
-        const totalCompleted = completedRunning + completedPending;
-        if (totalCompleted > 0) {
-          console.log(`[cwmp] ${deviceKey} BOOT — marked ${totalCompleted} reboot task(s) completed`);
-        }
-      }
-
-      await releaseStaleRunningTasks(deviceKey);
-      pendingCount = await countPendingTasks(deviceKey);
-
-      // TR-069: MaxEnvelopes MUST be >= 1. Nilai 0 membuat beberapa ONU (CMHI) gagal Manual Inform.
-      if (pendingCount > 0) {
-        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: true });
-      } else {
-        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
-      }
+      sendCwmpXml(res, informResponse(requestId, 1));
 
       console.log(
-        `[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] pending=${pendingCount}`,
+        `[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] pending=${pendingCount} responded in ${Date.now() - startedAt}ms`,
       );
 
-      return sendCwmpXml(res, informResponse(requestId, 1));
+      setImmediate(() => processInformBackground(deviceKey, info, clientIp));
+      return;
     }
 
     console.warn(`[cwmp] inform tanpa deviceKey (${raw.length} bytes): ${bodyPreview}`);

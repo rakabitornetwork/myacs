@@ -284,6 +284,22 @@ async function finishEmptyPost(deviceKey, res, requestId) {
   }
 }
 
+function extractSoapFault(body) {
+  const fault = body?.Fault;
+  if (!fault) return null;
+  const cwmpDetail = fault.detail?.Fault || fault.Detail?.Fault;
+  return {
+    faultcode: fault.faultcode || fault.FaultCode || '',
+    faultstring: fault.faultstring || fault.FaultString || '',
+    cwmpCode: cwmpDetail?.FaultCode || '',
+    cwmpString: cwmpDetail?.FaultString || '',
+  };
+}
+
+function isCpeSoapFault(body) {
+  return !!body?.Fault;
+}
+
 function isEmptyCwmpPost(body) {
   if (!body || Object.keys(body).length === 0) return true;
   if (body.Empty !== undefined) return true;
@@ -433,6 +449,15 @@ export async function handleCwmpRequest(req, res) {
   const body = getSoapBody(envelope);
   const header = getSoapHeader(envelope);
   const requestId = extractRequestId(header, raw);
+
+  if (isCpeSoapFault(body)) {
+    const fault = extractSoapFault(body);
+    console.warn(
+      `[cwmp] CPE SOAP Fault from ${clientIp} (${raw.length}b): ${fault.faultcode} ${fault.faultstring} cwmp=${fault.cwmpCode} ${fault.cwmpString}`,
+    );
+    sendCwmpXml(res, emptyResponse(requestId));
+    return;
+  }
 
   console.log(`[cwmp] non-inform SOAP keys=${Object.keys(body || {}).join(',') || 'none'} preview=${bodyPreview}`);
 

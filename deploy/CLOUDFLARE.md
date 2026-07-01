@@ -103,6 +103,32 @@ Di Cloudflare Dashboard → **Cache Rules**:
 
 CWMP = POST SOAP, tidak boleh di-cache.
 
+### Wajib untuk ONU / TR-069 (CWMP)
+
+Buka **Cloudflare Dashboard** → domain `teslatech.my.id`:
+
+| Setting | Lokasi | Nilai |
+|---------|--------|-------|
+| **Always Use HTTPS** | SSL/TLS → Edge Certificates | **OFF** jika ONU pakai `http://` — atau pakai `https://` di ONU dan biarkan ON |
+| **Bot Fight Mode** | Security → Bots | **OFF** |
+| **Security Level** | Security → Settings | **Essentially Off** atau Low |
+| **Browser Integrity Check** | Security → Settings | **OFF** |
+| **Cache** | Cache Rules | Bypass untuk path `/cwmp` |
+| **WAF** | Security → WAF → Custom rules | Skip / Allow untuk URI Path contains `/cwmp` |
+| **Rate Limiting** | Security → WAF | Pastikan tidak membatasi IP ONU |
+
+**Kenapa penting:** ONU CMHI mengirim HTTP POST SOAP — bukan browser. Bot Fight / WAF / redirect HTTPS bisa memutus koneksi → ONU kirim SOAP Fault berulang (flood di log).
+
+**Rekomendasi URL di ONU:**
+
+```text
+https://myacs.teslatech.my.id/cwmp
+```
+
+Dengan **Always Use HTTPS = ON** di Cloudflare (lebih aman).
+
+Hindari `http://` kecuali Always Use HTTPS dimatikan.
+
 ### CPE ACS URL
 
 | CPE | URL |

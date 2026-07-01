@@ -33,6 +33,9 @@ const config = {
   cwmp: {
     path: process.env.CWMP_PATH || '/cwmp',
     enabled: acsMode === 'dual' || acsMode === 'standalone',
+    crUsername: process.env.CWMP_CR_USERNAME || '',
+    crPassword: process.env.CWMP_CR_PASSWORD || '',
+    crAutoProvision: process.env.CWMP_CR_AUTO_PROVISION === 'true',
   },
   genieacs: {
     syncEnabled: acsMode === 'dual' || acsMode === 'genieacs-panel',

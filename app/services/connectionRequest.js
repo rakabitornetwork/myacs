@@ -73,7 +73,7 @@ export async function sendConnectionRequest(connectionRequestUrl, credentials = 
   }
 
   const url = new URL(connectionRequestUrl);
-  const hasCreds = Boolean(credentials.username && credentials.password);
+  const hasCreds = Boolean(credentials.username) || Boolean(credentials.password);
 
   if (credentials.username && !url.username) {
     url.username = credentials.username;

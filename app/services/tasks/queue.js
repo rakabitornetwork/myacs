@@ -2,7 +2,19 @@ import Task from '../../models/Task.js';
 import Device from '../../models/Device.js';
 import { sendConnectionRequest } from '../connectionRequest.js';
 import { isGenieacsDevice } from '../../helpers/acs.js';
-import { getConnectionRequestCredentials } from '../../helpers/connectionRequestCreds.js';
+import { getConnectionRequestCredentials, hasConnectionRequestCredentials, CR_CREDENTIAL_PARAM_NAMES } from '../../helpers/connectionRequestCreds.js';
+
+export async function queueFetchConnectionRequestCredentials(device) {
+  return createTaskForDevice(
+    device,
+    {
+      name: 'Get Connection Request credentials',
+      method: 'GetParameterValues',
+      payload: { names: CR_CREDENTIAL_PARAM_NAMES },
+    },
+    { wake: true },
+  );
+}
 
 export async function wakeDeviceConnection(device) {
   if (!device?.connectionRequestUrl || isGenieacsDevice(device)) return { ok: false, skipped: true };

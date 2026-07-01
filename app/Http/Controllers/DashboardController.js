@@ -18,9 +18,13 @@ import {
 } from '../../services/genieacs/nbi.js';
 import { validateConfig } from '../../config/validate.js';
 import config from '../../config/index.js';
-import { createTaskForDevice, wakeDeviceConnection } from '../../services/tasks/queue.js';
+import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestCredentials } from '../../services/tasks/queue.js';
 import { parametersToEntries } from '../../helpers/parameters.js';
-import { getConnectionRequestCredentials } from '../../helpers/connectionRequestCreds.js';
+import {
+  getConnectionRequestCredentials,
+  connectionRequestCredentialStatus,
+  hasConnectionRequestCredentials,
+} from '../../helpers/connectionRequestCreds.js';
 
 function redirectDevice(res, device) {
   return res.redirect(`/devices/${device._id}`);
@@ -253,6 +257,7 @@ export async function devicesShow(req, res) {
     })),
     flash,
     acs: acsInfoForClient(),
+    crCredentials: connectionRequestCredentialStatus(device),
   });
 }
 
@@ -414,6 +419,19 @@ export async function connectionRequest(req, res) {
 
   try {
     const credentials = getConnectionRequestCredentials(device);
+
+    if (!hasConnectionRequestCredentials(credentials)) {
+      await queueFetchConnectionRequestCredentials(device);
+      req.session.flash = {
+        type: 'warning',
+        message:
+          'Kredensial Connection Request belum diketahui — task Get Parameter diantrikan. ' +
+          'Tunggu task selesai (cek halaman Tasks), lalu klik Conn. Request lagi. ' +
+          'Alternatif: set CWMP_CR_USERNAME dan CWMP_CR_PASSWORD di .env (sama dengan yang dikonfigurasi di CPE).',
+      };
+      return res.redirect(`/devices/${device._id}`);
+    }
+
     const result = await sendConnectionRequest(device.connectionRequestUrl, credentials);
 
     const detail = result.hint ? ` — ${result.hint}` : '';

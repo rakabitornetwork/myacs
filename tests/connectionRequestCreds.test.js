@@ -30,4 +30,19 @@ describe('getConnectionRequestCredentials', () => {
     assert.equal(creds.username, 'user1');
     assert.equal(creds.password, 'pass1');
   });
+
+  it('uses env fallback when device params empty', async () => {
+    const config = (await import('../app/config/index.js')).default;
+    const origUser = config.cwmp.crUsername;
+    const origPass = config.cwmp.crPassword;
+    config.cwmp.crUsername = 'envuser';
+    config.cwmp.crPassword = 'envpass';
+
+    const creds = getConnectionRequestCredentials({ parameters: {} });
+    assert.equal(creds.username, 'envuser');
+    assert.equal(creds.password, 'envpass');
+
+    config.cwmp.crUsername = origUser;
+    config.cwmp.crPassword = origPass;
+  });
 });

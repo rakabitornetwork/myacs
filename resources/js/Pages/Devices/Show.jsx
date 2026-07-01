@@ -24,7 +24,7 @@ function formatParamValue(value) {
   return String(value);
 }
 
-export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, acs }) {
+export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, acs, crCredentials }) {
   const { auth } = usePage().props;
   const [selectedFirmware, setSelectedFirmware] = useState(firmwareFiles[0]?.id || '');
   const [getNames, setGetNames] = useState('InternetGatewayDevice.DeviceInfo.');
@@ -109,6 +109,16 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
     >
       <Head title={device.deviceId} />
       <Flash flash={flash} />
+
+      {!isGenieacs && device.connectionRequestUrl && crCredentials && !crCredentials.ready && (
+        <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <strong>Connection Request</strong> memerlukan username/password CPE yang belum tersimpan.
+          Klik <strong>Conn. Request</strong> untuk mengantrikan Get Parameter otomatis, atau set{' '}
+          <code className="rounded bg-amber-100 px-1">CWMP_CR_USERNAME</code> /{' '}
+          <code className="rounded bg-amber-100 px-1">CWMP_CR_PASSWORD</code> di <code>.env</code>{' '}
+          VPS (harus sama dengan kredensial di modem).
+        </div>
+      )}
 
       {!canWrite && (
         <div className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">

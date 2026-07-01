@@ -28,8 +28,22 @@ curl -sS -D - -X POST "$URL" \
 echo
 
 echo "=== 5. Via Cloudflare (jika DNS OK) ==="
-curl -sS -D - -X POST "https://myacs.teslatech.my.id/cwmp" \
+CF_HEADERS=$(curl -sS -D - -o /tmp/cwmp-cf-body.txt -X POST "https://myacs.teslatech.my.id/cwmp" \
   -H 'Content-Type: text/xml; charset=utf-8' \
-  -d "$INFORM" --max-time 15 | head -20 || echo "(curl cloudflare gagal)"
+  -d "$INFORM" --max-time 15 2>&1) || true
+echo "$CF_HEADERS" | head -25
+if echo "$CF_HEADERS" | grep -qi '403'; then
+  echo ""
+  echo ">>> MASALAH: Cloudflare memblokir CWMP (403)."
+  if echo "$CF_HEADERS" | grep -qi 'cf-mitigated: challenge'; then
+    echo ">>> Penyebab: JavaScript Challenge — ONU tidak bisa lewat."
+  fi
+  echo ">>> Solusi: Security → WAF → Custom rules → Skip untuk URI Path contains /cwmp"
+  echo ">>> Lihat: deploy/CLOUDFLARE.md"
+elif echo "$CF_HEADERS" | grep -qi 'InformResponse'; then
+  echo ""
+  echo ">>> OK: Cloudflare meneruskan CWMP ke MyACS."
+fi
+head -5 /tmp/cwmp-cf-body.txt 2>/dev/null || true
 echo
 echo "Selesai. Pantau: pm2 logs myacs | grep cwmp"

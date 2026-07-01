@@ -119,6 +119,52 @@ Buka **Cloudflare Dashboard** → domain `teslatech.my.id`:
 
 **Kenapa penting:** ONU CMHI mengirim HTTP POST SOAP — bukan browser. Bot Fight / WAF / redirect HTTPS bisa memutus koneksi → ONU kirim SOAP Fault berulang (flood di log).
 
+### WAF Skip Rule untuk `/cwmp` (WAJIB — penyebab 403 challenge)
+
+Jika `bash scripts/cwmp-test-inform.sh` langkah 5 menampilkan:
+
+```text
+HTTP/2 403
+cf-mitigated: challenge
+```
+
+Cloudflare memblokir ONU dengan **JavaScript Challenge** — ONU tidak bisa lewat → Manual Inform gagal, log MyACS kosong.
+
+**Buat Custom Rule:**
+
+1. **Security** → **WAF** → **Custom rules** → **Create rule**
+2. **Rule name:** `Allow CWMP TR-069`
+3. **When incoming requests match:**
+   - Field: **URI Path**
+   - Operator: **contains**
+   - Value: `/cwmp`
+4. **Then take action:** **Skip**
+5. Centang **semua** opsi skip yang tersedia:
+   - All remaining custom rules
+   - Super Bot Fight Mode
+   - Bot Fight Mode
+   - Rate limiting rules
+   - Managed rules (jika ada opsi)
+6. **Deploy**
+
+Verifikasi ulang:
+
+```bash
+bash scripts/cwmp-test-inform.sh
+```
+
+Langkah 5 harus **HTTP/2 200** + XML `InformResponse` — bukan 403.
+
+**Alternatif cepat (sementara):** Security → Settings → **Security Level = Essentially Off** + Bots → **Bot Fight Mode = OFF**.
+
+**Alternatif tanpa Cloudflare (CPE langsung ke VPS):** buka port `3001` di firewall VPS, ACS URL ONU:
+
+```text
+http://IP_PUBLIK_VPS:3001/cwmp
+```
+
+(GenieACS lama tetap `:7547` — port berbeda.)
+
 **Rekomendasi URL di ONU:**
 
 ```text
@@ -189,7 +235,7 @@ bash scripts/vps-diagnose.sh --fix   # install deps + restart PM2
 | `Cannot find package` | `node_modules` hilang | `npm ci --omit=dev` |
 | Login loop | `APP_URL` salah | `APP_URL=https://myacs.teslatech.my.id` |
 | CWMP gagal | Cache CF | Bypass cache `/cwmp` |
-| Manual Inform gagal ("Interruption of reporting process") | Task pending / dispatch RPC saat tes | Batalkan semua task di `/tasks/pending`, deploy terbaru, pantau log |
+| Manual Inform gagal, log kosong | **Cloudflare 403 challenge** (`cf-mitigated: challenge`) | WAF Skip Rule untuk `/cwmp` — lihat [WAF Skip Rule](#waf-skip-rule-untuk-cwmp-wajib--penyebab-403-challenge) |
 
 | Gejala | Penyebab (A record) | Solusi |
 |--------|---------------------|--------|

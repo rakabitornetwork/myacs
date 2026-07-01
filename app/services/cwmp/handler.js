@@ -12,8 +12,6 @@ import { isConnectionRequestEvent, isBootEvent } from '../../helpers/cwmpEvents.
 import { releaseStaleRunningTasks, completeRebootTasksOnBoot, completePendingRebootTasksOnBoot } from '../tasks/lifecycle.js';
 import CwmpSession from '../../models/CwmpSession.js';
 
-const AGGRESSIVE_CR_DISPATCH = process.env.CWMP_DISPATCH_ON_CR_INFORM === 'true';
-
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
@@ -121,11 +119,18 @@ async function shouldDispatchAfterEmptyPost(deviceKey) {
   ]);
 
   if (!pending) return false;
-  if (!session?.awaitingDispatch) return false;
 
-  const ageMs = Date.now() - new Date(session.lastSeen || 0).getTime();
-  if (ageMs > 120_000) return false;
+  // If awaitingDispatch is set, always dispatch
+  if (session?.awaitingDispatch) return true;
 
+  // Even if awaitingDispatch wasn't set, dispatch if session is recent
+  // This handles CPEs that send empty POST without prior Inform in the same session
+  if (session) {
+    const ageMs = Date.now() - new Date(session.lastSeen || 0).getTime();
+    if (ageMs <= 300_000) return true; // 5 minute window
+  }
+
+  // No session but has pending tasks — still try to dispatch
   return true;
 }
 
@@ -276,11 +281,13 @@ async function dispatchNextTask(deviceKey, res, requestId) {
 }
 
 export async function handleCwmpRequest(req, res) {
-  const raw = typeof req.body === 'string' ? req.body : req.rawBody || '';
+  const raw = typeof req.body === 'string' ? req.body : (req.rawBody ?? '');
 
   // CPE mengirim HTTP POST kosong setelah InformResponse — ini trigger dispatch task (TR-069)
+  // Some CPEs send empty body, empty XML, or zero-length content
   if (!raw || raw.trim() === '') {
     const deviceKey = await resolveDeviceId(req);
+    console.log(`[cwmp] empty raw POST received, deviceKey=${deviceKey || 'unknown'}`);
     return finishEmptyPost(deviceKey, res, '1');
   }
 
@@ -352,19 +359,18 @@ export async function handleCwmpRequest(req, res) {
 
       await releaseStaleRunningTasks(deviceKey);
 
-      // TR-069: Inform WAJIB dijawab InformResponse (bukan RPC langsung).
-      // Mode agresif opsional — aktifkan CWMP_DISPATCH_ON_CR_INFORM=true jika ONU tidak kirim empty POST.
-      if (AGGRESSIVE_CR_DISPATCH && pendingCount > 0 && connectionRequestInform) {
-        console.log(`[cwmp] ${deviceKey} CONNECTION REQUEST (agresif) — dispatch task`);
-        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
-        return dispatchNextTask(deviceKey, res, requestId);
-      }
+      // Recount pending tasks — BOOT event may have completed some
+      pendingCount = await countPendingTasks(deviceKey);
 
+      // When there are pending tasks, dispatch directly instead of sending
+      // InformResponse and waiting for an empty POST.
+      // Many CPEs (especially ONUs) close the connection after InformResponse
+      // and never send the empty POST that TR-069 expects.
+      // This is industry standard practice (GenieACS does the same).
       if (pendingCount > 0) {
-        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: true });
-        console.log(`[cwmp] ${deviceKey} inform — ${pendingCount} pending task(s), menunggu empty POST`);
-      } else {
-        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
+        const reason = connectionRequestInform ? 'CONNECTION REQUEST' : 'inform with pending';
+        console.log(`[cwmp] ${deviceKey} ${reason} — dispatching task directly (${pendingCount} pending)`);
+        return dispatchNextTask(deviceKey, res, requestId);
       }
     }
 

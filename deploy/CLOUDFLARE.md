@@ -163,6 +163,7 @@ bash scripts/vps-diagnose.sh --fix   # install deps + restart PM2
 | `Cannot find package` | `node_modules` hilang | `npm ci --omit=dev` |
 | Login loop | `APP_URL` salah | `APP_URL=https://myacs.teslatech.my.id` |
 | CWMP gagal | Cache CF | Bypass cache `/cwmp` |
+| Manual Inform gagal ("Interruption of reporting process") | Task pending / dispatch RPC saat tes | Batalkan semua task di `/tasks/pending`, deploy terbaru, pantau log |
 
 | Gejala | Penyebab (A record) | Solusi |
 |--------|---------------------|--------|

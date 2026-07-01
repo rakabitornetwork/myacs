@@ -27,6 +27,11 @@ app.use(express.text({ type: ['text/xml', 'application/xml', 'application/soap+x
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+// CWMP harus sebelum session/web middleware — CPE tidak perlu cookie web & hindari delay Mongo session
+if (config.cwmp.enabled) {
+  app.use(cwmpRoutes);
+}
+
 app.use(
   session({
     name: 'myacs.sid',
@@ -53,10 +58,6 @@ app.use('/build', express.static(path.join(__dirname, 'public/build'), { maxAge:
 app.use('/uploads/firmware', express.static(path.join(__dirname, 'uploads/firmware')));
 app.use('/uploads/cpe', express.static(path.join(__dirname, 'uploads/cpe')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-if (config.cwmp.enabled) {
-  app.use(cwmpRoutes);
-}
 
 app.get('/health', async (_req, res) => {
   try {

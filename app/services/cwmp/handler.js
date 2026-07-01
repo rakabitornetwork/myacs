@@ -6,9 +6,9 @@ import { applyPresetsForDevice } from '../presets/apply.js';
 import { createSession, resolveDeviceId, setCwmpCookie } from './session.js';
 import { buildTaskRpc, extractParameterValues, extractParameterNames, findResponseType } from './rpc.js';
 import { getClientIp } from '../../helpers/clientIp.js';
-import { countPendingTasks, wakeDeviceConnection } from '../tasks/queue.js';
+import { countPendingTasks } from '../tasks/queue.js';
 import { paramUpdatesFromMap } from '../../helpers/parameters.js';
-import { isConnectionRequestEvent, isBootEvent } from '../../helpers/cwmpEvents.js';
+import { isBootEvent } from '../../helpers/cwmpEvents.js';
 import { releaseStaleRunningTasks, completeRebootTasksOnBoot, completePendingRebootTasksOnBoot } from '../tasks/lifecycle.js';
 import CwmpSession from '../../models/CwmpSession.js';
 
@@ -23,6 +23,9 @@ const builder = new XMLBuilder({
   attributeNamePrefix: '@_',
   suppressEmptyNode: true,
 });
+
+const SOAP_XML_PREFIX = '<?xml version="1.0" encoding="UTF-8"?>\n';
+const DISPATCH_SESSION_MAX_AGE_MS = parseInt(process.env.CWMP_DISPATCH_SESSION_MAX_AGE_MS || '120000', 10);
 
 function extractDeviceId(envelope) {
   const body = envelope?.Envelope?.Body;
@@ -100,16 +103,26 @@ function soapResponse(bodyContent, id = '1') {
       '@_xmlns:soap': 'http://schemas.xmlsoap.org/soap/envelope/',
       '@_xmlns:cwmp': 'urn:dslforum-org:cwmp-1-0',
       'soap:Header': {
-        'cwmp:ID': { '@_soap:mustUnderstand': '1', '#text': id },
+        'cwmp:ID': { '@_soap:mustUnderstand': '1', '#text': String(id) },
       },
       'soap:Body': bodyContent,
     },
   };
-  return builder.build(envelope);
+  return SOAP_XML_PREFIX + builder.build(envelope);
 }
 
-function informResponse(id) {
-  return soapResponse({ InformResponse: { MaxEnvelopes: 1 } }, id);
+function informResponse(id, maxEnvelopes) {
+  return soapResponse({ InformResponse: { MaxEnvelopes: maxEnvelopes } }, id);
+}
+
+function emptyResponse(id) {
+  return soapResponse({}, id);
+}
+
+function sendCwmpXml(res, xml) {
+  res.set('Content-Type', 'text/xml; charset=utf-8');
+  res.set('Connection', 'close');
+  return res.send(xml);
 }
 
 async function shouldDispatchAfterEmptyPost(deviceKey) {
@@ -119,19 +132,10 @@ async function shouldDispatchAfterEmptyPost(deviceKey) {
   ]);
 
   if (!pending) return false;
+  if (!session?.awaitingDispatch) return false;
 
-  // If awaitingDispatch is set, always dispatch
-  if (session?.awaitingDispatch) return true;
-
-  // Even if awaitingDispatch wasn't set, dispatch if session is recent
-  // This handles CPEs that send empty POST without prior Inform in the same session
-  if (session) {
-    const ageMs = Date.now() - new Date(session.lastSeen || 0).getTime();
-    if (ageMs <= 300_000) return true; // 5 minute window
-  }
-
-  // No session but has pending tasks — still try to dispatch
-  return true;
+  const ageMs = Date.now() - new Date(session.lastSeen || 0).getTime();
+  return ageMs <= DISPATCH_SESSION_MAX_AGE_MS;
 }
 
 async function finishEmptyPost(deviceKey, res, requestId) {
@@ -145,18 +149,12 @@ async function finishEmptyPost(deviceKey, res, requestId) {
     console.log(`[cwmp] empty POST from ${deviceKey} — sesi selesai (tanpa task)`);
   }
 
-  res.set('Content-Type', 'text/xml; charset=utf-8');
-  return res.send(emptyResponse(requestId));
-}
-
-function emptyResponse(id) {
-  return soapResponse({}, id);
+  return sendCwmpXml(res, emptyResponse(requestId));
 }
 
 function isEmptyCwmpPost(body) {
   if (!body || Object.keys(body).length === 0) return true;
   if (body.Empty !== undefined) return true;
-  // Beberapa CPE kirim Body kosong tanpa child element
   const keys = Object.keys(body).filter((k) => !k.startsWith('@_'));
   return keys.length === 0;
 }
@@ -192,13 +190,11 @@ async function handleCwmpResponse(deviceKey, body, res, requestId) {
       detail: body,
     });
 
-    res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(emptyResponse(requestId));
+    return sendCwmpXml(res, emptyResponse(requestId));
   }
 
   if (!responseType) {
-    res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(emptyResponse(requestId));
+    return sendCwmpXml(res, emptyResponse(requestId));
   }
 
   await completeRunningTask(deviceKey, {
@@ -207,11 +203,8 @@ async function handleCwmpResponse(deviceKey, body, res, requestId) {
     result: body,
   });
 
-  // After RebootResponse, the CPE will reboot — no point sending more RPCs.
-  // The task is already marked completed above. Just close the session.
   if (responseType === 'RebootResponse' || responseType === 'FactoryResetResponse') {
-    res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(emptyResponse(requestId));
+    return sendCwmpXml(res, emptyResponse(requestId));
   }
 
   if (responseType === 'GetParameterValuesResponse') {
@@ -244,8 +237,7 @@ async function handleCwmpResponse(deviceKey, body, res, requestId) {
     }
   }
 
-  res.set('Content-Type', 'text/xml; charset=utf-8');
-  return res.send(emptyResponse(requestId));
+  return sendCwmpXml(res, emptyResponse(requestId));
 }
 
 async function dispatchNextTask(deviceKey, res, requestId) {
@@ -259,8 +251,7 @@ async function dispatchNextTask(deviceKey, res, requestId) {
   );
 
   if (!task) {
-    res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(emptyResponse(requestId));
+    return sendCwmpXml(res, emptyResponse(requestId));
   }
 
   console.log(`[cwmp] ${deviceKey} → ${task.method} (task ${task._id})`);
@@ -272,22 +263,19 @@ async function dispatchNextTask(deviceKey, res, requestId) {
       fault: `Unsupported method: ${task.method}`,
       completedAt: new Date(),
     });
-    res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(emptyResponse(requestId));
+    return sendCwmpXml(res, emptyResponse(requestId));
   }
 
-  res.set('Content-Type', 'text/xml; charset=utf-8');
-  return res.send(soapResponse(rpcBody, requestId));
+  return sendCwmpXml(res, soapResponse(rpcBody, requestId));
 }
 
 export async function handleCwmpRequest(req, res) {
   const raw = typeof req.body === 'string' ? req.body : (req.rawBody ?? '');
+  const bodyPreview = raw.trim().slice(0, 80).replace(/\s+/g, ' ');
 
-  // CPE mengirim HTTP POST kosong setelah InformResponse — ini trigger dispatch task (TR-069)
-  // Some CPEs send empty body, empty XML, or zero-length content
   if (!raw || raw.trim() === '') {
     const deviceKey = await resolveDeviceId(req);
-    console.log(`[cwmp] empty raw POST received, deviceKey=${deviceKey || 'unknown'}`);
+    console.log(`[cwmp] empty raw POST device=${deviceKey || 'unknown'}`);
     return finishEmptyPost(deviceKey, res, '1');
   }
 
@@ -295,6 +283,7 @@ export async function handleCwmpRequest(req, res) {
   try {
     envelope = parser.parse(raw);
   } catch {
+    console.warn(`[cwmp] invalid XML (${raw.length} bytes) from ${getClientIp(req)}`);
     await Fault.create({ message: 'Invalid XML received', detail: { ip: req.ip } });
     return res.status(400).send('Invalid XML');
   }
@@ -312,7 +301,6 @@ export async function handleCwmpRequest(req, res) {
 
     if (deviceKey && info) {
       pendingCount = await countPendingTasks(deviceKey);
-      const connectionRequestInform = isConnectionRequestEvent(info.events);
 
       const paramUpdates = paramUpdatesFromMap(info.parameters);
 
@@ -349,57 +337,30 @@ export async function handleCwmpRequest(req, res) {
         const completedPending = await completePendingRebootTasksOnBoot(deviceKey);
         const totalCompleted = completedRunning + completedPending;
         if (totalCompleted > 0) {
-          console.log(`[cwmp] ${deviceKey} BOOT — marked ${totalCompleted} reboot task(s) completed (running=${completedRunning}, pending=${completedPending})`);
+          console.log(`[cwmp] ${deviceKey} BOOT — marked ${totalCompleted} reboot task(s) completed`);
         }
+      }
+
+      await releaseStaleRunningTasks(deviceKey);
+      pendingCount = await countPendingTasks(deviceKey);
+
+      const maxEnvelopes = pendingCount > 0 ? 1 : 0;
+
+      if (pendingCount > 0) {
+        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: true });
+      } else {
+        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
       }
 
       console.log(
-        `[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] pending=${pendingCount}`,
+        `[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] pending=${pendingCount} maxEnv=${maxEnvelopes}`,
       );
 
-      await releaseStaleRunningTasks(deviceKey);
-
-      // Recount pending tasks — BOOT event may have completed some
-      pendingCount = await countPendingTasks(deviceKey);
-
-      if (pendingCount > 0) {
-        // Connection Request Inform: CPE came because of our request.
-        // Dispatch task directly — CPE expects work to be sent.
-        if (connectionRequestInform) {
-          console.log(`[cwmp] ${deviceKey} CONNECTION REQUEST — dispatching task directly (${pendingCount} pending)`);
-          return dispatchNextTask(deviceKey, res, requestId);
-        }
-
-        // Periodic/Boot Inform with pending tasks:
-        // Some CPEs (ONU CMHI) REQUIRE InformResponse before accepting RPC
-        // and do NOT send empty POST after InformResponse.
-        // Strategy: send InformResponse, then immediately re-send Connection Request
-        // so CPE reconnects and we dispatch via Connection Request Inform.
-        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: true });
-        console.log(`[cwmp] ${deviceKey} inform with ${pendingCount} pending — sending InformResponse + scheduling immediate CR`);
-
-        res.set('Content-Type', 'text/xml; charset=utf-8');
-        res.send(informResponse(requestId));
-
-        // Schedule Connection Request after response is sent (non-blocking)
-        setTimeout(async () => {
-          try {
-            const result = await wakeDeviceConnection(device);
-            if (result.ok) {
-              console.log(`[cwmp] ${deviceKey} immediate CR sent after InformResponse`);
-            } else if (!result.skipped) {
-              console.log(`[cwmp] ${deviceKey} immediate CR failed: ${result.error || result.hint || result.status}`);
-            }
-          } catch (err) {
-            console.warn(`[cwmp] ${deviceKey} immediate CR error:`, err.message);
-          }
-        }, 500);
-        return;
-      }
+      return sendCwmpXml(res, informResponse(requestId, maxEnvelopes));
     }
 
-    res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(informResponse(requestId));
+    console.warn(`[cwmp] inform tanpa deviceKey (${raw.length} bytes): ${bodyPreview}`);
+    return sendCwmpXml(res, informResponse(requestId, 0));
   }
 
   const deviceKey = await resolveDeviceId(req);
@@ -408,8 +369,7 @@ export async function handleCwmpRequest(req, res) {
     if (deviceKey) {
       return handleCwmpResponse(deviceKey, body, res, requestId);
     }
-    res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(emptyResponse(requestId));
+    return sendCwmpXml(res, emptyResponse(requestId));
   }
 
   if (isEmptyCwmpPost(body)) {
@@ -417,10 +377,9 @@ export async function handleCwmpRequest(req, res) {
       return finishEmptyPost(deviceKey, res, requestId);
     }
     console.warn('[cwmp] empty SOAP POST tanpa session device');
-    res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(emptyResponse(requestId));
+    return sendCwmpXml(res, emptyResponse(requestId));
   }
 
-  res.set('Content-Type', 'text/xml; charset=utf-8');
-  return res.send(emptyResponse(requestId));
+  console.warn(`[cwmp] unhandled SOAP from ${deviceKey || 'unknown'}: ${bodyPreview}`);
+  return sendCwmpXml(res, emptyResponse(requestId));
 }

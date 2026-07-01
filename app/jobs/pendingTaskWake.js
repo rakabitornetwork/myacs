@@ -1,5 +1,6 @@
 import Task from '../models/Task.js';
 import Device from '../models/Device.js';
+import CwmpSession from '../models/CwmpSession.js';
 import { wakeDeviceConnection } from '../services/tasks/queue.js';
 import { getStalePendingDeviceIds, retryOrFailStalePendingTasks } from '../services/tasks/lifecycle.js';
 
@@ -17,6 +18,7 @@ export function startPendingTaskWakeJob() {
         if (device) {
           const result = await wakeDeviceConnection(device);
           if (result.ok) {
+            await CwmpSession.updateOne({ deviceId }, { awaitingDispatch: true });
             console.log(`[jobs] connection request sent for pending tasks: ${deviceId}`);
           }
         }

@@ -45,21 +45,16 @@ export async function resolveDeviceId(req) {
     const ipSession = await CwmpSession.findOne({ ipAddress: clientIp })
       .sort({ lastSeen: -1 })
       .lean();
-    if (ipSession) return ipSession.deviceId;
+    if (ipSession) {
+      const ageMs = Date.now() - new Date(ipSession.lastSeen || 0).getTime();
+      if (ageMs <= SESSION_FALLBACK_MS) return ipSession.deviceId;
+    }
 
     const device = await Device.findOne({ ipAddress: clientIp, source: 'myacs' })
       .sort({ lastInform: -1 })
       .lean();
     if (device) return device.deviceId;
   }
-
-  const recentSession = await CwmpSession.findOne({
-    lastSeen: { $gte: new Date(Date.now() - SESSION_FALLBACK_MS) },
-  })
-    .sort({ lastSeen: -1 })
-    .lean();
-
-  if (recentSession) return recentSession.deviceId;
 
   return null;
 }

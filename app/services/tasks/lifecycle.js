@@ -1,4 +1,4 @@
-import Task from '../models/Task.js';
+import Task from '../../models/Task.js';
 
 const RUNNING_STALE_MINUTES = parseInt(process.env.TASK_RUNNING_STALE_MINUTES || '5', 10);
 

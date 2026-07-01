@@ -18,7 +18,7 @@ import {
 } from '../../services/genieacs/nbi.js';
 import { validateConfig } from '../../config/validate.js';
 import config from '../../config/index.js';
-import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestCredentials, markConnectionRequestSent } from '../../services/tasks/queue.js';
+import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestCredentials, markConnectionRequestSent, retryWakeForPendingTasks } from '../../services/tasks/queue.js';
 import { parametersToEntries } from '../../helpers/parameters.js';
 import {
   getConnectionRequestCredentials,
@@ -248,6 +248,8 @@ export async function devicesShow(req, res) {
       status: t.status,
       createdAt: t.createdAt,
       completedAt: t.completedAt,
+      retries: t.retries || 0,
+      maxRetries: t.maxRetries || 3,
     })),
     firmwareFiles: firmwareFiles.map((f) => ({
       id: f._id.toString(),
@@ -277,6 +279,8 @@ export async function tasksIndex(req, res) {
       createdAt: t.createdAt,
       completedAt: t.completedAt,
       fault: t.fault,
+      retries: t.retries || 0,
+      maxRetries: t.maxRetries || 3,
     })),
   });
 }
@@ -543,6 +547,31 @@ export async function cancelTask(req, res) {
     task.completedAt = new Date();
     await task.save();
     req.session.flash = { type: 'success', message: 'Task dibatalkan' };
+  }
+
+  const back = req.headers.referer || '/tasks';
+  return res.redirect(back);
+}
+
+export async function retryTask(req, res) {
+  const task = await Task.findOne({ _id: req.params.id, status: 'pending' });
+
+  if (!task) {
+    req.session.flash = { type: 'error', message: 'Task tidak ditemukan atau sudah diproses' };
+  } else {
+    // Reset updatedAt and send Connection Request
+    task.retries = Math.max(0, (task.retries || 0));
+    await task.save(); // touch updatedAt
+
+    const result = await retryWakeForPendingTasks(task.deviceId);
+    if (result.ok) {
+      req.session.flash = { type: 'success', message: 'Connection Request dikirim ulang — menunggu CPE merespons' };
+    } else {
+      req.session.flash = {
+        type: 'warning',
+        message: `Connection Request gagal (${result.error || result.hint || result.status || 'unknown'}) — task tetap pending, akan dicoba lagi otomatis`,
+      };
+    }
   }
 
   const back = req.headers.referer || '/tasks';

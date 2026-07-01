@@ -34,6 +34,7 @@ router.post('/devices/:id/firmware', requireAuth, requireWrite, DashboardControl
 router.get('/tasks', requireAuth, DashboardController.tasksIndex);
 router.get('/tasks/pending', requireAuth, requireWrite, DashboardController.tasksPendingHtml);
 router.post('/tasks/:id/cancel', requireAuth, requireWrite, DashboardController.cancelTask);
+router.post('/tasks/:id/retry', requireAuth, requireWrite, DashboardController.retryTask);
 
 router.get('/faults', requireAuth, FaultController.faultsIndex);
 router.post('/faults/:id/resolve', requireAuth, requireWrite, FaultController.faultsResolve);

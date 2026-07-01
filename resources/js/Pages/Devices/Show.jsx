@@ -353,23 +353,39 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 <div key={task.id} className="px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-xs font-medium text-zinc-800">{task.name}</p>
-                    <Badge status={task.status}>{task.status}</Badge>
+                    <div className="flex items-center gap-1.5">
+                      {task.status === 'pending' && task.retries > 0 && (
+                        <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">
+                          retry {task.retries}/{task.maxRetries}
+                        </span>
+                      )}
+                      <Badge status={task.status}>{task.status}</Badge>
+                    </div>
                   </div>
                   <p className="ui-mono mt-0.5 text-[10px] text-zinc-500">{task.method}</p>
                   <div className="mt-0.5 flex items-center justify-between gap-2">
                     <p className="text-[10px] tabular-nums text-zinc-400">{formatDate(task.createdAt)}</p>
                     {canAct && task.status === 'pending' && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (confirm('Batalkan task ini?')) {
-                            router.post(`/tasks/${task.id}/cancel`);
-                          }
-                        }}
-                        className="shrink-0 text-[10px] font-medium text-red-600 hover:text-red-700"
-                      >
-                        Batalkan
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => router.post(`/tasks/${task.id}/retry`)}
+                          className="shrink-0 text-[10px] font-medium text-blue-600 hover:text-blue-700"
+                        >
+                          Retry
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm('Batalkan task ini?')) {
+                              router.post(`/tasks/${task.id}/cancel`);
+                            }
+                          }}
+                          className="shrink-0 text-[10px] font-medium text-red-600 hover:text-red-700"
+                        >
+                          Batalkan
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>

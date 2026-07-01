@@ -52,3 +52,20 @@ export async function createTaskForDevice(device, taskData, { wake = true } = {}
 export async function countPendingTasks(deviceId) {
   return Task.countDocuments({ deviceId, status: 'pending' });
 }
+
+/**
+ * Re-send Connection Request for a device that has stale pending tasks.
+ * Called by the sweep job after retryOrFailStalePendingTasks increments retries.
+ */
+export async function retryWakeForPendingTasks(deviceId) {
+  const device = await Device.findOne({ deviceId }).lean();
+  if (!device) return { ok: false, error: 'device not found' };
+
+  const result = await wakeDeviceConnection(device);
+  if (result.ok) {
+    console.log(`[task] retry connection request OK for ${deviceId}`);
+  } else if (!result.skipped) {
+    console.warn(`[task] retry connection request failed for ${deviceId}:`, result.error || result.hint || result.status);
+  }
+  return result;
+}

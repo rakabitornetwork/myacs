@@ -9,7 +9,7 @@ import { getClientIp } from '../../helpers/clientIp.js';
 import { countPendingTasks } from '../tasks/queue.js';
 import { paramUpdatesFromMap } from '../../helpers/parameters.js';
 import { isConnectionRequestEvent, isBootEvent } from '../../helpers/cwmpEvents.js';
-import { releaseStaleRunningTasks, completeRebootTasksOnBoot } from '../tasks/lifecycle.js';
+import { releaseStaleRunningTasks, completeRebootTasksOnBoot, completePendingRebootTasksOnBoot } from '../tasks/lifecycle.js';
 import CwmpSession from '../../models/CwmpSession.js';
 
 const AGGRESSIVE_CR_DISPATCH = process.env.CWMP_DISPATCH_ON_CR_INFORM === 'true';
@@ -202,6 +202,13 @@ async function handleCwmpResponse(deviceKey, body, res, requestId) {
     result: body,
   });
 
+  // After RebootResponse, the CPE will reboot — no point sending more RPCs.
+  // The task is already marked completed above. Just close the session.
+  if (responseType === 'RebootResponse' || responseType === 'FactoryResetResponse') {
+    res.set('Content-Type', 'text/xml; charset=utf-8');
+    return res.send(emptyResponse(requestId));
+  }
+
   if (responseType === 'GetParameterValuesResponse') {
     const params = extractParameterValues(body);
     if (Object.keys(params).length) {
@@ -331,9 +338,11 @@ export async function handleCwmpRequest(req, res) {
 
       if (isBootEvent(info.events) && device) {
         await applyPresetsForDevice(device);
-        const completed = await completeRebootTasksOnBoot(deviceKey);
-        if (completed > 0) {
-          console.log(`[cwmp] ${deviceKey} BOOT — marked ${completed} reboot task(s) completed`);
+        const completedRunning = await completeRebootTasksOnBoot(deviceKey);
+        const completedPending = await completePendingRebootTasksOnBoot(deviceKey);
+        const totalCompleted = completedRunning + completedPending;
+        if (totalCompleted > 0) {
+          console.log(`[cwmp] ${deviceKey} BOOT — marked ${totalCompleted} reboot task(s) completed (running=${completedRunning}, pending=${completedPending})`);
         }
       }
 

@@ -19,6 +19,7 @@ import {
 import { validateConfig } from '../../config/validate.js';
 import config from '../../config/index.js';
 import { createTaskForDevice, wakeDeviceConnection } from '../../services/tasks/queue.js';
+import { parametersToEntries } from '../../helpers/parameters.js';
 
 function redirectDevice(res, device) {
   return res.redirect(`/devices/${device._id}`);
@@ -202,13 +203,7 @@ export async function devicesShow(req, res) {
     .limit(20)
     .lean();
 
-  const parameters = device.parameters
-    ? Object.fromEntries(
-        device.parameters instanceof Map
-          ? device.parameters
-          : Object.entries(device.parameters),
-      )
-    : {};
+  const parameters = Object.fromEntries(parametersToEntries(device.parameters, { limit: 200 }));
 
   const flash = req.session.flash || null;
   delete req.session.flash;

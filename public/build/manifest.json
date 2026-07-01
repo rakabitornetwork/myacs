@@ -99,7 +99,7 @@
     ]
   },
   "resources/js/Pages/Devices/Show.jsx": {
-    "file": "assets/Show-D4zuUjli.js",
+    "file": "assets/Show-M3s16pZZ.js",
     "name": "Show",
     "src": "resources/js/Pages/Devices/Show.jsx",
     "isDynamicEntry": true,
@@ -211,7 +211,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-XSNqw-Ja.js",
+    "file": "assets/app-CBBrOKNq.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
@@ -233,7 +233,7 @@
       "resources/js/Pages/Users/Index.jsx"
     ],
     "css": [
-      "assets/app-CtTLaHJS.css"
+      "assets/app-feSQ1_ZU.css"
     ]
   }
 }

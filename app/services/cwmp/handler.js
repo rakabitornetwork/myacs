@@ -7,6 +7,7 @@ import { createSession, resolveDeviceId, setCwmpCookie } from './session.js';
 import { buildTaskRpc, extractParameterValues, extractParameterNames, findResponseType } from './rpc.js';
 import { getClientIp } from '../../helpers/clientIp.js';
 import { countPendingTasks } from '../tasks/queue.js';
+import { paramUpdatesFromMap } from '../../helpers/parameters.js';
 import CwmpSession from '../../models/CwmpSession.js';
 
 const parser = new XMLParser({
@@ -167,14 +168,7 @@ async function handleCwmpResponse(deviceKey, body, res, requestId) {
   if (responseType === 'GetParameterValuesResponse') {
     const params = extractParameterValues(body);
     if (Object.keys(params).length) {
-      await Device.findOneAndUpdate(
-        { deviceId: deviceKey },
-        {
-          $set: Object.fromEntries(
-            Object.entries(params).map(([k, v]) => [`parameters.${k}`, v]),
-          ),
-        },
-      );
+      await Device.findOneAndUpdate({ deviceId: deviceKey }, { $set: paramUpdatesFromMap(params) });
     }
   }
 
@@ -279,9 +273,7 @@ export async function handleCwmpRequest(req, res) {
         return dispatchNextTask(deviceKey, res, requestId);
       }
 
-      const paramUpdates = Object.fromEntries(
-        Object.entries(info.parameters).map(([k, v]) => [`parameters.${k}`, v]),
-      );
+      const paramUpdates = paramUpdatesFromMap(info.parameters);
 
       const device = await Device.findOneAndUpdate(
         { deviceId: deviceKey },

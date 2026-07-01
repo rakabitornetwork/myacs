@@ -27,13 +27,13 @@ function formatParamValue(value) {
 export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, acs }) {
   const { auth } = usePage().props;
   const [selectedFirmware, setSelectedFirmware] = useState(firmwareFiles[0]?.id || '');
-  const [getNames, setGetNames] = useState('Device.DeviceInfo.');
-  const [paramNamesPath, setParamNamesPath] = useState('Device.');
+  const [getNames, setGetNames] = useState('InternetGatewayDevice.DeviceInfo.');
+  const [paramNamesPath, setParamNamesPath] = useState('InternetGatewayDevice.');
   const [paramNamesNextLevel, setParamNamesNextLevel] = useState(false);
   const [uploadFileType, setUploadFileType] = useState('1 Vendor Configuration File');
   const [setPath, setSetPath] = useState('');
   const [setValue, setSetValue] = useState('');
-  const paramEntries = Object.entries(device.parameters || {}).slice(0, 100);
+  const paramEntries = Object.entries(device.parameters || {});
   const canManage = device.canManage !== false;
   const canWrite = auth?.canWrite !== false;
   const canAct = canManage && canWrite;
@@ -214,7 +214,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                     className="ui-input min-h-[4rem] font-mono text-[11px]"
                     value={getNames}
                     onChange={(e) => setGetNames(e.target.value)}
-                    placeholder="Device.DeviceInfo."
+                    placeholder="InternetGatewayDevice.DeviceInfo."
                   />
                   <button type="submit" className="ui-btn-secondary w-full">
                     Queue Get
@@ -230,7 +230,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                     className="ui-input font-mono text-[11px]"
                     value={paramNamesPath}
                     onChange={(e) => setParamNamesPath(e.target.value)}
-                    placeholder="Device."
+                    placeholder="InternetGatewayDevice."
                   />
                   <label className="flex items-center gap-1.5 text-[10px] text-zinc-500">
                     <input

@@ -67,8 +67,9 @@ export function isRequestHttps(req) {
 }
 
 export function setCwmpCookie(res, sessionId, req) {
-  const flags = isRequestHttps(req)
-    ? 'Path=/cwmp; HttpOnly; Secure; SameSite=None'
-    : 'Path=/cwmp; HttpOnly; SameSite=Lax';
-  res.setHeader('Set-Cookie', `${COOKIE_NAME}=${sessionId}; ${flags}`);
+  if (!isRequestHttps(req)) return;
+  res.setHeader(
+    'Set-Cookie',
+    `${COOKIE_NAME}=${sessionId}; Path=/cwmp; HttpOnly; Secure; SameSite=None`,
+  );
 }

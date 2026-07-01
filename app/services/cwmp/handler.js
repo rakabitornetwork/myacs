@@ -1,9 +1,10 @@
+import crypto from 'crypto';
 import { XMLParser, XMLBuilder } from 'fast-xml-parser';
 import Device from '../../models/Device.js';
 import Task from '../../models/Task.js';
 import Fault from '../../models/Fault.js';
 import { applyPresetsForDevice } from '../presets/apply.js';
-import { createSession, resolveDeviceId, setCwmpCookie } from './session.js';
+import { resolveDeviceId, setCwmpCookie } from './session.js';
 import { buildTaskRpc, extractParameterValues, extractParameterNames, findResponseType } from './rpc.js';
 import { getClientIp } from '../../helpers/clientIp.js';
 import { countPendingTasks } from '../tasks/queue.js';
@@ -27,11 +28,54 @@ const builder = new XMLBuilder({
 const SOAP_XML_PREFIX = '<?xml version="1.0" encoding="UTF-8"?>\n';
 const DISPATCH_SESSION_MAX_AGE_MS = parseInt(process.env.CWMP_DISPATCH_SESSION_MAX_AGE_MS || '120000', 10);
 
-function extractDeviceId(envelope) {
-  const body = envelope?.Envelope?.Body;
-  if (!body?.Inform) return null;
+const INFORM_RAW_RE = /<(?:[\w-]+:)?Inform\b/i;
 
-  const deviceId = body.Inform.DeviceId || {};
+function getEnvelopeRoot(parsed) {
+  if (!parsed || typeof parsed !== 'object') return null;
+  if (parsed.Envelope) return parsed.Envelope;
+  const key = Object.keys(parsed).find((k) => !k.startsWith('@_') && !k.startsWith('?') && /envelope/i.test(k));
+  return key ? parsed[key] : null;
+}
+
+function getSoapBody(envelope) {
+  const root = getEnvelopeRoot(envelope);
+  if (!root) return null;
+  if (root.Body) return root.Body;
+  const key = Object.keys(root).find((k) => !k.startsWith('@_') && /body/i.test(k));
+  return key ? root[key] : null;
+}
+
+function getSoapHeader(envelope) {
+  const root = getEnvelopeRoot(envelope);
+  if (!root) return null;
+  if (root.Header) return root.Header;
+  const key = Object.keys(root).find((k) => !k.startsWith('@_') && /header/i.test(k));
+  return key ? root[key] : null;
+}
+
+function getInformNode(body) {
+  if (!body || typeof body !== 'object') return null;
+  if (body.Inform) return body.Inform;
+  const key = Object.keys(body).find((k) => !k.startsWith('@_') && /^inform$/i.test(k));
+  return key ? body[key] : null;
+}
+
+function isRawInform(raw) {
+  return INFORM_RAW_RE.test(raw);
+}
+
+function extractRequestId(header, raw) {
+  const fromHeader = header?.ID?.['#text'] ?? header?.ID;
+  if (fromHeader) return String(fromHeader);
+  const match = raw.match(/<(?:[\w-]+:)?ID[^>]*>([^<]+)<\/(?:[\w-]+:)?ID>/i);
+  return match?.[1]?.trim() || '1';
+}
+
+function extractDeviceId(envelope) {
+  const inform = getInformNode(getSoapBody(envelope));
+  if (!inform) return null;
+
+  const deviceId = inform.DeviceId || {};
   const oui = deviceId.OUI || deviceId['@_OUI'] || '';
   const serial = deviceId.SerialNumber || '';
   const productClass = deviceId.ProductClass || '';
@@ -49,9 +93,13 @@ function paramValue(parameters, ...keys) {
 }
 
 function parseInform(envelope) {
-  const inform = envelope?.Envelope?.Body?.Inform;
+  const inform = getInformNode(getSoapBody(envelope));
   if (!inform) return null;
+  return parseInformNode(inform);
+}
 
+function parseInformNode(inform) {
+  if (!inform) return null;
   const deviceId = inform.DeviceId || {};
   const event = inform.Event?.EventStruct;
   const events = Array.isArray(event)
@@ -99,13 +147,13 @@ function parseInform(envelope) {
 
 function soapResponse(bodyContent, id = '1') {
   const envelope = {
-    'soap:Envelope': {
-      '@_xmlns:soap': 'http://schemas.xmlsoap.org/soap/envelope/',
+    'soap-env:Envelope': {
+      '@_xmlns:soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
       '@_xmlns:cwmp': 'urn:dslforum-org:cwmp-1-0',
-      'soap:Header': {
-        'cwmp:ID': { '@_soap:mustUnderstand': '1', '#text': String(id) },
+      'soap-env:Header': {
+        'cwmp:ID': { '@_soap-env:mustUnderstand': '1', '#text': String(id) },
       },
-      'soap:Body': bodyContent,
+      'soap-env:Body': bodyContent,
     },
   };
   return SOAP_XML_PREFIX + builder.build(envelope);
@@ -113,9 +161,8 @@ function soapResponse(bodyContent, id = '1') {
 
 function informResponse(id, maxEnvelopes = 1) {
   return soapResponse({
-    InformResponse: {
+    'cwmp:InformResponse': {
       MaxEnvelopes: maxEnvelopes,
-      HoldRequests: false,
     },
   }, id);
 }
@@ -129,8 +176,17 @@ function sendCwmpXml(res, xml) {
   return res.send(xml);
 }
 
-async function processInformBackground(deviceKey, info, clientIp) {
+async function processInformBackground(deviceKey, info, clientIp, sessionId) {
   try {
+    await CwmpSession.findOneAndUpdate(
+      { deviceId: deviceKey },
+      { sessionId, deviceId: deviceKey, ipAddress: clientIp, lastSeen: new Date() },
+      { upsert: true },
+    );
+
+    const pendingCount = await countPendingTasks(deviceKey);
+    await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: pendingCount > 0 });
+
     const paramUpdates = paramUpdatesFromMap(info.parameters);
 
     const device = await Device.findOneAndUpdate(
@@ -168,15 +224,37 @@ async function processInformBackground(deviceKey, info, clientIp) {
     }
 
     await releaseStaleRunningTasks(deviceKey);
-
-    const pendingCount = await countPendingTasks(deviceKey);
-    await CwmpSession.updateOne(
-      { deviceId: deviceKey },
-      { awaitingDispatch: pendingCount > 0 },
-    );
   } catch (err) {
     console.error(`[cwmp] ${deviceKey} inform background error:`, err.message);
   }
+}
+
+function replyInform(req, res, envelope, raw, clientIp) {
+  const body = getSoapBody(envelope);
+  const header = getSoapHeader(envelope);
+  const informNode = getInformNode(body);
+  const isInform = informNode || isRawInform(raw);
+
+  if (!isInform) return false;
+
+  const requestId = extractRequestId(header, raw);
+  const deviceKey = extractDeviceId(envelope);
+  const info = informNode ? parseInformNode(informNode) : null;
+  const sessionId = crypto.randomBytes(16).toString('hex');
+
+  console.log(`[cwmp] inform received from ${clientIp} (${raw.length} bytes) keys=${Object.keys(body || {}).join(',') || 'raw'}`);
+
+  setCwmpCookie(res, sessionId, req);
+  sendCwmpXml(res, informResponse(requestId, 1));
+
+  if (deviceKey && info) {
+    console.log(`[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] — InformResponse sent`);
+    setImmediate(() => processInformBackground(deviceKey, info, clientIp, sessionId));
+  } else {
+    console.warn(`[cwmp] inform tanpa deviceKey (${raw.length} bytes) — InformResponse sent anyway`);
+  }
+
+  return true;
 }
 
 async function shouldDispatchAfterEmptyPost(deviceKey) {
@@ -340,51 +418,23 @@ export async function handleCwmpRequest(req, res) {
   try {
     envelope = parser.parse(raw);
   } catch {
-    console.warn(`[cwmp] invalid XML (${raw.length} bytes) from ${clientIp}`);
-    await Fault.create({ message: 'Invalid XML received', detail: { ip: req.ip } });
+    if (isRawInform(raw)) {
+      const requestId = extractRequestId(null, raw);
+      console.warn(`[cwmp] invalid XML but Inform detected (${raw.length}b) — sending InformResponse`);
+      sendCwmpXml(res, informResponse(requestId, 1));
+      return;
+    }
+    console.warn(`[cwmp] invalid XML (${raw.length} bytes) from ${clientIp}: ${bodyPreview}`);
     return res.status(400).send('Invalid XML');
   }
 
-  const body = envelope?.Envelope?.Body;
-  const header = envelope?.Envelope?.Header;
-  const requestId = header?.ID?.['#text'] || header?.ID || '1';
+  if (replyInform(req, res, envelope, raw, clientIp)) return;
 
-  if (body?.Inform) {
-    const deviceKey = extractDeviceId(envelope);
-    const info = parseInform(envelope);
-    const startedAt = Date.now();
+  const body = getSoapBody(envelope);
+  const header = getSoapHeader(envelope);
+  const requestId = extractRequestId(header, raw);
 
-    console.log(`[cwmp] inform received from ${clientIp} (${raw.length} bytes)`);
-
-    if (deviceKey && info) {
-      const pendingCount = await countPendingTasks(deviceKey);
-      const sessionId = await createSession(deviceKey, clientIp);
-
-      await CwmpSession.updateOne(
-        { deviceId: deviceKey },
-        { awaitingDispatch: pendingCount > 0 },
-      );
-
-      setCwmpCookie(res, sessionId, req);
-      sendCwmpXml(res, informResponse(requestId, 1));
-
-      console.log(
-        `[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] pending=${pendingCount} responded in ${Date.now() - startedAt}ms`,
-      );
-
-      const acsUrl = info.parameters['InternetGatewayDevice.ManagementServer.URL']
-        || info.parameters['Device.ManagementServer.URL'];
-      if (acsUrl) {
-        console.log(`[cwmp] ${deviceKey} ONU ACS URL parameter: ${acsUrl}`);
-      }
-
-      setImmediate(() => processInformBackground(deviceKey, info, clientIp));
-      return;
-    }
-
-    console.warn(`[cwmp] inform tanpa deviceKey (${raw.length} bytes): ${bodyPreview}`);
-    return sendCwmpXml(res, informResponse(requestId, 1));
-  }
+  console.log(`[cwmp] non-inform SOAP keys=${Object.keys(body || {}).join(',') || 'none'} preview=${bodyPreview}`);
 
   const deviceKey = await resolveDeviceId(req);
 

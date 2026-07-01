@@ -156,7 +156,8 @@ Template environment:
 | **MyACS** | **`3001`** |
 | HTTPS | `443` → proxy ke `3001` |
 
-Detail: [`deploy/PORTS.md`](deploy/PORTS.md)
+Detail: [`deploy/PORTS.md`](deploy/PORTS.md)  
+Cloudflare proxied: [`deploy/CLOUDFLARE.md`](deploy/CLOUDFLARE.md)
 
 ### Clone pertama kali di VPS
 

@@ -1,3 +1,5 @@
+import { permissionsForRole } from '../helpers/permissions.js';
+
 export function requireAuth(req, res, next) {
   if (!req.session?.userId) {
     if (req.headers['x-inertia'] === 'true') {
@@ -40,18 +42,22 @@ export function guestOnly(req, res, next) {
 }
 
 export async function attachUser(req, res, next) {
-  if (req.session?.userId) {
-    const User = (await import('../models/User.js')).default;
-    const user = await User.findById(req.session.userId);
-    if (user?.isActive) {
-      req.inertia.share('auth', {
-        user: user.toSafeJSON(),
-        ...permissionsForRole(user.role),
-      });
-      req.user = user;
-    } else {
-      req.session.destroy(() => {});
+  try {
+    if (req.session?.userId) {
+      const User = (await import('../models/User.js')).default;
+      const user = await User.findById(req.session.userId);
+      if (user?.isActive) {
+        req.inertia.share('auth', {
+          user: user.toSafeJSON(),
+          ...permissionsForRole(user.role),
+        });
+        req.user = user;
+      } else {
+        req.session.destroy(() => {});
+      }
     }
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 }

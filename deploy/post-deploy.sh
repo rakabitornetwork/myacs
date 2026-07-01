@@ -24,7 +24,13 @@ echo "==> Validasi environment..."
 node scripts/check-env.js || true
 
 echo "==> Install dependencies..."
-npm ci --omit=dev
+if [ ! -d node_modules/express ]; then
+  echo "    node_modules tidak lengkap — install ulang..."
+  npm ci
+  npm run build
+else
+  npm ci --omit=dev
+fi
 
 echo "==> Pastikan folder upload ada..."
 mkdir -p uploads/firmware uploads/cpe logs

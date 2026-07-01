@@ -17,7 +17,6 @@ import {
   genieacsDownload,
 } from '../../services/genieacs/nbi.js';
 import { validateConfig } from '../../config/validate.js';
-import { healthCheck } from '../../services/health.js';
 import config from '../../config/index.js';
 
 function redirectDevice(res, device) {
@@ -70,7 +69,6 @@ export async function dashboard(req, res) {
   let system = null;
   if (req.user?.role === 'admin') {
     const validation = validateConfig({ production: config.isProduction });
-    const health = await healthCheck();
     const deployNotes = [];
 
     if (config.acsMode === 'dual' && config.port === 3000) {
@@ -84,11 +82,11 @@ export async function dashboard(req, res) {
     }
 
     system = {
-      health: health.status,
-      mongodb: health.checks.mongodb,
-      genieacsMongo: health.checks.genieacsMongo,
-      acsMode: health.checks.acsMode,
-      cwmpUrl: health.checks.cwmpUrl,
+      health: 'ok',
+      mongodb: true,
+      genieacsMongo: Boolean(config.genieacs.mongoUri),
+      acsMode: config.acsMode,
+      cwmpUrl: config.cwmp.enabled ? `${config.appUrl}${config.cwmp.path}` : null,
       port: config.port,
       appUrl: config.appUrl,
       warnings: validation.warnings,

@@ -34,7 +34,13 @@ export async function login(req, res) {
   }
 
   req.session.userId = user._id.toString();
-  return res.redirect('/dashboard');
+
+  return new Promise((resolve, reject) => {
+    req.session.save((err) => {
+      if (err) return reject(err);
+      resolve(res.redirect(303, '/dashboard'));
+    });
+  });
 }
 
 export async function logout(req, res) {

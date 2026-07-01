@@ -346,9 +346,22 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                     <Badge status={task.status}>{task.status}</Badge>
                   </div>
                   <p className="ui-mono mt-0.5 text-[10px] text-zinc-500">{task.method}</p>
-                  <p className="mt-0.5 text-[10px] tabular-nums text-zinc-400">
-                    {formatDate(task.createdAt)}
-                  </p>
+                  <div className="mt-0.5 flex items-center justify-between gap-2">
+                    <p className="text-[10px] tabular-nums text-zinc-400">{formatDate(task.createdAt)}</p>
+                    {canAct && task.status === 'pending' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm('Batalkan task ini?')) {
+                            router.post(`/tasks/${task.id}/cancel`);
+                          }
+                        }}
+                        className="shrink-0 text-[10px] font-medium text-red-600 hover:text-red-700"
+                      >
+                        Batalkan
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))
             )}

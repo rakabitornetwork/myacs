@@ -56,7 +56,7 @@ export default function TasksIndex({ tasks }) {
                 <th>Status</th>
                 <th>Created</th>
                 <th>Completed</th>
-                {canWrite && <th />}
+                {canWrite && <th className="text-right">Aksi</th>}
               </tr>
             </thead>
             <tbody>
@@ -82,10 +82,14 @@ export default function TasksIndex({ tasks }) {
                         {task.status === 'pending' && (
                           <button
                             type="button"
-                            onClick={() => router.post(`/tasks/${task.id}/cancel`)}
-                            className="ui-btn-secondary text-[10px]"
+                            onClick={() => {
+                              if (confirm('Batalkan task ini?')) {
+                                router.post(`/tasks/${task.id}/cancel`);
+                              }
+                            }}
+                            className="ui-btn-secondary text-[10px] text-red-600 hover:text-red-700"
                           >
-                            Cancel
+                            Batalkan
                           </button>
                         )}
                       </td>

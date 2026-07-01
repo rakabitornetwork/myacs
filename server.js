@@ -46,7 +46,7 @@ if (config.cwmp.enabled) {
     cwmpTextParser(req, res, next);
   });
 
-  app.use(cwmpRoutes);
+  app.use(config.cwmp.path, cwmpRoutes);
 }
 
 app.use(express.text({ type: ['text/xml', 'application/xml', 'application/soap+xml'], limit: '10mb' }));

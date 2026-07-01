@@ -59,10 +59,16 @@ export async function resolveDeviceId(req) {
   return null;
 }
 
-export function setCwmpCookie(res, sessionId) {
-  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  res.setHeader(
-    'Set-Cookie',
-    `${COOKIE_NAME}=${sessionId}; Path=/cwmp; HttpOnly; SameSite=None${secure}`,
-  );
+export function isRequestHttps(req) {
+  if (req.secure) return true;
+  const proto = req.headers['x-forwarded-proto'];
+  if (typeof proto === 'string') return proto.split(',')[0].trim() === 'https';
+  return false;
+}
+
+export function setCwmpCookie(res, sessionId, req) {
+  const flags = isRequestHttps(req)
+    ? 'Path=/cwmp; HttpOnly; Secure; SameSite=None'
+    : 'Path=/cwmp; HttpOnly; SameSite=Lax';
+  res.setHeader('Set-Cookie', `${COOKIE_NAME}=${sessionId}; ${flags}`);
 }

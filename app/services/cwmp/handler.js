@@ -111,8 +111,13 @@ function soapResponse(bodyContent, id = '1') {
   return SOAP_XML_PREFIX + builder.build(envelope);
 }
 
-function informResponse(id, maxEnvelopes) {
-  return soapResponse({ InformResponse: { MaxEnvelopes: maxEnvelopes } }, id);
+function informResponse(id, maxEnvelopes = 1) {
+  return soapResponse({
+    InformResponse: {
+      MaxEnvelopes: maxEnvelopes,
+      HoldRequests: false,
+    },
+  }, id);
 }
 
 function emptyResponse(id) {
@@ -321,6 +326,9 @@ async function dispatchNextTask(deviceKey, res, requestId) {
 export async function handleCwmpRequest(req, res) {
   const raw = typeof req.body === 'string' ? req.body : (req.rawBody ?? '');
   const bodyPreview = raw.trim().slice(0, 80).replace(/\s+/g, ' ');
+  const clientIp = getClientIp(req);
+
+  console.log(`[cwmp] handle POST ${raw.length}b from ${clientIp} proto=${req.headers['x-forwarded-proto'] || '-'}`);
 
   if (!raw || raw.trim() === '') {
     const deviceKey = await resolveDeviceId(req);
@@ -332,7 +340,7 @@ export async function handleCwmpRequest(req, res) {
   try {
     envelope = parser.parse(raw);
   } catch {
-    console.warn(`[cwmp] invalid XML (${raw.length} bytes) from ${getClientIp(req)}`);
+    console.warn(`[cwmp] invalid XML (${raw.length} bytes) from ${clientIp}`);
     await Fault.create({ message: 'Invalid XML received', detail: { ip: req.ip } });
     return res.status(400).send('Invalid XML');
   }
@@ -340,8 +348,6 @@ export async function handleCwmpRequest(req, res) {
   const body = envelope?.Envelope?.Body;
   const header = envelope?.Envelope?.Header;
   const requestId = header?.ID?.['#text'] || header?.ID || '1';
-
-  const clientIp = getClientIp(req);
 
   if (body?.Inform) {
     const deviceKey = extractDeviceId(envelope);
@@ -359,7 +365,7 @@ export async function handleCwmpRequest(req, res) {
         { awaitingDispatch: pendingCount > 0 },
       );
 
-      setCwmpCookie(res, sessionId);
+      setCwmpCookie(res, sessionId, req);
       sendCwmpXml(res, informResponse(requestId, 1));
 
       console.log(

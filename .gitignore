@@ -1,8 +1,11 @@
 node_modules/
-public/build/
+# Build frontend di-commit agar VPS bisa git pull tanpa npm run build
+# Jalankan "npm run build" di PC lokal sebelum commit jika ada perubahan UI
+# public/build/
 public/hot
 .env
 *.log
 logs/
 .DS_Store
 uploads/
+dist/

@@ -39,7 +39,9 @@ npm test
 
 ## Opsi B — Build di PC, upload folder `public/build`
 
-Cocok jika ada perubahan tampilan (React/Tailwind).
+**Atau** commit `public/build/` sudah ikut `git pull` (disarankan) — cukup `git pull` + `pm2 restart` setelah ada perubahan UI.
+
+Cocok jika upload manual gagal:
 
 ### 1. Build di komputer Anda (Laragon)
 

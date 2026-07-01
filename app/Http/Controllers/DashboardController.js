@@ -478,6 +478,50 @@ export async function createDownloadTask(req, res) {
   return redirectDevice(res, device);
 }
 
+export async function tasksPendingHtml(req, res) {
+  const tasks = await Task.find({ status: 'pending' }).sort({ createdAt: -1 }).lean();
+
+  const rows = tasks.length
+    ? tasks
+        .map(
+          (t) => `<tr>
+        <td>${escapeHtml(t.name)}</td>
+        <td><code>${escapeHtml(t.deviceId)}</code></td>
+        <td>${escapeHtml(t.method)}</td>
+        <td>${new Date(t.createdAt).toLocaleString('id-ID')}</td>
+        <td>
+          <form method="post" action="/tasks/${t._id}/cancel" style="display:inline"
+            onsubmit="return confirm('Batalkan task ini?')">
+            <button type="submit" style="color:#dc2626;border:1px solid #fecaca;padding:4px 10px;border-radius:6px;background:#fff;cursor:pointer;font-size:12px">
+              Batalkan
+            </button>
+          </form>
+        </td>
+      </tr>`,
+        )
+        .join('')
+    : '<tr><td colspan="5" style="padding:16px;color:#71717a">Tidak ada task pending</td></tr>';
+
+  res.send(`<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8"><title>Task Pending — MyACS</title>
+<style>body{font-family:system-ui,sans-serif;margin:24px;color:#18181b}table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #e4e4e7;padding:10px;text-align:left;font-size:13px}th{font-size:11px;text-transform:uppercase;color:#71717a}a{color:#2563eb}</style>
+</head><body>
+<h1 style="font-size:18px;margin-bottom:4px">Batalkan Task Pending</h1>
+<p style="color:#71717a;font-size:13px;margin-bottom:16px">Halaman ini selalu tersedia tanpa perlu update frontend.</p>
+<table><thead><tr><th>Task</th><th>Device</th><th>Method</th><th>Dibuat</th><th>Aksi</th></tr></thead>
+<tbody>${rows}</tbody></table>
+<p style="margin-top:20px"><a href="/tasks">← Kembali ke Tasks</a></p>
+</body></html>`);
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 export async function cancelTask(req, res) {
   const task = await Task.findOne({ _id: req.params.id, status: 'pending' });
 

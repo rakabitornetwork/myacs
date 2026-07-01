@@ -7,6 +7,7 @@ import { createSession, resolveDeviceId, setCwmpCookie } from './session.js';
 import { buildTaskRpc, extractParameterValues, extractParameterNames, findResponseType } from './rpc.js';
 import { getClientIp } from '../../helpers/clientIp.js';
 import { countPendingTasks } from '../tasks/queue.js';
+import CwmpSession from '../../models/CwmpSession.js';
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -205,6 +206,8 @@ async function handleCwmpResponse(deviceKey, body, res, requestId) {
 }
 
 async function dispatchNextTask(deviceKey, res, requestId) {
+  await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
+
   const task = await Task.findOneAndUpdate(
     { deviceId: deviceKey, status: 'pending' },
     { status: 'running' },
@@ -266,6 +269,16 @@ export async function handleCwmpRequest(req, res) {
     const info = parseInform(envelope);
 
     if (deviceKey && info) {
+      const pending = await countPendingTasks(deviceKey);
+      const priorSession = await CwmpSession.findOne({ deviceId: deviceKey }).lean();
+
+      if (priorSession?.awaitingDispatch && pending > 0) {
+        const sessionId = await createSession(deviceKey, clientIp);
+        setCwmpCookie(res, sessionId);
+        console.log(`[cwmp] ${deviceKey} repeat Inform — dispatch task`);
+        return dispatchNextTask(deviceKey, res, requestId);
+      }
+
       const paramUpdates = Object.fromEntries(
         Object.entries(info.parameters).map(([k, v]) => [`parameters.${k}`, v]),
       );
@@ -304,8 +317,8 @@ export async function handleCwmpRequest(req, res) {
         await applyPresetsForDevice(device);
       }
 
-      const pending = await countPendingTasks(deviceKey);
       if (pending > 0) {
+        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: true });
         console.log(`[cwmp] ${deviceKey} inform — ${pending} pending task(s), menunggu empty POST`);
       }
     }

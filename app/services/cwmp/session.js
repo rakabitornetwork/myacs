@@ -4,6 +4,7 @@ import Device from '../../models/Device.js';
 import { getClientIp } from '../../helpers/clientIp.js';
 
 const COOKIE_NAME = 'myacs-cwmp-session';
+const SESSION_FALLBACK_MS = parseInt(process.env.CWMP_SESSION_FALLBACK_MS || '600000', 10);
 
 export function parseCookies(header) {
   if (!header) return {};
@@ -24,9 +25,6 @@ export async function createSession(deviceId, ipAddress) {
   );
   return sessionId;
 }
-
-const COOKIE_NAME = 'myacs-cwmp-session';
-const SESSION_FALLBACK_MS = parseInt(process.env.CWMP_SESSION_FALLBACK_MS || '600000', 10);
 
 export async function resolveDeviceId(req) {
   const cookies = parseCookies(req.headers.cookie);

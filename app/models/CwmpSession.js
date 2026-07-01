@@ -6,6 +6,7 @@ const cwmpSessionSchema = new mongoose.Schema(
     deviceId: { type: String, required: true, index: true },
     ipAddress: { type: String, index: true },
     lastSeen: { type: Date, default: Date.now },
+    awaitingDispatch: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

@@ -7,13 +7,6 @@ import { getClientIp } from '../app/helpers/clientIp.js';
 const router = Router();
 const rawUpload = express.raw({ type: () => true, limit: '100mb' });
 
-const CWMP_PROBE_XML = '<?xml version="1.0" encoding="UTF-8"?>\n<cwmp/>';
-
-function sendProbeResponse(res) {
-  res.set('Content-Type', 'text/xml; charset=utf-8');
-  return res.status(200).send(CWMP_PROBE_XML);
-}
-
 router.post('/', (req, res, next) => {
   req.rawBody = typeof req.body === 'string' ? req.body : '';
   handleCwmpRequest(req, res).catch(next);
@@ -21,12 +14,11 @@ router.post('/', (req, res, next) => {
 
 router.get('/', (req, res) => {
   console.log(`[cwmp-access] GET probe from ${getClientIp(req)}`);
-  return sendProbeResponse(res);
+  return res.status(200).end();
 });
 
 router.head('/', (req, res) => {
   console.log(`[cwmp-access] HEAD probe from ${getClientIp(req)}`);
-  res.set('Content-Type', 'text/xml; charset=utf-8');
   return res.status(200).end();
 });
 
@@ -36,7 +28,7 @@ router.put('/upload/:taskId', rawUpload, handleCwmpUpload);
 router.use((err, req, res, _next) => {
   console.error('[cwmp] unhandled error:', err.message);
   if (res.headersSent) return;
-  res.status(500).set('Content-Type', 'text/xml; charset=utf-8').send(CWMP_PROBE_XML);
+  res.status(200).end();
 });
 
 export default router;

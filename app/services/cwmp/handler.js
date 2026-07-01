@@ -145,7 +145,51 @@ function parseInformNode(inform) {
   };
 }
 
-function soapResponse(bodyContent, id = '1') {
+function detectSoapStyle(raw) {
+  if (/SOAP-ENV:Envelope/i.test(raw)) {
+    return {
+      envTag: 'SOAP-ENV:Envelope',
+      envNs: 'SOAP-ENV',
+      bodyTag: 'SOAP-ENV:Body',
+      headerTag: 'SOAP-ENV:Header',
+      cwmpResponseTag: 'InformResponse',
+    };
+  }
+  if (/soapenv:Envelope/i.test(raw)) {
+    return {
+      envTag: 'soapenv:Envelope',
+      envNs: 'soapenv',
+      bodyTag: 'soapenv:Body',
+      headerTag: 'soapenv:Header',
+      cwmpResponseTag: 'cwmp:InformResponse',
+    };
+  }
+  return {
+    envTag: 'soap-env:Envelope',
+    envNs: 'soap-env',
+    bodyTag: 'soap-env:Body',
+    headerTag: 'soap-env:Header',
+    cwmpResponseTag: 'cwmp:InformResponse',
+  };
+}
+
+function buildMirroredSoap(bodyContent, id, raw) {
+  const style = detectSoapStyle(raw);
+  const envelope = {
+    [style.envTag]: {
+      [`@_xmlns:${style.envNs}`]: 'http://schemas.xmlsoap.org/soap/envelope/',
+      '@_xmlns:cwmp': 'urn:dslforum-org:cwmp-1-0',
+      [style.headerTag]: {
+        'cwmp:ID': { [`@_${style.envNs}:mustUnderstand`]: '1', '#text': String(id) },
+      },
+      [style.bodyTag]: bodyContent,
+    },
+  };
+  return SOAP_XML_PREFIX + builder.build(envelope);
+}
+
+function soapResponse(bodyContent, id = '1', raw = '') {
+  if (raw) return buildMirroredSoap(bodyContent, id, raw);
   const envelope = {
     'soap-env:Envelope': {
       '@_xmlns:soap-env': 'http://schemas.xmlsoap.org/soap/envelope/',
@@ -159,13 +203,12 @@ function soapResponse(bodyContent, id = '1') {
   return SOAP_XML_PREFIX + builder.build(envelope);
 }
 
-function informResponse(id, maxEnvelopes = 1) {
-  return soapResponse({
-    'cwmp:InformResponse': {
-      MaxEnvelopes: maxEnvelopes,
-      HoldRequests: false,
-    },
-  }, id);
+function informResponse(id, raw, maxEnvelopes = 1) {
+  const style = detectSoapStyle(raw);
+  const responseBody = {
+    [style.cwmpResponseTag]: { MaxEnvelopes: maxEnvelopes },
+  };
+  return buildMirroredSoap(responseBody, id, raw);
 }
 
 function emptyResponse(id) {
@@ -177,9 +220,9 @@ function sendCwmpXml(res, xml) {
   return res.send(xml);
 }
 
-/** TR-069: ACS menutup sesi dengan HTTP 204 tanpa body SOAP (bukan empty Envelope). */
+/** TR-069: ACS menutup sesi — HTTP 200 tanpa body (CMHI/GenieACS compatible). */
 function sendEmptyHttp(res) {
-  return res.status(204).end();
+  return res.status(200).end();
 }
 
 async function processInformBackground(deviceKey, info, clientIp, sessionId) {
@@ -270,8 +313,8 @@ async function replyInform(req, res, envelope, raw, clientIp) {
   }
 
   setCwmpCookie(res, sessionId, req);
-  sendCwmpXml(res, informResponse(requestId, 1));
-  console.log(`[cwmp] InformResponse sent (id=${requestId})`);
+  sendCwmpXml(res, informResponse(requestId, raw, 1));
+  console.log(`[cwmp] InformResponse sent (id=${requestId}, style=${detectSoapStyle(raw).envNs})`);
 
   if (deviceKey && info) {
     setImmediate(() => processInformBackground(deviceKey, info, clientIp, sessionId));
@@ -303,9 +346,9 @@ async function finishEmptyPost(deviceKey, res, requestId) {
 
   if (deviceKey) {
     CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false }).catch(() => {});
-    console.log(`[cwmp] empty POST from ${deviceKey} — sesi selesai (HTTP 204)`);
+    console.log(`[cwmp] empty POST from ${deviceKey} — sesi selesai (HTTP 200 kosong)`);
   } else {
-    console.log(`[cwmp] empty POST — sesi selesai (HTTP 204, tanpa device)`);
+    console.log('[cwmp] empty POST — sesi selesai (HTTP 200 kosong, tanpa device)');
   }
 }
 
@@ -321,7 +364,8 @@ function extractSoapFault(body) {
   };
 }
 
-function isCpeSoapFault(body) {
+function isCpeSoapFault(body, raw) {
+  if (isRawInform(raw)) return false;
   return !!body?.Fault;
 }
 
@@ -448,6 +492,9 @@ export async function handleCwmpRequest(req, res) {
   const clientIp = getClientIp(req);
 
   console.log(`[cwmp] handle POST ${raw.length}b from ${clientIp} proto=${req.headers['x-forwarded-proto'] || '-'}`);
+  if (raw.length <= 600) {
+    console.log(`[cwmp] raw: ${raw.replace(/\s+/g, ' ').trim()}`);
+  }
 
   if (!raw || raw.trim() === '') {
     const deviceKey = await resolveDeviceId(req);
@@ -462,7 +509,7 @@ export async function handleCwmpRequest(req, res) {
     if (isRawInform(raw)) {
       const requestId = extractRequestId(null, raw);
       console.warn(`[cwmp] invalid XML but Inform detected (${raw.length}b) — sending InformResponse`);
-      sendCwmpXml(res, informResponse(requestId, 1));
+      sendCwmpXml(res, informResponse(requestId, raw, 1));
       return;
     }
     console.warn(`[cwmp] invalid XML (${raw.length} bytes) from ${clientIp}: ${bodyPreview}`);
@@ -475,7 +522,7 @@ export async function handleCwmpRequest(req, res) {
   const header = getSoapHeader(envelope);
   const requestId = extractRequestId(header, raw);
 
-  if (isCpeSoapFault(body)) {
+  if (isCpeSoapFault(body, raw)) {
     const fault = extractSoapFault(body);
     console.warn(
       `[cwmp] CPE SOAP Fault from ${clientIp} (${raw.length}b): ${fault.faultcode} ${fault.faultstring} cwmp=${fault.cwmpCode} ${fault.cwmpString}`,

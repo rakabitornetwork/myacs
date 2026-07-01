@@ -16,7 +16,7 @@ function parseDigestChallenge(header) {
 function buildDigestAuth({ method, path, credentials, challenge }) {
   const realm = challenge.realm || '';
   const nonce = challenge.nonce || '';
-  const qop = challenge.qop?.split(',')[0] || 'auth';
+  const qop = challenge.qop?.split(',')[0]?.trim().replace(/^"|"$/g, '') || '';
   const nc = '00000001';
   const cnonce = crypto.randomBytes(8).toString('hex');
 
@@ -25,16 +25,30 @@ function buildDigestAuth({ method, path, credentials, challenge }) {
     .update(`${credentials.username}:${realm}:${credentials.password}`)
     .digest('hex');
   const ha2 = crypto.createHash('md5').update(`${method}:${path}`).digest('hex');
-  const response = crypto
-    .createHash('md5')
-    .update(`${ha1}:${nonce}:${nc}:${cnonce}:${qop}:${ha2}`)
-    .digest('hex');
 
-  return (
-    `Digest username="${credentials.username}", realm="${realm}", nonce="${nonce}", ` +
-    `uri="${path}", qop=${qop}, nc=${nc}, cnonce="${cnonce}", response="${response}"` +
-    (challenge.opaque ? `, opaque="${challenge.opaque}"` : '')
-  );
+  let response;
+  let auth;
+
+  if (qop) {
+    response = crypto
+      .createHash('md5')
+      .update(`${ha1}:${nonce}:${nc}:${cnonce}:${qop}:${ha2}`)
+      .digest('hex');
+    auth =
+      `Digest username="${credentials.username}", realm="${realm}", nonce="${nonce}", ` +
+      `uri="${path}", qop=${qop}, nc=${nc}, cnonce="${cnonce}", response="${response}"`;
+  } else {
+    response = crypto.createHash('md5').update(`${ha1}:${nonce}:${ha2}`).digest('hex');
+    auth =
+      `Digest username="${credentials.username}", realm="${realm}", nonce="${nonce}", ` +
+      `uri="${path}", response="${response}"`;
+  }
+
+  if (challenge.opaque) {
+    auth += `, opaque="${challenge.opaque}"`;
+  }
+
+  return auth;
 }
 
 async function fetchOnce(url, options = {}) {
@@ -88,9 +102,21 @@ export async function sendConnectionRequest(connectionRequestUrl, credentials = 
     }
   }
 
+  if (response.status === 401 && !hasCreds) {
+    return {
+      ok: false,
+      status: 401,
+      statusText: 'Unauthorized',
+      hint: 'CPE memerlukan ConnectionRequestUsername/Password — jalankan Get Parameter pada InternetGatewayDevice.ManagementServer.',
+    };
+  }
+
   return {
     ok: response.ok || response.status === 204,
     status: response.status,
     statusText: response.statusText,
+    hint: response.status === 401
+      ? 'Digest auth gagal — periksa username/password Connection Request di parameter CPE.'
+      : undefined,
   };
 }

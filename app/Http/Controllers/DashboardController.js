@@ -20,6 +20,7 @@ import { validateConfig } from '../../config/validate.js';
 import config from '../../config/index.js';
 import { createTaskForDevice, wakeDeviceConnection } from '../../services/tasks/queue.js';
 import { parametersToEntries } from '../../helpers/parameters.js';
+import { getConnectionRequestCredentials } from '../../helpers/connectionRequestCreds.js';
 
 function redirectDevice(res, device) {
   return res.redirect(`/devices/${device._id}`);
@@ -411,23 +412,16 @@ export async function connectionRequest(req, res) {
     return runGenieacsAction(device, req, res, () => genieacsConnectionRequest(device.deviceId));
   }
 
-  const params = device.parameters || {};
-  const getParam = (key) => {
-    if (params instanceof Map) return params.get(key);
-    return params[key];
-  };
-
   try {
-    const result = await sendConnectionRequest(device.connectionRequestUrl, {
-      username: getParam('Device.ManagementServer.ConnectionRequestUsername') || '',
-      password: getParam('Device.ManagementServer.ConnectionRequestPassword') || '',
-    });
+    const credentials = getConnectionRequestCredentials(device);
+    const result = await sendConnectionRequest(device.connectionRequestUrl, credentials);
 
+    const detail = result.hint ? ` — ${result.hint}` : '';
     req.session.flash = {
       type: result.ok ? 'success' : 'warning',
       message: result.ok
         ? `Connection Request berhasil (${result.status})`
-        : `Connection Request gagal (${result.status} ${result.statusText})`,
+        : `Connection Request gagal (${result.status} ${result.statusText})${detail}`,
     };
   } catch (err) {
     req.session.flash = { type: 'error', message: err.message };

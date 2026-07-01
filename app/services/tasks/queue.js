@@ -2,22 +2,15 @@ import Task from '../../models/Task.js';
 import Device from '../../models/Device.js';
 import { sendConnectionRequest } from '../connectionRequest.js';
 import { isGenieacsDevice } from '../../helpers/acs.js';
-
-function getDeviceParam(device, key) {
-  const params = device.parameters || {};
-  if (params instanceof Map) return params.get(key);
-  return params[key];
-}
+import { getConnectionRequestCredentials } from '../../helpers/connectionRequestCreds.js';
 
 export async function wakeDeviceConnection(device) {
   if (!device?.connectionRequestUrl || isGenieacsDevice(device)) return { ok: false, skipped: true };
 
   try {
-    const result = await sendConnectionRequest(device.connectionRequestUrl, {
-      username: getDeviceParam(device, 'Device.ManagementServer.ConnectionRequestUsername') || '',
-      password: getDeviceParam(device, 'Device.ManagementServer.ConnectionRequestPassword') || '',
-    });
-    return { ok: result.ok, status: result.status };
+    const credentials = getConnectionRequestCredentials(device);
+    const result = await sendConnectionRequest(device.connectionRequestUrl, credentials);
+    return { ok: result.ok, status: result.status, hint: result.hint };
   } catch (err) {
     console.warn(`[task] connection request failed for ${device.deviceId}:`, err.message);
     return { ok: false, error: err.message };

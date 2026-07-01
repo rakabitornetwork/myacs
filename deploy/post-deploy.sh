@@ -25,9 +25,8 @@ node scripts/check-env.js || true
 
 echo "==> Install dependencies..."
 if [ ! -d node_modules/express ]; then
-  echo "    node_modules tidak lengkap — install ulang..."
-  npm ci
-  npm run build
+  echo "    node_modules tidak lengkap — install ulang (production only)..."
+  npm ci --omit=dev
 else
   npm ci --omit=dev
 fi
@@ -38,15 +37,15 @@ mkdir -p uploads/firmware uploads/cpe logs
 if [ -d public/build ] && [ -f public/build/manifest.json ]; then
   echo "==> Build assets OK"
 else
-  echo "==> Build assets tidak ada — jalankan 'npm run build' di mesin CI/lokal"
+  echo "==> PERINGATAN: public/build tidak ada — upload dari PC lokal (lihat deploy/VPS-NO-BUILD.md)"
+  echo "    Backend tetap bisa jalan; halaman UI mungkin kosong/error."
 fi
 
 echo "==> Reload PM2..."
 if pm2 describe myacs >/dev/null 2>&1; then
-  pm2 reload ecosystem.config.cjs --env production
-else
-  pm2 start ecosystem.config.cjs --env production
+  pm2 delete myacs 2>/dev/null || true
 fi
+pm2 start ecosystem.config.cjs --env production
 
 pm2 save
 

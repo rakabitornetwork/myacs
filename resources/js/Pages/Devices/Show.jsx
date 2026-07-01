@@ -18,6 +18,12 @@ function formatDate(date) {
   });
 }
 
+function formatParamValue(value) {
+  if (value === null || value === undefined) return '—';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
 export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, acs }) {
   const { auth } = usePage().props;
   const [selectedFirmware, setSelectedFirmware] = useState(firmwareFiles[0]?.id || '');
@@ -317,7 +323,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                     {paramEntries.map(([key, value]) => (
                       <tr key={key}>
                         <td className="ui-mono text-zinc-500">{key}</td>
-                        <td className="break-all text-zinc-800">{String(value)}</td>
+                        <td className="break-all text-zinc-800">{formatParamValue(value)}</td>
                       </tr>
                     ))}
                   </tbody>

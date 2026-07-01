@@ -147,7 +147,20 @@ sudo certbot --apache -d myacs.teslatech.my.id
 |--------|-------------------|--------|
 | 403 Forbidden | DNS A record ke Apache, bukan tunnel | Hapus A record, pakai CNAME tunnel |
 | 404 Not Found | Tunnel mati / route salah | Cek `cloudflared`, route `localhost:3001` |
-| 502 Bad Gateway | MyACS / PM2 mati | `pm2 restart myacs` |
+### Diagnosa cepat (502)
+
+```bash
+cd ~/public_html
+bash scripts/vps-diagnose.sh
+bash scripts/vps-diagnose.sh --fix   # install deps + restart PM2
+```
+
+| Gejala | Penyebab umum | Solusi |
+|--------|---------------|--------|
+| 502 Bad Gateway | PM2 crash / mati | `bash scripts/vps-diagnose.sh --fix` |
+| 502 setelah `post-deploy.sh` | Script lama panggil `npm run build` | Pull terbaru, jalankan `--fix` di atas |
+| `EADDRINUSE` di log | Port bentrok (3000 = GenieACS) | `PORT=3001` di `.env` |
+| `Cannot find package` | `node_modules` hilang | `npm ci --omit=dev` |
 | Login loop | `APP_URL` salah | `APP_URL=https://myacs.teslatech.my.id` |
 | CWMP gagal | Cache CF | Bypass cache `/cwmp` |
 

@@ -1,5 +1,4 @@
-import Task from '../../models/Task.js';
-import config from '../config/index.js';
+import Task from '../models/Task.js';
 
 const STALE_MINUTES = parseInt(process.env.TASK_STALE_MINUTES || '60', 10);
 

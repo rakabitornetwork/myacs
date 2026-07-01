@@ -13,6 +13,7 @@ import { attachUser } from './app/middleware/auth.js';
 import { startDeviceStatusJob } from './app/jobs/deviceStatus.js';
 import { startGenieacsSyncJob } from './app/jobs/genieacsSync.js';
 import { startTaskStaleJob } from './app/jobs/taskStale.js';
+import { startPendingTaskWakeJob } from './app/jobs/pendingTaskWake.js';
 import { healthCheck } from './app/services/health.js';
 import webRoutes from './routes/web.js';
 import cwmpRoutes from './routes/cwmp.js';
@@ -108,6 +109,7 @@ async function start() {
   startDeviceStatusJob();
   startGenieacsSyncJob();
   startTaskStaleJob();
+  startPendingTaskWakeJob();
 
   app.listen(config.port, logStartup);
 }

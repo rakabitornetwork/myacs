@@ -25,6 +25,9 @@ export async function createSession(deviceId, ipAddress) {
   return sessionId;
 }
 
+const COOKIE_NAME = 'myacs-cwmp-session';
+const SESSION_FALLBACK_MS = parseInt(process.env.CWMP_SESSION_FALLBACK_MS || '600000', 10);
+
 export async function resolveDeviceId(req) {
   const cookies = parseCookies(req.headers.cookie);
   const sessionId = cookies[COOKIE_NAME];
@@ -41,15 +44,19 @@ export async function resolveDeviceId(req) {
   const clientIp = getClientIp(req);
 
   if (clientIp && clientIp !== '127.0.0.1' && clientIp !== '::1') {
+    const ipSession = await CwmpSession.findOne({ ipAddress: clientIp })
+      .sort({ lastSeen: -1 })
+      .lean();
+    if (ipSession) return ipSession.deviceId;
+
     const device = await Device.findOne({ ipAddress: clientIp, source: 'myacs' })
       .sort({ lastInform: -1 })
       .lean();
     if (device) return device.deviceId;
   }
 
-  // Fallback: CPE tanpa cookie (umum) — sesi CWMP aktif dalam 3 menit terakhir
   const recentSession = await CwmpSession.findOne({
-    lastSeen: { $gte: new Date(Date.now() - 180_000) },
+    lastSeen: { $gte: new Date(Date.now() - SESSION_FALLBACK_MS) },
   })
     .sort({ lastSeen: -1 })
     .lean();

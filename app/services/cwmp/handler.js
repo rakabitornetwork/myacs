@@ -33,6 +33,14 @@ function extractDeviceId(envelope) {
   return `${oui}-${productClass}-${serial}`.replace(/^-|-$/g, '').toLowerCase();
 }
 
+function paramValue(parameters, ...keys) {
+  for (const key of keys) {
+    const val = parameters[key];
+    if (val !== undefined && val !== null && val !== '') return val;
+  }
+  return '';
+}
+
 function parseInform(envelope) {
   const inform = envelope?.Envelope?.Body?.Inform;
   if (!inform) return null;
@@ -59,10 +67,26 @@ function parseInform(envelope) {
     manufacturer: deviceId.Manufacturer || '',
     events,
     parameters,
-    connectionRequestUrl: parameters['Device.ManagementServer.ConnectionRequestURL'] || '',
-    softwareVersion: parameters['Device.DeviceInfo.SoftwareVersion'] || '',
-    hardwareVersion: parameters['Device.DeviceInfo.HardwareVersion'] || '',
-    model: parameters['Device.DeviceInfo.ModelName'] || '',
+    connectionRequestUrl: paramValue(
+      parameters,
+      'Device.ManagementServer.ConnectionRequestURL',
+      'InternetGatewayDevice.ManagementServer.ConnectionRequestURL',
+    ),
+    softwareVersion: paramValue(
+      parameters,
+      'Device.DeviceInfo.SoftwareVersion',
+      'InternetGatewayDevice.DeviceInfo.SoftwareVersion',
+    ),
+    hardwareVersion: paramValue(
+      parameters,
+      'Device.DeviceInfo.HardwareVersion',
+      'InternetGatewayDevice.DeviceInfo.HardwareVersion',
+    ),
+    model: paramValue(
+      parameters,
+      'Device.DeviceInfo.ModelName',
+      'InternetGatewayDevice.DeviceInfo.ModelName',
+    ),
   };
 }
 
@@ -210,8 +234,17 @@ async function dispatchNextTask(deviceKey, res, requestId) {
 export async function handleCwmpRequest(req, res) {
   const raw = typeof req.body === 'string' ? req.body : req.rawBody || '';
 
+  // CPE mengirim HTTP POST kosong setelah InformResponse — ini trigger dispatch task (TR-069)
   if (!raw || raw.trim() === '') {
-    return res.status(400).send('Empty body');
+    const deviceKey = await resolveDeviceId(req);
+    const requestId = '1';
+    if (deviceKey) {
+      console.log(`[cwmp] empty HTTP POST from ${deviceKey} — dispatch task`);
+      return dispatchNextTask(deviceKey, res, requestId);
+    }
+    console.warn('[cwmp] empty HTTP POST tanpa session device');
+    res.set('Content-Type', 'text/xml; charset=utf-8');
+    return res.send(emptyResponse(requestId));
   }
 
   let envelope;

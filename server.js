@@ -23,14 +23,35 @@ const app = express();
 
 app.set('trust proxy', 1);
 
+function isCwmpRequest(req) {
+  const base = config.cwmp.path;
+  return req.path === base || req.path.startsWith(`${base}/`);
+}
+
+// CWMP: log + body parser (semua Content-Type) sebelum middleware web
+if (config.cwmp.enabled) {
+  const cwmpTextParser = express.text({ type: () => true, limit: '10mb' });
+
+  app.use((req, res, next) => {
+    if (!isCwmpRequest(req)) return next();
+    const ip = req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'] || req.ip;
+    console.log(
+      `[cwmp-access] ${req.method} ${req.path} ip=${ip} ct=${req.headers['content-type'] || '-'} cl=${req.headers['content-length'] || '-'}`,
+    );
+    next();
+  });
+
+  app.use((req, res, next) => {
+    if (!isCwmpRequest(req)) return next();
+    cwmpTextParser(req, res, next);
+  });
+
+  app.use(cwmpRoutes);
+}
+
 app.use(express.text({ type: ['text/xml', 'application/xml', 'application/soap+xml'], limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-// CWMP harus sebelum session/web middleware — CPE tidak perlu cookie web & hindari delay Mongo session
-if (config.cwmp.enabled) {
-  app.use(cwmpRoutes);
-}
 
 app.use(
   session({

@@ -366,6 +366,12 @@ export async function handleCwmpRequest(req, res) {
         `[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] pending=${pendingCount} responded in ${Date.now() - startedAt}ms`,
       );
 
+      const acsUrl = info.parameters['InternetGatewayDevice.ManagementServer.URL']
+        || info.parameters['Device.ManagementServer.URL'];
+      if (acsUrl) {
+        console.log(`[cwmp] ${deviceKey} ONU ACS URL parameter: ${acsUrl}`);
+      }
+
       setImmediate(() => processInformBackground(deviceKey, info, clientIp));
       return;
     }

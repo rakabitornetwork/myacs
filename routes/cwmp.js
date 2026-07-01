@@ -3,33 +3,32 @@ import express from 'express';
 import { handleCwmpRequest } from '../app/services/cwmp/handler.js';
 import { handleCwmpUpload } from '../app/services/cwmp/uploadReceiver.js';
 import config from '../app/config/index.js';
+import { getClientIp } from '../app/helpers/clientIp.js';
 
 const router = Router();
 const rawUpload = express.raw({ type: () => true, limit: '100mb' });
 
-// Capture rawBody for CWMP POST so empty-POST detection works
-// regardless of Content-Type (some CPEs send no Content-Type).
-router.post(config.cwmp.path, (req, res, next) => {
-  // If body was already captured as string by express.text(), rawBody is the string itself
-  if (typeof req.body === 'string') {
-    req.rawBody = req.body;
-    return next();
-  }
-  // Otherwise, accumulate raw body manually
-  const chunks = [];
-  req.on('data', (chunk) => chunks.push(chunk));
-  req.on('end', () => {
-    req.rawBody = Buffer.concat(chunks).toString('utf8');
-    next();
-  });
-  // If body was already fully consumed by other middleware, rawBody may be empty
-  if (req.readableEnded || req._readableState?.endEmitted) {
-    req.rawBody = '';
-    next();
-  }
-}, (req, res) => handleCwmpRequest(req, res));
-router.get(config.cwmp.path, (_req, res) => {
-  res.type('text/plain').send('MyACS CWMP endpoint — POST SOAP requests here');
+const CWMP_PROBE_XML = '<?xml version="1.0" encoding="UTF-8"?>\n<cwmp/>';
+
+function sendProbeResponse(res) {
+  res.set('Content-Type', 'text/xml; charset=utf-8');
+  return res.status(200).send(CWMP_PROBE_XML);
+}
+
+router.post(config.cwmp.path, (req, res) => {
+  req.rawBody = typeof req.body === 'string' ? req.body : '';
+  return handleCwmpRequest(req, res);
+});
+
+router.get(config.cwmp.path, (req, res) => {
+  console.log(`[cwmp-access] GET probe from ${getClientIp(req)}`);
+  return sendProbeResponse(res);
+});
+
+router.head(config.cwmp.path, (req, res) => {
+  console.log(`[cwmp-access] HEAD probe from ${getClientIp(req)}`);
+  res.set('Content-Type', 'text/xml; charset=utf-8');
+  return res.status(200).end();
 });
 
 router.post(`${config.cwmp.path}/upload/:taskId`, rawUpload, handleCwmpUpload);

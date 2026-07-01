@@ -1,0 +1,40 @@
+{
+  "name": "myacs",
+  "version": "1.0.0",
+  "description": "TR-069 ACS Management — TeslaTech",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "node --watch server.js",
+    "build": "vite build",
+    "start": "node server.js",
+    "seed": "node app/seed.js",
+    "test": "node --test tests/**/*.test.js",
+    "check:env": "node scripts/check-env.js",
+    "check:env:prod": "node scripts/check-env.js --production --env=.env.production.dual",
+    "package:release": "powershell -ExecutionPolicy Bypass -File scripts/package-release.ps1"
+  },
+  "dependencies": {
+    "@inertiajs/react": "^2.0.0",
+    "bcryptjs": "^2.4.3",
+    "connect-mongo": "^5.1.0",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "fast-xml-parser": "^4.5.1",
+    "lucide-react": "^0.469.0",
+    "mongoose": "^8.9.3",
+    "multer": "^2.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "vite": "^6.0.6"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}

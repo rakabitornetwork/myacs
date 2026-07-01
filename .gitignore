@@ -1,0 +1,8 @@
+node_modules/
+public/build/
+public/hot
+.env
+*.log
+logs/
+.DS_Store
+uploads/

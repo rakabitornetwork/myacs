@@ -1,0 +1,300 @@
+import { XMLParser, XMLBuilder } from 'fast-xml-parser';
+import Device from '../../models/Device.js';
+import Task from '../../models/Task.js';
+import Fault from '../../models/Fault.js';
+import { applyPresetsForDevice } from '../presets/apply.js';
+import { createSession, resolveDeviceId, setCwmpCookie } from './session.js';
+import { buildTaskRpc, extractParameterValues, extractParameterNames, findResponseType } from './rpc.js';
+
+const parser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: '@_',
+  removeNSPrefix: true,
+});
+
+const builder = new XMLBuilder({
+  ignoreAttributes: false,
+  attributeNamePrefix: '@_',
+  suppressEmptyNode: true,
+});
+
+function extractDeviceId(envelope) {
+  const body = envelope?.Envelope?.Body;
+  if (!body?.Inform) return null;
+
+  const deviceId = body.Inform.DeviceId || {};
+  const oui = deviceId.OUI || deviceId['@_OUI'] || '';
+  const serial = deviceId.SerialNumber || '';
+  const productClass = deviceId.ProductClass || '';
+
+  if (!serial) return null;
+  return `${oui}-${productClass}-${serial}`.replace(/^-|-$/g, '').toLowerCase();
+}
+
+function parseInform(envelope) {
+  const inform = envelope?.Envelope?.Body?.Inform;
+  if (!inform) return null;
+
+  const deviceId = inform.DeviceId || {};
+  const event = inform.Event?.EventStruct;
+  const events = Array.isArray(event)
+    ? event.map((e) => e.EventCode)
+    : event
+      ? [event.EventCode]
+      : [];
+
+  const params = inform.ParameterList?.ParameterValueStruct || [];
+  const paramList = Array.isArray(params) ? params : [params];
+  const parameters = {};
+  for (const p of paramList) {
+    if (p?.Name) parameters[p.Name] = p.Value?.['#text'] ?? p.Value ?? '';
+  }
+
+  return {
+    oui: deviceId.OUI || '',
+    serialNumber: deviceId.SerialNumber || '',
+    productClass: deviceId.ProductClass || '',
+    manufacturer: deviceId.Manufacturer || '',
+    events,
+    parameters,
+    connectionRequestUrl: parameters['Device.ManagementServer.ConnectionRequestURL'] || '',
+    softwareVersion: parameters['Device.DeviceInfo.SoftwareVersion'] || '',
+    hardwareVersion: parameters['Device.DeviceInfo.HardwareVersion'] || '',
+    model: parameters['Device.DeviceInfo.ModelName'] || '',
+  };
+}
+
+function soapResponse(bodyContent, id = '1') {
+  const envelope = {
+    'soap:Envelope': {
+      '@_xmlns:soap': 'http://schemas.xmlsoap.org/soap/envelope/',
+      '@_xmlns:cwmp': 'urn:dslforum-org:cwmp-1-0',
+      'soap:Header': {
+        'cwmp:ID': { '@_soap:mustUnderstand': '1', '#text': id },
+      },
+      'soap:Body': bodyContent,
+    },
+  };
+  return builder.build(envelope);
+}
+
+function informResponse(id) {
+  return soapResponse({ InformResponse: { MaxEnvelopes: 1 } }, id);
+}
+
+function emptyResponse(id) {
+  return soapResponse({}, id);
+}
+
+function isEmptyCwmpPost(body) {
+  if (!body || Object.keys(body).length === 0) return true;
+  return body.Empty !== undefined;
+}
+
+async function completeRunningTask(deviceKey, update) {
+  return Task.findOneAndUpdate(
+    { deviceId: deviceKey, status: 'running' },
+    update,
+    { sort: { updatedAt: -1 }, new: true },
+  );
+}
+
+async function handleCwmpResponse(deviceKey, body, res, requestId) {
+  const responseType = findResponseType(body);
+
+  if (responseType === 'Fault') {
+    const fault = body.Fault || {};
+    const cwmpFault = fault.detail?.Fault || fault;
+    const message = cwmpFault.FaultString || fault.faultstring || 'CWMP Fault';
+    const code = cwmpFault.FaultCode || fault.faultcode || '';
+
+    await completeRunningTask(deviceKey, {
+      status: 'fault',
+      fault: message,
+      completedAt: new Date(),
+      result: body,
+    });
+
+    await Fault.create({
+      deviceId: deviceKey,
+      code: String(code),
+      message,
+      detail: body,
+    });
+
+    res.set('Content-Type', 'text/xml; charset=utf-8');
+    return res.send(emptyResponse(requestId));
+  }
+
+  if (!responseType) {
+    res.set('Content-Type', 'text/xml; charset=utf-8');
+    return res.send(emptyResponse(requestId));
+  }
+
+  await completeRunningTask(deviceKey, {
+    status: 'completed',
+    completedAt: new Date(),
+    result: body,
+  });
+
+  if (responseType === 'GetParameterValuesResponse') {
+    const params = extractParameterValues(body);
+    if (Object.keys(params).length) {
+      await Device.findOneAndUpdate(
+        { deviceId: deviceKey },
+        {
+          $set: Object.fromEntries(
+            Object.entries(params).map(([k, v]) => [`parameters.${k}`, v]),
+          ),
+        },
+      );
+    }
+  }
+
+  if (responseType === 'GetParameterNamesResponse') {
+    const names = extractParameterNames(body);
+    if (names.length) {
+      const device = await Device.findOne({ deviceId: deviceKey }).lean();
+      const existing = device?.parameters || {};
+      const updates = Object.fromEntries(
+        names.map((name) => [`parameters.${name}`, existing[name] ?? '']),
+      );
+      await Device.findOneAndUpdate({ deviceId: deviceKey }, { $set: updates });
+    }
+  }
+
+  if (responseType === 'TransferComplete') {
+    const commandKey = body.TransferComplete?.CommandKey;
+    if (commandKey) {
+      await Task.findByIdAndUpdate(commandKey, {
+        status: 'completed',
+        completedAt: new Date(),
+        result: body.TransferComplete,
+      });
+    }
+  }
+
+  res.set('Content-Type', 'text/xml; charset=utf-8');
+  return res.send(emptyResponse(requestId));
+}
+
+async function dispatchNextTask(deviceKey, res, requestId) {
+  const task = await Task.findOneAndUpdate(
+    { deviceId: deviceKey, status: 'pending' },
+    { status: 'running' },
+    { sort: { priority: -1, createdAt: 1 }, new: true },
+  );
+
+  if (!task) {
+    res.set('Content-Type', 'text/xml; charset=utf-8');
+    return res.send(emptyResponse(requestId));
+  }
+
+  const rpcBody = buildTaskRpc(task);
+  if (!rpcBody) {
+    await Task.findByIdAndUpdate(task._id, {
+      status: 'fault',
+      fault: `Unsupported method: ${task.method}`,
+      completedAt: new Date(),
+    });
+    res.set('Content-Type', 'text/xml; charset=utf-8');
+    return res.send(emptyResponse(requestId));
+  }
+
+  res.set('Content-Type', 'text/xml; charset=utf-8');
+  return res.send(soapResponse(rpcBody, requestId));
+}
+
+export async function handleCwmpRequest(req, res) {
+  const raw = typeof req.body === 'string' ? req.body : req.rawBody || '';
+
+  if (!raw || raw.trim() === '') {
+    return res.status(400).send('Empty body');
+  }
+
+  let envelope;
+  try {
+    envelope = parser.parse(raw);
+  } catch {
+    await Fault.create({ message: 'Invalid XML received', detail: { ip: req.ip } });
+    return res.status(400).send('Invalid XML');
+  }
+
+  const body = envelope?.Envelope?.Body;
+  const header = envelope?.Envelope?.Header;
+  const requestId = header?.ID?.['#text'] || header?.ID || '1';
+
+  const clientIp =
+    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+    req.socket?.remoteAddress?.replace('::ffff:', '') ||
+    req.ip;
+
+  if (body?.Inform) {
+    const deviceKey = extractDeviceId(envelope);
+    const info = parseInform(envelope);
+
+    if (deviceKey && info) {
+      const paramUpdates = Object.fromEntries(
+        Object.entries(info.parameters).map(([k, v]) => [`parameters.${k}`, v]),
+      );
+
+      const device = await Device.findOneAndUpdate(
+        { deviceId: deviceKey },
+        {
+          $set: {
+            deviceId: deviceKey,
+            serialNumber: info.serialNumber,
+            oui: info.oui,
+            productClass: info.productClass,
+            manufacturer: info.manufacturer,
+            model: info.model,
+            softwareVersion: info.softwareVersion,
+            hardwareVersion: info.hardwareVersion,
+            connectionRequestUrl: info.connectionRequestUrl,
+            ipAddress: clientIp,
+            lastInform: new Date(),
+            isOnline: true,
+            source: 'myacs',
+            events: info.events,
+            ...paramUpdates,
+          },
+        },
+        { upsert: true, new: true },
+      );
+
+      const sessionId = await createSession(deviceKey, clientIp);
+      setCwmpCookie(res, sessionId);
+
+      const isBoot = info.events.some(
+        (e) => String(e).includes('BOOTSTRAP') || String(e).includes('BOOT'),
+      );
+      if (isBoot && device) {
+        await applyPresetsForDevice(device);
+      }
+    }
+
+    res.set('Content-Type', 'text/xml; charset=utf-8');
+    return res.send(informResponse(requestId));
+  }
+
+  const deviceKey = await resolveDeviceId(req);
+
+  if (findResponseType(body)) {
+    if (deviceKey) {
+      return handleCwmpResponse(deviceKey, body, res, requestId);
+    }
+    res.set('Content-Type', 'text/xml; charset=utf-8');
+    return res.send(emptyResponse(requestId));
+  }
+
+  if (isEmptyCwmpPost(body)) {
+    if (deviceKey) {
+      return dispatchNextTask(deviceKey, res, requestId);
+    }
+    res.set('Content-Type', 'text/xml; charset=utf-8');
+    return res.send(emptyResponse(requestId));
+  }
+
+  res.set('Content-Type', 'text/xml; charset=utf-8');
+  return res.send(emptyResponse(requestId));
+}

@@ -1,0 +1,111 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #d9e6ff;
+  --color-brand-200: #bcd4ff;
+  --color-brand-300: #8eb8ff;
+  --color-brand-400: #5990ff;
+  --color-brand-500: #3366ff;
+  --color-brand-600: #1a4bff;
+  --color-brand-700: #1339eb;
+  --color-brand-800: #1630be;
+  --color-brand-900: #182e95;
+  --color-brand-950: #111c5a;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  body {
+    @apply bg-zinc-100 text-zinc-900 text-[13px] leading-snug;
+  }
+
+  ::selection {
+    @apply bg-brand-500/20 text-brand-900;
+  }
+}
+
+@layer components {
+  .ui-panel {
+    @apply rounded-md border border-zinc-200/90 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)];
+  }
+
+  .ui-panel-header {
+    @apply flex items-center justify-between border-b border-zinc-100 px-3 py-2;
+  }
+
+  .ui-panel-title {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-zinc-500;
+  }
+
+  .ui-table-wrap {
+    @apply overflow-x-auto;
+  }
+
+  .ui-table {
+    @apply w-full text-left text-xs;
+  }
+
+  .ui-table thead tr {
+    @apply border-b border-zinc-100 bg-zinc-50/80;
+  }
+
+  .ui-table th {
+    @apply px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 whitespace-nowrap;
+  }
+
+  .ui-table td {
+    @apply px-3 py-1.5 text-zinc-700 border-b border-zinc-50;
+  }
+
+  .ui-table tbody tr {
+    @apply transition-colors hover:bg-zinc-50/80;
+  }
+
+  .ui-input {
+    @apply w-full rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/15;
+  }
+
+  .ui-btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition;
+  }
+
+  .ui-btn-primary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50;
+  }
+
+  .ui-btn-secondary {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50;
+  }
+
+  .ui-btn-danger {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition bg-amber-600 text-white hover:bg-amber-700;
+  }
+
+  .ui-badge {
+    @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+  }
+
+  .ui-link {
+    @apply font-medium text-brand-600 hover:text-brand-700 hover:underline underline-offset-2;
+  }
+
+  .ui-mono {
+    @apply font-mono text-[11px];
+  }
+
+  .ui-stat {
+    @apply rounded-md border border-zinc-200/90 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] flex items-center gap-2.5 px-3 py-2;
+  }
+
+  .ui-empty {
+    @apply px-3 py-8 text-center text-xs text-zinc-400;
+  }
+}

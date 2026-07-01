@@ -12,7 +12,6 @@ import { isConnectionRequestEvent, isBootEvent } from '../../helpers/cwmpEvents.
 import { releaseStaleRunningTasks, completeRebootTasksOnBoot } from '../tasks/lifecycle.js';
 import CwmpSession from '../../models/CwmpSession.js';
 
-const CR_DISPATCH_WINDOW_MS = parseInt(process.env.CWMP_CR_DISPATCH_WINDOW_MS || '180000', 10);
 const AGGRESSIVE_CR_DISPATCH = process.env.CWMP_DISPATCH_ON_CR_INFORM === 'true';
 
 const parser = new XMLParser({
@@ -111,9 +110,38 @@ function soapResponse(bodyContent, id = '1') {
   return builder.build(envelope);
 }
 
-function informResponse(id, pendingCount = 0) {
-  const maxEnvelopes = pendingCount > 0 ? 1 : 0;
-  return soapResponse({ InformResponse: { MaxEnvelopes: maxEnvelopes } }, id);
+function informResponse(id) {
+  return soapResponse({ InformResponse: { MaxEnvelopes: 1 } }, id);
+}
+
+async function shouldDispatchAfterEmptyPost(deviceKey) {
+  const [session, pending] = await Promise.all([
+    CwmpSession.findOne({ deviceId: deviceKey }).lean(),
+    countPendingTasks(deviceKey),
+  ]);
+
+  if (!pending) return false;
+  if (!session?.awaitingDispatch) return false;
+
+  const ageMs = Date.now() - new Date(session.lastSeen || 0).getTime();
+  if (ageMs > 120_000) return false;
+
+  return true;
+}
+
+async function finishEmptyPost(deviceKey, res, requestId) {
+  if (deviceKey && (await shouldDispatchAfterEmptyPost(deviceKey))) {
+    console.log(`[cwmp] empty POST from ${deviceKey} — dispatch task`);
+    return dispatchNextTask(deviceKey, res, requestId);
+  }
+
+  if (deviceKey) {
+    await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
+    console.log(`[cwmp] empty POST from ${deviceKey} — sesi selesai (tanpa task)`);
+  }
+
+  res.set('Content-Type', 'text/xml; charset=utf-8');
+  return res.send(emptyResponse(requestId));
 }
 
 function emptyResponse(id) {
@@ -246,14 +274,7 @@ export async function handleCwmpRequest(req, res) {
   // CPE mengirim HTTP POST kosong setelah InformResponse — ini trigger dispatch task (TR-069)
   if (!raw || raw.trim() === '') {
     const deviceKey = await resolveDeviceId(req);
-    const requestId = '1';
-    if (deviceKey) {
-      console.log(`[cwmp] empty HTTP POST from ${deviceKey} — dispatch task`);
-      return dispatchNextTask(deviceKey, res, requestId);
-    }
-    console.warn('[cwmp] empty HTTP POST tanpa session device');
-    res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(emptyResponse(requestId));
+    return finishEmptyPost(deviceKey, res, '1');
   }
 
   let envelope;
@@ -316,6 +337,10 @@ export async function handleCwmpRequest(req, res) {
         }
       }
 
+      console.log(
+        `[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] pending=${pendingCount}`,
+      );
+
       await releaseStaleRunningTasks(deviceKey);
 
       // TR-069: Inform WAJIB dijawab InformResponse (bukan RPC langsung).
@@ -329,11 +354,13 @@ export async function handleCwmpRequest(req, res) {
       if (pendingCount > 0) {
         await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: true });
         console.log(`[cwmp] ${deviceKey} inform — ${pendingCount} pending task(s), menunggu empty POST`);
+      } else {
+        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
       }
     }
 
     res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(informResponse(requestId, pendingCount));
+    return res.send(informResponse(requestId));
   }
 
   const deviceKey = await resolveDeviceId(req);
@@ -348,10 +375,9 @@ export async function handleCwmpRequest(req, res) {
 
   if (isEmptyCwmpPost(body)) {
     if (deviceKey) {
-      console.log(`[cwmp] empty POST from ${deviceKey} — dispatch task`);
-      return dispatchNextTask(deviceKey, res, requestId);
+      return finishEmptyPost(deviceKey, res, requestId);
     }
-    console.warn('[cwmp] empty POST tanpa session device — task tidak bisa dikirim');
+    console.warn('[cwmp] empty SOAP POST tanpa session device');
     res.set('Content-Type', 'text/xml; charset=utf-8');
     return res.send(emptyResponse(requestId));
   }

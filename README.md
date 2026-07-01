@@ -157,7 +157,8 @@ Template environment:
 | HTTPS | `443` → proxy ke `3001` |
 
 Detail: [`deploy/PORTS.md`](deploy/PORTS.md)  
-Cloudflare proxied: [`deploy/CLOUDFLARE.md`](deploy/CLOUDFLARE.md)
+Cloudflare proxied: [`deploy/CLOUDFLARE.md`](deploy/CLOUDFLARE.md)  
+VPS tanpa `npm run build`: [`deploy/VPS-NO-BUILD.md`](deploy/VPS-NO-BUILD.md)
 
 ### Clone pertama kali di VPS
 

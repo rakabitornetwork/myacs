@@ -5,6 +5,8 @@ import Fault from '../../models/Fault.js';
 import { applyPresetsForDevice } from '../presets/apply.js';
 import { createSession, resolveDeviceId, setCwmpCookie } from './session.js';
 import { buildTaskRpc, extractParameterValues, extractParameterNames, findResponseType } from './rpc.js';
+import { getClientIp } from '../../helpers/clientIp.js';
+import { countPendingTasks } from '../tasks/queue.js';
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -224,10 +226,7 @@ export async function handleCwmpRequest(req, res) {
   const header = envelope?.Envelope?.Header;
   const requestId = header?.ID?.['#text'] || header?.ID || '1';
 
-  const clientIp =
-    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress?.replace('::ffff:', '') ||
-    req.ip;
+  const clientIp = getClientIp(req);
 
   if (body?.Inform) {
     const deviceKey = extractDeviceId(envelope);
@@ -271,6 +270,11 @@ export async function handleCwmpRequest(req, res) {
       if (isBoot && device) {
         await applyPresetsForDevice(device);
       }
+
+      const pending = await countPendingTasks(deviceKey);
+      if (pending > 0) {
+        console.log(`[cwmp] ${deviceKey} inform — ${pending} pending task(s), menunggu empty POST`);
+      }
     }
 
     res.set('Content-Type', 'text/xml; charset=utf-8');
@@ -291,6 +295,7 @@ export async function handleCwmpRequest(req, res) {
     if (deviceKey) {
       return dispatchNextTask(deviceKey, res, requestId);
     }
+    console.warn('[cwmp] empty POST tanpa session device — task tidak bisa dikirim');
     res.set('Content-Type', 'text/xml; charset=utf-8');
     return res.send(emptyResponse(requestId));
   }

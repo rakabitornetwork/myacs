@@ -1,4 +1,4 @@
-import { Head } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/Components/AppLayout';
 import Badge from '@/Components/Badge';
 import { Panel, PanelHeader } from '@/Components/Panel';
@@ -14,6 +14,8 @@ function formatDate(date) {
 }
 
 export default function TasksIndex({ tasks }) {
+  const { auth } = usePage().props;
+  const canWrite = auth?.canWrite !== false;
   const counts = tasks.reduce(
     (acc, t) => {
       acc[t.status] = (acc[t.status] || 0) + 1;
@@ -54,12 +56,13 @@ export default function TasksIndex({ tasks }) {
                 <th>Status</th>
                 <th>Created</th>
                 <th>Completed</th>
+                {canWrite && <th />}
               </tr>
             </thead>
             <tbody>
               {tasks.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="ui-empty">
+                  <td colSpan={canWrite ? 7 : 6} className="ui-empty">
                     Belum ada task dalam antrian
                   </td>
                 </tr>
@@ -74,6 +77,19 @@ export default function TasksIndex({ tasks }) {
                     </td>
                     <td className="tabular-nums text-zinc-500">{formatDate(task.createdAt)}</td>
                     <td className="tabular-nums text-zinc-500">{formatDate(task.completedAt)}</td>
+                    {canWrite && (
+                      <td className="text-right">
+                        {task.status === 'pending' && (
+                          <button
+                            type="button"
+                            onClick={() => router.post(`/tasks/${task.id}/cancel`)}
+                            className="ui-btn-secondary text-[10px]"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

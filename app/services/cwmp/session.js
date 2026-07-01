@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import CwmpSession from '../../models/CwmpSession.js';
 import Device from '../../models/Device.js';
+import { getClientIp } from '../../helpers/clientIp.js';
 
 const COOKIE_NAME = 'myacs-cwmp-session';
 
@@ -37,17 +38,23 @@ export async function resolveDeviceId(req) {
     }
   }
 
-  const clientIp =
-    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress?.replace('::ffff:', '') ||
-    req.ip;
+  const clientIp = getClientIp(req);
 
-  if (clientIp) {
+  if (clientIp && clientIp !== '127.0.0.1' && clientIp !== '::1') {
     const device = await Device.findOne({ ipAddress: clientIp, source: 'myacs' })
       .sort({ lastInform: -1 })
       .lean();
     if (device) return device.deviceId;
   }
+
+  // Fallback: CPE tanpa cookie (umum) — sesi CWMP aktif dalam 3 menit terakhir
+  const recentSession = await CwmpSession.findOne({
+    lastSeen: { $gte: new Date(Date.now() - 180_000) },
+  })
+    .sort({ lastSeen: -1 })
+    .lean();
+
+  if (recentSession) return recentSession.deviceId;
 
   return null;
 }
@@ -56,6 +63,6 @@ export function setCwmpCookie(res, sessionId) {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   res.setHeader(
     'Set-Cookie',
-    `${COOKIE_NAME}=${sessionId}; Path=/cwmp; HttpOnly; SameSite=Lax${secure}`,
+    `${COOKIE_NAME}=${sessionId}; Path=/cwmp; HttpOnly; SameSite=None${secure}`,
   );
 }

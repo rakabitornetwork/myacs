@@ -18,6 +18,7 @@ import {
 } from '../../services/genieacs/nbi.js';
 import { validateConfig } from '../../config/validate.js';
 import config from '../../config/index.js';
+import { createTaskForDevice, wakeDeviceConnection } from '../../services/tasks/queue.js';
 
 function redirectDevice(res, device) {
   return res.redirect(`/devices/${device._id}`);
@@ -45,6 +46,15 @@ async function runGenieacsAction(device, req, res, action) {
   } catch (err) {
     return flashAndRedirect(req, res, device, 'error', err.message);
   }
+}
+
+async function queueMyacsTask(req, res, device, taskData, label) {
+  await createTaskForDevice(device, taskData);
+  req.session.flash = {
+    type: 'success',
+    message: `${label} diantrikan — Connection Request dikirim agar CPE segera mengambil task`,
+  };
+  return redirectDevice(res, device);
 }
 
 export async function dashboard(req, res) {
@@ -278,14 +288,11 @@ export async function createRebootTask(req, res) {
     return runGenieacsAction(device, req, res, () => genieacsReboot(device.deviceId));
   }
 
-  await Task.create({
-    deviceId: device.deviceId,
+  return queueMyacsTask(req, res, device, {
     name: 'Reboot device',
     method: 'Reboot',
     payload: {},
-  });
-
-  return redirectDevice(res, device);
+  }, 'Reboot');
 }
 
 export async function createFactoryResetTask(req, res) {
@@ -296,14 +303,11 @@ export async function createFactoryResetTask(req, res) {
     return runGenieacsAction(device, req, res, () => genieacsFactoryReset(device.deviceId));
   }
 
-  await Task.create({
-    deviceId: device.deviceId,
+  return queueMyacsTask(req, res, device, {
     name: 'Factory reset',
     method: 'FactoryReset',
     payload: {},
-  });
-
-  return redirectDevice(res, device);
+  }, 'Factory reset');
 }
 
 export async function createGetParamsTask(req, res) {
@@ -321,14 +325,11 @@ export async function createGetParamsTask(req, res) {
     );
   }
 
-  await Task.create({
-    deviceId: device.deviceId,
+  return queueMyacsTask(req, res, device, {
     name: `Get: ${names.slice(0, 2).join(', ')}${names.length > 2 ? '…' : ''}`,
     method: 'GetParameterValues',
     payload: { names },
-  });
-
-  return redirectDevice(res, device);
+  }, 'Get parameter');
 }
 
 export async function createSetParamsTask(req, res) {
@@ -350,14 +351,11 @@ export async function createSetParamsTask(req, res) {
     );
   }
 
-  await Task.create({
-    deviceId: device.deviceId,
+  return queueMyacsTask(req, res, device, {
     name: `Set: ${path}`,
     method: 'SetParameterValues',
     payload: { values },
-  });
-
-  return redirectDevice(res, device);
+  }, 'Set parameter');
 }
 
 export async function createGetParamNamesTask(req, res) {
@@ -373,14 +371,11 @@ export async function createGetParamNamesTask(req, res) {
     );
   }
 
-  await Task.create({
-    deviceId: device.deviceId,
+  return queueMyacsTask(req, res, device, {
     name: `Get names: ${parameterPath}`,
     method: 'GetParameterNames',
     payload: { path: parameterPath, nextLevel },
-  });
-
-  return redirectDevice(res, device);
+  }, 'Get parameter names');
 }
 
 export async function createUploadTask(req, res) {
@@ -405,9 +400,10 @@ export async function createUploadTask(req, res) {
     );
   }
 
+  await wakeDeviceConnection(device);
   req.session.flash = {
     type: 'success',
-    message: 'Task upload dari CPE diantrikan — file akan disimpan saat CPE mengirim',
+    message: 'Task upload diantrikan — Connection Request dikirim ke CPE',
   };
   return redirectDevice(res, device);
 }
@@ -463,8 +459,7 @@ export async function createDownloadTask(req, res) {
     );
   }
 
-  await Task.create({
-    deviceId: device.deviceId,
+  await createTaskForDevice(device, {
     name: `Firmware: ${file.name}`,
     method: 'Download',
     payload: {
@@ -476,8 +471,27 @@ export async function createDownloadTask(req, res) {
     priority: 10,
   });
 
-  req.session.flash = { type: 'success', message: `Task download firmware "${file.name}" diantrikan` };
+  req.session.flash = {
+    type: 'success',
+    message: `Firmware "${file.name}" diantrikan — Connection Request dikirim ke CPE`,
+  };
   return redirectDevice(res, device);
+}
+
+export async function cancelTask(req, res) {
+  const task = await Task.findOne({ _id: req.params.id, status: 'pending' });
+
+  if (!task) {
+    req.session.flash = { type: 'error', message: 'Task tidak ditemukan atau sudah diproses' };
+  } else {
+    task.status = 'cancelled';
+    task.completedAt = new Date();
+    await task.save();
+    req.session.flash = { type: 'success', message: 'Task dibatalkan' };
+  }
+
+  const back = req.headers.referer || '/tasks';
+  return res.redirect(back);
 }
 
 export async function syncGenieacs(req, res) {

@@ -32,6 +32,7 @@ router.post('/devices/:id/tasks/upload', requireAuth, requireWrite, DashboardCon
 router.post('/devices/:id/connection-request', requireAuth, requireWrite, DashboardController.connectionRequest);
 router.post('/devices/:id/firmware', requireAuth, requireWrite, DashboardController.createDownloadTask);
 router.get('/tasks', requireAuth, DashboardController.tasksIndex);
+router.post('/tasks/:id/cancel', requireAuth, requireWrite, DashboardController.cancelTask);
 
 router.get('/faults', requireAuth, FaultController.faultsIndex);
 router.post('/faults/:id/resolve', requireAuth, requireWrite, FaultController.faultsResolve);

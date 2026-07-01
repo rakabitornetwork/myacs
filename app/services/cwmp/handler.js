@@ -13,11 +13,7 @@ import { releaseStaleRunningTasks, completeRebootTasksOnBoot } from '../tasks/li
 import CwmpSession from '../../models/CwmpSession.js';
 
 const CR_DISPATCH_WINDOW_MS = parseInt(process.env.CWMP_CR_DISPATCH_WINDOW_MS || '180000', 10);
-
-function isRecentConnectionRequest(lastAt) {
-  if (!lastAt) return false;
-  return Date.now() - new Date(lastAt).getTime() < CR_DISPATCH_WINDOW_MS;
-}
+const AGGRESSIVE_CR_DISPATCH = process.env.CWMP_DISPATCH_ON_CR_INFORM === 'true';
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -115,8 +111,9 @@ function soapResponse(bodyContent, id = '1') {
   return builder.build(envelope);
 }
 
-function informResponse(id) {
-  return soapResponse({ InformResponse: { MaxEnvelopes: 1 } }, id);
+function informResponse(id, pendingCount = 0) {
+  const maxEnvelopes = pendingCount > 0 ? 1 : 0;
+  return soapResponse({ InformResponse: { MaxEnvelopes: maxEnvelopes } }, id);
 }
 
 function emptyResponse(id) {
@@ -125,7 +122,10 @@ function emptyResponse(id) {
 
 function isEmptyCwmpPost(body) {
   if (!body || Object.keys(body).length === 0) return true;
-  return body.Empty !== undefined;
+  if (body.Empty !== undefined) return true;
+  // Beberapa CPE kirim Body kosong tanpa child element
+  const keys = Object.keys(body).filter((k) => !k.startsWith('@_'));
+  return keys.length === 0;
 }
 
 async function completeRunningTask(deviceKey, update) {
@@ -273,13 +273,11 @@ export async function handleCwmpRequest(req, res) {
   if (body?.Inform) {
     const deviceKey = extractDeviceId(envelope);
     const info = parseInform(envelope);
+    let pendingCount = 0;
 
     if (deviceKey && info) {
-      const existingDevice = await Device.findOne({ deviceId: deviceKey }).lean();
-      const pending = await countPendingTasks(deviceKey);
-      const priorSession = await CwmpSession.findOne({ deviceId: deviceKey }).lean();
+      pendingCount = await countPendingTasks(deviceKey);
       const connectionRequestInform = isConnectionRequestEvent(info.events);
-      const recentConnectionRequest = isRecentConnectionRequest(existingDevice?.lastConnectionRequestAt);
 
       const paramUpdates = paramUpdatesFromMap(info.parameters);
 
@@ -320,28 +318,22 @@ export async function handleCwmpRequest(req, res) {
 
       await releaseStaleRunningTasks(deviceKey);
 
-      if (
-        pending > 0 &&
-        (connectionRequestInform || priorSession?.awaitingDispatch || recentConnectionRequest)
-      ) {
-        const reason = connectionRequestInform
-          ? 'CONNECTION REQUEST'
-          : recentConnectionRequest
-            ? 'post-CR Inform'
-            : 'repeat Inform';
-        console.log(`[cwmp] ${deviceKey} ${reason} — dispatch ${pending} pending task(s)`);
+      // TR-069: Inform WAJIB dijawab InformResponse (bukan RPC langsung).
+      // Mode agresif opsional — aktifkan CWMP_DISPATCH_ON_CR_INFORM=true jika ONU tidak kirim empty POST.
+      if (AGGRESSIVE_CR_DISPATCH && pendingCount > 0 && connectionRequestInform) {
+        console.log(`[cwmp] ${deviceKey} CONNECTION REQUEST (agresif) — dispatch task`);
         await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
         return dispatchNextTask(deviceKey, res, requestId);
       }
 
-      if (pending > 0) {
+      if (pendingCount > 0) {
         await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: true });
-        console.log(`[cwmp] ${deviceKey} inform — ${pending} pending task(s), menunggu empty POST`);
+        console.log(`[cwmp] ${deviceKey} inform — ${pendingCount} pending task(s), menunggu empty POST`);
       }
     }
 
     res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.send(informResponse(requestId));
+    return res.send(informResponse(requestId, pendingCount));
   }
 
   const deviceKey = await resolveDeviceId(req);
@@ -356,6 +348,7 @@ export async function handleCwmpRequest(req, res) {
 
   if (isEmptyCwmpPost(body)) {
     if (deviceKey) {
+      console.log(`[cwmp] empty POST from ${deviceKey} — dispatch task`);
       return dispatchNextTask(deviceKey, res, requestId);
     }
     console.warn('[cwmp] empty POST tanpa session device — task tidak bisa dikirim');

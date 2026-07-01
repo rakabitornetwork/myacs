@@ -8,7 +8,16 @@ import { buildTaskRpc, extractParameterValues, extractParameterNames, findRespon
 import { getClientIp } from '../../helpers/clientIp.js';
 import { countPendingTasks } from '../tasks/queue.js';
 import { paramUpdatesFromMap } from '../../helpers/parameters.js';
+import { isConnectionRequestEvent, isBootEvent } from '../../helpers/cwmpEvents.js';
+import { releaseStaleRunningTasks, completeRebootTasksOnBoot } from '../tasks/lifecycle.js';
 import CwmpSession from '../../models/CwmpSession.js';
+
+const CR_DISPATCH_WINDOW_MS = parseInt(process.env.CWMP_CR_DISPATCH_WINDOW_MS || '180000', 10);
+
+function isRecentConnectionRequest(lastAt) {
+  if (!lastAt) return false;
+  return Date.now() - new Date(lastAt).getTime() < CR_DISPATCH_WINDOW_MS;
+}
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -201,6 +210,7 @@ async function handleCwmpResponse(deviceKey, body, res, requestId) {
 
 async function dispatchNextTask(deviceKey, res, requestId) {
   await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
+  await releaseStaleRunningTasks(deviceKey);
 
   const task = await Task.findOneAndUpdate(
     { deviceId: deviceKey, status: 'pending' },
@@ -212,6 +222,8 @@ async function dispatchNextTask(deviceKey, res, requestId) {
     res.set('Content-Type', 'text/xml; charset=utf-8');
     return res.send(emptyResponse(requestId));
   }
+
+  console.log(`[cwmp] ${deviceKey} → ${task.method} (task ${task._id})`);
 
   const rpcBody = buildTaskRpc(task);
   if (!rpcBody) {
@@ -263,15 +275,11 @@ export async function handleCwmpRequest(req, res) {
     const info = parseInform(envelope);
 
     if (deviceKey && info) {
+      const existingDevice = await Device.findOne({ deviceId: deviceKey }).lean();
       const pending = await countPendingTasks(deviceKey);
       const priorSession = await CwmpSession.findOne({ deviceId: deviceKey }).lean();
-
-      if (priorSession?.awaitingDispatch && pending > 0) {
-        const sessionId = await createSession(deviceKey, clientIp);
-        setCwmpCookie(res, sessionId);
-        console.log(`[cwmp] ${deviceKey} repeat Inform — dispatch task`);
-        return dispatchNextTask(deviceKey, res, requestId);
-      }
+      const connectionRequestInform = isConnectionRequestEvent(info.events);
+      const recentConnectionRequest = isRecentConnectionRequest(existingDevice?.lastConnectionRequestAt);
 
       const paramUpdates = paramUpdatesFromMap(info.parameters);
 
@@ -302,11 +310,28 @@ export async function handleCwmpRequest(req, res) {
       const sessionId = await createSession(deviceKey, clientIp);
       setCwmpCookie(res, sessionId);
 
-      const isBoot = info.events.some(
-        (e) => String(e).includes('BOOTSTRAP') || String(e).includes('BOOT'),
-      );
-      if (isBoot && device) {
+      if (isBootEvent(info.events) && device) {
         await applyPresetsForDevice(device);
+        const completed = await completeRebootTasksOnBoot(deviceKey);
+        if (completed > 0) {
+          console.log(`[cwmp] ${deviceKey} BOOT — marked ${completed} reboot task(s) completed`);
+        }
+      }
+
+      await releaseStaleRunningTasks(deviceKey);
+
+      if (
+        pending > 0 &&
+        (connectionRequestInform || priorSession?.awaitingDispatch || recentConnectionRequest)
+      ) {
+        const reason = connectionRequestInform
+          ? 'CONNECTION REQUEST'
+          : recentConnectionRequest
+            ? 'post-CR Inform'
+            : 'repeat Inform';
+        console.log(`[cwmp] ${deviceKey} ${reason} — dispatch ${pending} pending task(s)`);
+        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false });
+        return dispatchNextTask(deviceKey, res, requestId);
       }
 
       if (pending > 0) {

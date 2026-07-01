@@ -16,12 +16,19 @@ export async function queueFetchConnectionRequestCredentials(device) {
   );
 }
 
+export async function markConnectionRequestSent(deviceId) {
+  await Device.updateOne({ deviceId }, { $set: { lastConnectionRequestAt: new Date() } });
+}
+
 export async function wakeDeviceConnection(device) {
   if (!device?.connectionRequestUrl || isGenieacsDevice(device)) return { ok: false, skipped: true };
 
   try {
     const credentials = getConnectionRequestCredentials(device);
     const result = await sendConnectionRequest(device.connectionRequestUrl, credentials);
+    if (result.ok) {
+      await markConnectionRequestSent(device.deviceId);
+    }
     return { ok: result.ok, status: result.status, hint: result.hint };
   } catch (err) {
     console.warn(`[task] connection request failed for ${device.deviceId}:`, err.message);

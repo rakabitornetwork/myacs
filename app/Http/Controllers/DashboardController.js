@@ -18,7 +18,7 @@ import {
 } from '../../services/genieacs/nbi.js';
 import { validateConfig } from '../../config/validate.js';
 import config from '../../config/index.js';
-import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestCredentials } from '../../services/tasks/queue.js';
+import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestCredentials, markConnectionRequestSent } from '../../services/tasks/queue.js';
 import { parametersToEntries } from '../../helpers/parameters.js';
 import {
   getConnectionRequestCredentials,
@@ -433,6 +433,10 @@ export async function connectionRequest(req, res) {
     }
 
     const result = await sendConnectionRequest(device.connectionRequestUrl, credentials);
+
+    if (result.ok) {
+      await markConnectionRequestSent(device.deviceId);
+    }
 
     const detail = result.hint ? ` — ${result.hint}` : '';
     req.session.flash = {

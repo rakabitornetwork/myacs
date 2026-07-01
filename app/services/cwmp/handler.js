@@ -6,7 +6,7 @@ import { applyPresetsForDevice } from '../presets/apply.js';
 import { createSession, resolveDeviceId, setCwmpCookie } from './session.js';
 import { buildTaskRpc, extractParameterValues, extractParameterNames, findResponseType } from './rpc.js';
 import { getClientIp } from '../../helpers/clientIp.js';
-import { countPendingTasks } from '../tasks/queue.js';
+import { countPendingTasks, wakeDeviceConnection } from '../tasks/queue.js';
 import { paramUpdatesFromMap } from '../../helpers/parameters.js';
 import { isConnectionRequestEvent, isBootEvent } from '../../helpers/cwmpEvents.js';
 import { releaseStaleRunningTasks, completeRebootTasksOnBoot, completePendingRebootTasksOnBoot } from '../tasks/lifecycle.js';
@@ -362,15 +362,39 @@ export async function handleCwmpRequest(req, res) {
       // Recount pending tasks — BOOT event may have completed some
       pendingCount = await countPendingTasks(deviceKey);
 
-      // When there are pending tasks, dispatch directly instead of sending
-      // InformResponse and waiting for an empty POST.
-      // Many CPEs (especially ONUs) close the connection after InformResponse
-      // and never send the empty POST that TR-069 expects.
-      // This is industry standard practice (GenieACS does the same).
       if (pendingCount > 0) {
-        const reason = connectionRequestInform ? 'CONNECTION REQUEST' : 'inform with pending';
-        console.log(`[cwmp] ${deviceKey} ${reason} — dispatching task directly (${pendingCount} pending)`);
-        return dispatchNextTask(deviceKey, res, requestId);
+        // Connection Request Inform: CPE came because of our request.
+        // Dispatch task directly — CPE expects work to be sent.
+        if (connectionRequestInform) {
+          console.log(`[cwmp] ${deviceKey} CONNECTION REQUEST — dispatching task directly (${pendingCount} pending)`);
+          return dispatchNextTask(deviceKey, res, requestId);
+        }
+
+        // Periodic/Boot Inform with pending tasks:
+        // Some CPEs (ONU CMHI) REQUIRE InformResponse before accepting RPC
+        // and do NOT send empty POST after InformResponse.
+        // Strategy: send InformResponse, then immediately re-send Connection Request
+        // so CPE reconnects and we dispatch via Connection Request Inform.
+        await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: true });
+        console.log(`[cwmp] ${deviceKey} inform with ${pendingCount} pending — sending InformResponse + scheduling immediate CR`);
+
+        res.set('Content-Type', 'text/xml; charset=utf-8');
+        res.send(informResponse(requestId));
+
+        // Schedule Connection Request after response is sent (non-blocking)
+        setTimeout(async () => {
+          try {
+            const result = await wakeDeviceConnection(device);
+            if (result.ok) {
+              console.log(`[cwmp] ${deviceKey} immediate CR sent after InformResponse`);
+            } else if (!result.skipped) {
+              console.log(`[cwmp] ${deviceKey} immediate CR failed: ${result.error || result.hint || result.status}`);
+            }
+          } catch (err) {
+            console.warn(`[cwmp] ${deviceKey} immediate CR error:`, err.message);
+          }
+        }, 500);
+        return;
       }
     }
 

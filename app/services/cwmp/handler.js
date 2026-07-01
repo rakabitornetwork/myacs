@@ -4,7 +4,7 @@ import Device from '../../models/Device.js';
 import Task from '../../models/Task.js';
 import Fault from '../../models/Fault.js';
 import { applyPresetsForDevice } from '../presets/apply.js';
-import { resolveDeviceId, setCwmpCookie } from './session.js';
+import { resolveDeviceId, setCwmpCookie, cacheCwmpSession } from './session.js';
 import { buildTaskRpc, extractParameterValues, extractParameterNames, findResponseType } from './rpc.js';
 import { getClientIp } from '../../helpers/clientIp.js';
 import { countPendingTasks } from '../tasks/queue.js';
@@ -163,6 +163,7 @@ function informResponse(id, maxEnvelopes = 1) {
   return soapResponse({
     'cwmp:InformResponse': {
       MaxEnvelopes: maxEnvelopes,
+      HoldRequests: false,
     },
   }, id);
 }
@@ -174,6 +175,11 @@ function emptyResponse(id) {
 function sendCwmpXml(res, xml) {
   res.set('Content-Type', 'text/xml; charset=utf-8');
   return res.send(xml);
+}
+
+/** TR-069: ACS menutup sesi dengan HTTP 204 tanpa body SOAP (bukan empty Envelope). */
+function sendEmptyHttp(res) {
+  return res.status(204).end();
 }
 
 async function processInformBackground(deviceKey, info, clientIp, sessionId) {
@@ -229,7 +235,7 @@ async function processInformBackground(deviceKey, info, clientIp, sessionId) {
   }
 }
 
-function replyInform(req, res, envelope, raw, clientIp) {
+async function replyInform(req, res, envelope, raw, clientIp) {
   const body = getSoapBody(envelope);
   const header = getSoapHeader(envelope);
   const informNode = getInformNode(body);
@@ -244,14 +250,31 @@ function replyInform(req, res, envelope, raw, clientIp) {
 
   console.log(`[cwmp] inform received from ${clientIp} (${raw.length} bytes) keys=${Object.keys(body || {}).join(',') || 'raw'}`);
 
+  if (deviceKey) {
+    const pendingCount = await countPendingTasks(deviceKey);
+    await CwmpSession.findOneAndUpdate(
+      { deviceId: deviceKey },
+      {
+        sessionId,
+        deviceId: deviceKey,
+        ipAddress: clientIp,
+        lastSeen: new Date(),
+        awaitingDispatch: pendingCount > 0,
+      },
+      { upsert: true },
+    );
+    cacheCwmpSession(clientIp, deviceKey, sessionId);
+    console.log(`[cwmp] ${deviceKey} inform [${(info?.events || []).join(', ')}] pending=${pendingCount}`);
+  } else {
+    console.warn(`[cwmp] inform tanpa deviceKey (${raw.length} bytes)`);
+  }
+
   setCwmpCookie(res, sessionId, req);
   sendCwmpXml(res, informResponse(requestId, 1));
+  console.log(`[cwmp] InformResponse sent (id=${requestId})`);
 
   if (deviceKey && info) {
-    console.log(`[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] — InformResponse sent`);
     setImmediate(() => processInformBackground(deviceKey, info, clientIp, sessionId));
-  } else {
-    console.warn(`[cwmp] inform tanpa deviceKey (${raw.length} bytes) — InformResponse sent anyway`);
   }
 
   return true;
@@ -276,11 +299,13 @@ async function finishEmptyPost(deviceKey, res, requestId) {
     return dispatchNextTask(deviceKey, res, requestId);
   }
 
-  sendCwmpXml(res, emptyResponse(requestId));
+  sendEmptyHttp(res);
 
   if (deviceKey) {
     CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: false }).catch(() => {});
-    console.log(`[cwmp] empty POST from ${deviceKey} — sesi selesai (tanpa task)`);
+    console.log(`[cwmp] empty POST from ${deviceKey} — sesi selesai (HTTP 204)`);
+  } else {
+    console.log(`[cwmp] empty POST — sesi selesai (HTTP 204, tanpa device)`);
   }
 }
 
@@ -338,11 +363,11 @@ async function handleCwmpResponse(deviceKey, body, res, requestId) {
       detail: body,
     });
 
-    return sendCwmpXml(res, emptyResponse(requestId));
+    return sendEmptyHttp(res);
   }
 
   if (!responseType) {
-    return sendCwmpXml(res, emptyResponse(requestId));
+    return sendEmptyHttp(res);
   }
 
   await completeRunningTask(deviceKey, {
@@ -352,7 +377,7 @@ async function handleCwmpResponse(deviceKey, body, res, requestId) {
   });
 
   if (responseType === 'RebootResponse' || responseType === 'FactoryResetResponse') {
-    return sendCwmpXml(res, emptyResponse(requestId));
+    return sendEmptyHttp(res);
   }
 
   if (responseType === 'GetParameterValuesResponse') {
@@ -385,7 +410,7 @@ async function handleCwmpResponse(deviceKey, body, res, requestId) {
     }
   }
 
-  return sendCwmpXml(res, emptyResponse(requestId));
+  return sendEmptyHttp(res);
 }
 
 async function dispatchNextTask(deviceKey, res, requestId) {
@@ -399,7 +424,7 @@ async function dispatchNextTask(deviceKey, res, requestId) {
   );
 
   if (!task) {
-    return sendCwmpXml(res, emptyResponse(requestId));
+    return sendEmptyHttp(res);
   }
 
   console.log(`[cwmp] ${deviceKey} → ${task.method} (task ${task._id})`);
@@ -411,7 +436,7 @@ async function dispatchNextTask(deviceKey, res, requestId) {
       fault: `Unsupported method: ${task.method}`,
       completedAt: new Date(),
     });
-    return sendCwmpXml(res, emptyResponse(requestId));
+    return sendEmptyHttp(res);
   }
 
   return sendCwmpXml(res, soapResponse(rpcBody, requestId));
@@ -444,7 +469,7 @@ export async function handleCwmpRequest(req, res) {
     return res.status(400).send('Invalid XML');
   }
 
-  if (replyInform(req, res, envelope, raw, clientIp)) return;
+  if (await replyInform(req, res, envelope, raw, clientIp)) return;
 
   const body = getSoapBody(envelope);
   const header = getSoapHeader(envelope);
@@ -455,7 +480,7 @@ export async function handleCwmpRequest(req, res) {
     console.warn(
       `[cwmp] CPE SOAP Fault from ${clientIp} (${raw.length}b): ${fault.faultcode} ${fault.faultstring} cwmp=${fault.cwmpCode} ${fault.cwmpString}`,
     );
-    sendCwmpXml(res, emptyResponse(requestId));
+    sendEmptyHttp(res);
     return;
   }
 
@@ -467,7 +492,7 @@ export async function handleCwmpRequest(req, res) {
     if (deviceKey) {
       return handleCwmpResponse(deviceKey, body, res, requestId);
     }
-    return sendCwmpXml(res, emptyResponse(requestId));
+    return sendEmptyHttp(res);
   }
 
   if (isEmptyCwmpPost(body)) {
@@ -475,9 +500,9 @@ export async function handleCwmpRequest(req, res) {
       return finishEmptyPost(deviceKey, res, requestId);
     }
     console.warn('[cwmp] empty SOAP POST tanpa session device');
-    return sendCwmpXml(res, emptyResponse(requestId));
+    return sendEmptyHttp(res);
   }
 
   console.warn(`[cwmp] unhandled SOAP from ${deviceKey || 'unknown'}: ${bodyPreview}`);
-  return sendCwmpXml(res, emptyResponse(requestId));
+  return sendEmptyHttp(res);
 }

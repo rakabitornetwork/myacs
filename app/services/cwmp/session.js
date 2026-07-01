@@ -5,6 +5,18 @@ import { getClientIp } from '../../helpers/clientIp.js';
 
 const COOKIE_NAME = 'myacs-cwmp-session';
 const SESSION_FALLBACK_MS = parseInt(process.env.CWMP_SESSION_FALLBACK_MS || '600000', 10);
+const ipSessionCache = new Map();
+
+export function cacheCwmpSession(ip, deviceId, sessionId) {
+  if (!ip) return;
+  ipSessionCache.set(ip, { deviceId, sessionId, at: Date.now() });
+}
+
+function getCachedCwmpSession(ip) {
+  const entry = ipSessionCache.get(ip);
+  if (!entry || Date.now() - entry.at > 120_000) return null;
+  return entry;
+}
 
 export function parseCookies(header) {
   if (!header) return {};
@@ -41,6 +53,9 @@ export async function resolveDeviceId(req) {
 
   const clientIp = getClientIp(req);
 
+  const cached = getCachedCwmpSession(clientIp);
+  if (cached) return cached.deviceId;
+
   if (clientIp && clientIp !== '127.0.0.1' && clientIp !== '::1') {
     const ipSession = await CwmpSession.findOne({ ipAddress: clientIp })
       .sort({ lastSeen: -1 })
@@ -67,9 +82,9 @@ export function isRequestHttps(req) {
 }
 
 export function setCwmpCookie(res, sessionId, req) {
-  if (!isRequestHttps(req)) return;
-  res.setHeader(
-    'Set-Cookie',
-    `${COOKIE_NAME}=${sessionId}; Path=/cwmp; HttpOnly; Secure; SameSite=None`,
-  );
+  const secure = isRequestHttps(req);
+  const flags = secure
+    ? 'Path=/cwmp; HttpOnly; Secure; SameSite=None'
+    : 'Path=/cwmp; HttpOnly; SameSite=Lax';
+  res.setHeader('Set-Cookie', `${COOKIE_NAME}=${sessionId}; ${flags}`);
 }

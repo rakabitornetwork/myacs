@@ -1,6 +1,5 @@
 import { getViteAssets, getAssetVersion } from '../helpers/vite.js';
 import { acsInfoForClient } from '../helpers/acs.js';
-import { taskCancelHelperScript } from '../helpers/taskCancelScript.js';
 import config from '../config/index.js';
 
 function resolveVersion(req) {
@@ -73,7 +72,6 @@ export function inertiaMiddleware(req, res, next) {
   </head>
   <body class="antialiased">
     <div id="app" data-page='${pageJson}'></div>
-    ${taskCancelHelperScript()}
   </body>
 </html>`);
     },

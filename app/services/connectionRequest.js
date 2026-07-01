@@ -67,36 +67,47 @@ async function fetchOnce(url, options = {}) {
   }
 }
 
+function stripUrlCredentials(rawUrl) {
+  const url = new URL(rawUrl);
+  const embedded = {
+    username: url.username ? decodeURIComponent(url.username) : '',
+    password: url.password ? decodeURIComponent(url.password) : '',
+  };
+  url.username = '';
+  url.password = '';
+  const path = url.pathname + url.search;
+  const requestUrl = `${url.protocol}//${url.host}${path}`;
+  return { requestUrl, path, embedded };
+}
+
+function mergeCredentials(credentials, embedded) {
+  return {
+    username: credentials.username || embedded.username || '',
+    password: credentials.password || embedded.password || '',
+  };
+}
+
 export async function sendConnectionRequest(connectionRequestUrl, credentials = {}) {
   if (!connectionRequestUrl?.trim()) {
     throw new Error('Connection Request URL tidak tersedia');
   }
 
-  const url = new URL(connectionRequestUrl);
-  const hasCreds = Boolean(credentials.username) || Boolean(credentials.password);
+  const { requestUrl, path, embedded } = stripUrlCredentials(connectionRequestUrl);
+  const creds = mergeCredentials(credentials, embedded);
+  const hasCreds = Boolean(creds.username) || Boolean(creds.password);
 
-  if (credentials.username && !url.username) {
-    url.username = credentials.username;
-  }
-  if (credentials.password && !url.password) {
-    url.password = credentials.password;
-  }
-
-  const target = url.toString();
-  let response = await fetchOnce(target);
+  let response = await fetchOnce(requestUrl);
 
   if (response.status === 401 && hasCreds) {
     const challenge = parseDigestChallenge(response.headers.get('www-authenticate'));
     if (challenge) {
-      const path = url.pathname + url.search;
       const auth = buildDigestAuth({
         method: 'GET',
         path,
-        credentials,
+        credentials: creds,
         challenge,
       });
-      const digestUrl = `${url.protocol}//${url.host}${path}`;
-      response = await fetchOnce(digestUrl, {
+      response = await fetchOnce(requestUrl, {
         headers: { Authorization: auth },
       });
     }

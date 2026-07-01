@@ -344,8 +344,7 @@ export async function handleCwmpRequest(req, res) {
       await releaseStaleRunningTasks(deviceKey);
       pendingCount = await countPendingTasks(deviceKey);
 
-      const maxEnvelopes = pendingCount > 0 ? 1 : 0;
-
+      // TR-069: MaxEnvelopes MUST be >= 1. Nilai 0 membuat beberapa ONU (CMHI) gagal Manual Inform.
       if (pendingCount > 0) {
         await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: true });
       } else {
@@ -353,14 +352,14 @@ export async function handleCwmpRequest(req, res) {
       }
 
       console.log(
-        `[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] pending=${pendingCount} maxEnv=${maxEnvelopes}`,
+        `[cwmp] ${deviceKey} inform [${(info.events || []).join(', ')}] pending=${pendingCount}`,
       );
 
-      return sendCwmpXml(res, informResponse(requestId, maxEnvelopes));
+      return sendCwmpXml(res, informResponse(requestId, 1));
     }
 
     console.warn(`[cwmp] inform tanpa deviceKey (${raw.length} bytes): ${bodyPreview}`);
-    return sendCwmpXml(res, informResponse(requestId, 0));
+    return sendCwmpXml(res, informResponse(requestId, 1));
   }
 
   const deviceKey = await resolveDeviceId(req);

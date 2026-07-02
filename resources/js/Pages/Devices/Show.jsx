@@ -247,6 +247,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 ['Software', device.softwareVersion],
                 ['Hardware', device.hardwareVersion],
                 ['IP Address', device.ipAddress],
+                ['IP TR069', device.info?.ipTr069],
                 ['Last Inform', formatDate(device.lastInform)],
                 ['Events', (device.events || []).join(', ') || '—'],
               ].map(([label, value]) => (

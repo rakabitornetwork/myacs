@@ -92,4 +92,14 @@ describe('extractDeviceInfo', () => {
     assert.equal(info.modelName, 'F650-GPON');
     assert.equal(info.onuType, 'F650-GPON');
   });
+
+  it('reads VirtualParameters.IPTR069', () => {
+    const info = extractDeviceInfo({
+      parameters: {
+        'VirtualParameters.IPTR069': '192.168.1.100',
+      },
+    });
+
+    assert.equal(info.ipTr069, '192.168.1.100');
+  });
 });

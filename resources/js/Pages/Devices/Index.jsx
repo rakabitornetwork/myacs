@@ -102,6 +102,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs, flash 
                 <th>Pass WiFi</th>
                 <th>RX</th>
                 <th>Suhu</th>
+                <th>IP TR069</th>
                 <th>Firmware</th>
                 <th>IP</th>
                 <th>Status</th>
@@ -111,7 +112,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs, flash 
             <tbody>
               {devices.length === 0 ? (
                 <tr>
-                  <td colSpan={acs?.mode === 'dual' ? 16 : 15} className="ui-empty">
+                  <td colSpan={acs?.mode === 'dual' ? 17 : 16} className="ui-empty">
                     Tidak ada device ditemukan
                   </td>
                 </tr>

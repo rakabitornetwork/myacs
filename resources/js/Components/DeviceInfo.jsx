@@ -31,6 +31,7 @@ export default function DeviceInfoCells({ info, showSecrets = false }) {
       <td className="whitespace-nowrap">
         <OpticalValue value={i.temperature} status={i.temperatureStatus} />
       </td>
+      <td className="ui-mono whitespace-nowrap">{cell(i.ipTr069)}</td>
     </>
   );
 }
@@ -51,6 +52,7 @@ export function DeviceInfoGrid({ info, showSecrets = true }) {
     ['Password SSID', showSecrets ? i.ssidPassword : i.ssidPasswordMasked, i.ssidPasswordNote, null],
     ['RX Power', i.rxPower, i.rxPowerNote, i.rxPowerStatus],
     ['Temperature', i.temperature, '', i.temperatureStatus],
+    ['IP TR069', i.ipTr069, i.ipTr069Note, null],
   ];
 
   return (

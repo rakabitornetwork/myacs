@@ -96,6 +96,12 @@ const MODEL_NAME_PATHS = [
   'Device.DeviceInfo.ModelName',
 ];
 
+const IP_TR069_PATHS = [
+  'VirtualParameters.IPTR069',
+  'VirtualParameters.IpTr069',
+  'VirtualParameters.iptr069',
+];
+
 function findModelName(flat, device) {
   for (const path of MODEL_NAME_PATHS) {
     const val = flat[path];
@@ -104,6 +110,23 @@ function findModelName(flat, device) {
     }
   }
   return device?.model || device?.productClass || '';
+}
+
+function findIpTr069(flat) {
+  for (const path of IP_TR069_PATHS) {
+    const val = flat[path];
+    if (val !== undefined && val !== null && String(val).trim()) {
+      return String(val).trim();
+    }
+  }
+
+  for (const [key, val] of Object.entries(flat)) {
+    if (!/^virtualparameters\.iptr069$/i.test(key)) continue;
+    if (val === undefined || val === null || String(val).trim() === '') continue;
+    return String(val).trim();
+  }
+
+  return '';
 }
 
 /** Subtree paths untuk GetParameterValues (akhiri dengan titik) */
@@ -408,11 +431,13 @@ export function extractDeviceInfo(device) {
   const temperatureRaw = findParamValue(flat, 'temperature');
   const rxPowerRaw = findParamValue(flat, 'rxPower');
   const modelName = findModelName(flat, device);
+  const ipTr069 = findIpTr069(flat);
 
   return {
     brand: device?.manufacturer || '',
     modelName,
     onuType: modelName,
+    ipTr069,
     pppoeUsername,
     pppoePassword,
     pppoePasswordMasked: maskSecret(pppoePassword),
@@ -429,6 +454,7 @@ export function extractDeviceInfo(device) {
     rxPowerStatus: classifyRxPower(rxPowerRaw),
     temperatureStatus: classifyTemperature(temperatureRaw),
     rxPowerNote: rxPowerRaw ? '' : 'Klik Refresh untuk fetch subtree optical (GPON/EPON)',
+    ipTr069Note: ipTr069 ? '' : 'Hanya tersedia dari GenieACS (VirtualParameters.IPTR069)',
   };
 }
 

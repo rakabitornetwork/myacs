@@ -55,6 +55,12 @@ const PARAM_PATHS = {
     'InternetGatewayDevice.X_CMHI_DeviceInfo.Temperature',
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.TransceiverTemperature',
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.Temperature',
+    'InternetGatewayDevice.WANDevice.1.X_GponInterfaceConfig.TransceiverTemperature',
+    'InternetGatewayDevice.WANDevice.1.X_GponInterfaceConfig.Temperature',
+    'InternetGatewayDevice.WANDevice.1.X_GponInterafceConfig.TransceiverTemperature',
+    'InternetGatewayDevice.WANDevice.1.X_ZTE-COM_WANPONInterfaceConfig.TransceiverTemperature',
+    'InternetGatewayDevice.X_ALU_OntOpticalParam.TransceiverTemperature',
+    'InternetGatewayDevice.X_CT-COM_GponInterfaceConfig.Stats.TransceiverTemperature',
     'InternetGatewayDevice.X_CMHI_Status.Temperature',
     'Device.DeviceInfo.TemperatureStatus.Temperature',
     'Device.Optical.Interface.1.Temperature',
@@ -67,6 +73,10 @@ const PARAM_PATHS = {
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.ReceivePower',
     'InternetGatewayDevice.WANDevice.1.X_GponInterfaceConfig.RXPower',
     'InternetGatewayDevice.WANDevice.1.X_GponInterfaceConfig.RxPower',
+    'InternetGatewayDevice.WANDevice.1.X_GponInterafceConfig.RXPower',
+    'InternetGatewayDevice.WANDevice.1.X_ZTE-COM_WANPONInterfaceConfig.RXPower',
+    'InternetGatewayDevice.X_ALU_OntOpticalParam.RXPower',
+    'InternetGatewayDevice.X_CT-COM_GponInterfaceConfig.Stats.RXPower',
     'InternetGatewayDevice.X_CMHI_Optical.RxPower',
     'InternetGatewayDevice.X_CMHI_Optical.RXPower',
     'InternetGatewayDevice.X_CMHI_Optical.Diagnostic.RXPower',
@@ -86,13 +96,19 @@ const FETCH_SUBTREES = [
   'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.',
   'InternetGatewayDevice.LANDevice.1.WLANConfiguration.',
   'InternetGatewayDevice.WANDevice.1.X_CMCC_EponInterfaceConfig.',
+  'InternetGatewayDevice.WANDevice.1.X_CMCC_GponInterfaceConfig.',
   'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.',
   'InternetGatewayDevice.WANDevice.1.X_GponInterfaceConfig.',
+  'InternetGatewayDevice.WANDevice.1.X_GponInterafceConfig.',
+  'InternetGatewayDevice.WANDevice.1.X_ZTE-COM_WANPONInterfaceConfig.',
   'InternetGatewayDevice.WANDevice.1.WANOpticalInterface.',
+  'InternetGatewayDevice.X_ALU_OntOpticalParam.',
+  'InternetGatewayDevice.X_CT-COM_GponInterfaceConfig.',
   'InternetGatewayDevice.X_CMHI_Optical.',
   'InternetGatewayDevice.X_CMHI_Status.',
   'InternetGatewayDevice.X_CMHI_DeviceInfo.',
   'InternetGatewayDevice.DeviceInfo.',
+  'Device.Optical.Interface.1.',
 ];
 
 const FIELD_SCAN = {
@@ -113,6 +129,12 @@ const FIELD_SCAN = {
     includesAll: [['wanpppconnection', 'password']],
     excludes: ['ssid', 'wlan'],
   },
+  pppoeUsername: {
+    includesAny: [
+      ['wanpppconnection', 'username'],
+    ],
+    excludes: ['connectionrequest', 'admin', 'managementserver', 'ssid', 'wlan'],
+  },
   rxPower: {
     includesAny: [
       ['rxpower'],
@@ -120,6 +142,8 @@ const FIELD_SCAN = {
       ['receivepower'],
       ['opticalsignallevel'],
       ['optical', 'rx'],
+      ['gponinterfaceconfig', 'rxpower'],
+      ['gponinterafceconfig', 'rxpower'],
     ],
     excludes: ['txpower', 'tx', 'transmit'],
   },
@@ -128,6 +152,8 @@ const FIELD_SCAN = {
       ['transceivertemperature'],
       ['.temperature'],
       ['temperaturestatus'],
+      ['gponinterfaceconfig', 'temperature'],
+      ['gponinterafceconfig', 'temperature'],
     ],
     excludes: ['txpower'],
   },
@@ -254,6 +280,49 @@ function findWifiCredentials(flat) {
   return { ssid: candidates[0].ssid, ssidPassword: candidates[0].password };
 }
 
+function isPppConnectionActive(flat, basePath) {
+  const enable = flat[`${basePath}.Enable`];
+  if (isEnabledValue(enable)) return true;
+  const status = String(flat[`${basePath}.ConnectionStatus`] || '').toLowerCase();
+  return status === 'connected' || status === 'connecting';
+}
+
+function findPppoeCredentials(flat) {
+  let username = findParamValue(flat, 'pppoeUsername');
+  let password = findParamValue(flat, 'pppoePassword');
+  if (username) return { username, password };
+
+  const connections = [];
+  for (const [key, val] of Object.entries(flat)) {
+    if (val === undefined || val === null || String(val).trim() === '') continue;
+    const match = key.match(/^(.*\.WANPPPConnection\.\d+)\.(Username|Password)$/i);
+    if (!match) continue;
+
+    const base = match[1];
+    const field = match[2].toLowerCase();
+    let conn = connections.find((item) => item.base === base);
+    if (!conn) {
+      conn = { base, username: '', password: '', active: isPppConnectionActive(flat, base) };
+      connections.push(conn);
+    }
+    if (field === 'username') conn.username = String(val).trim();
+    if (field === 'password') conn.password = String(val).trim();
+  }
+
+  connections.sort((a, b) => {
+    if (a.active !== b.active) return a.active ? -1 : 1;
+    if (a.username && !b.username) return -1;
+    if (!a.username && b.username) return 1;
+    return 0;
+  });
+
+  const best = connections.find((item) => item.username) || connections[0];
+  return {
+    username: best?.username || '',
+    password: password || best?.password || '',
+  };
+}
+
 function findParamValue(flat, field) {
   const exact = PARAM_PATHS[field] || [];
   for (const path of exact) {
@@ -311,8 +380,9 @@ export function formatTemperature(value) {
 export function extractDeviceInfo(device) {
   const flat = flattenParameterMap(device?.parameters);
 
-  const pppoeUsername = findParamValue(flat, 'pppoeUsername');
-  const pppoePassword = findParamValue(flat, 'pppoePassword');
+  const pppoe = findPppoeCredentials(flat);
+  const pppoeUsername = pppoe.username;
+  const pppoePassword = pppoe.password;
   let ssid = findParamValue(flat, 'ssid');
   let ssidPassword = findParamValue(flat, 'ssidPassword');
   if (!ssid || !ssidPassword) {
@@ -330,15 +400,18 @@ export function extractDeviceInfo(device) {
     pppoePassword,
     pppoePasswordMasked: maskSecret(pppoePassword),
     pppoePasswordNote: pppoePassword ? '' : 'ONU sering tidak expose password PPPoE via TR-069',
+    pppoeUsernameNote: pppoeUsername ? '' : 'Username PPPoE mungkin kosong di CPE atau belum ter-fetch',
     ssid,
     ssidPassword,
     ssidPasswordMasked: maskSecret(ssidPassword),
+    ssidPasswordNote: ssidPassword ? '' : 'Banyak ONU tidak mengirim password WiFi via TR-069',
     temperature: formatTemperature(temperatureRaw),
     temperatureRaw,
     rxPower: formatRxPower(rxPowerRaw),
     rxPowerRaw,
     rxPowerStatus: classifyRxPower(rxPowerRaw),
     temperatureStatus: classifyTemperature(temperatureRaw),
+    rxPowerNote: rxPowerRaw ? '' : 'Klik Refresh untuk fetch subtree optical (GPON/EPON)',
   };
 }
 

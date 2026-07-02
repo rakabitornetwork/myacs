@@ -40,7 +40,7 @@ export function DeviceInfoGrid({ info, showSecrets = true }) {
   const rows = [
     ['Merk ONU', i.brand, '', null],
     ['Type ONU', i.onuType, '', null],
-    ['PPPoE Username', i.pppoeUsername, '', null],
+    ['PPPoE Username', i.pppoeUsername, i.pppoeUsernameNote, null],
     [
       'PPPoE Password',
       showSecrets ? i.pppoePassword : i.pppoePasswordMasked,
@@ -48,8 +48,8 @@ export function DeviceInfoGrid({ info, showSecrets = true }) {
       null,
     ],
     ['SSID', i.ssid, '', null],
-    ['Password SSID', showSecrets ? i.ssidPassword : i.ssidPasswordMasked, '', null],
-    ['RX Power', i.rxPower, '', i.rxPowerStatus],
+    ['Password SSID', showSecrets ? i.ssidPassword : i.ssidPasswordMasked, i.ssidPasswordNote, null],
+    ['RX Power', i.rxPower, i.rxPowerNote, i.rxPowerStatus],
     ['Temperature', i.temperature, '', i.temperatureStatus],
   ];
 

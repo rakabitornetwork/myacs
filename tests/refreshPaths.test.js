@@ -34,6 +34,18 @@ test('empty device uses minimal IGD bootstrap paths', () => {
   assert.ok(!paths.some((p) => /X_CMCC|X_CMHI/i.test(p)));
 });
 
+test('generic GPON ONU probes optical subtrees', () => {
+  const paths = resolveDeviceRefreshFetchPaths({
+    parameters: {
+      'InternetGatewayDevice.DeviceInfo.Manufacturer': 'ZICG',
+      'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID': 'ABADI',
+    },
+  });
+
+  assert.ok(paths.some((p) => p.includes('X_GponInterfaceConfig')));
+  assert.ok(!paths.some((p) => /X_CMCC|X_CMHI/i.test(p)));
+});
+
 test('TR-181 device model uses Device paths only', () => {
   const paths = resolveDeviceRefreshFetchPaths({
     parameters: {

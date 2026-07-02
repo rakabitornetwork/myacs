@@ -16,8 +16,24 @@ const CORE_DEVICE_PATHS = [
   'Device.WiFi.AccessPoint.',
 ];
 
+/** Subtree optical umum — di-probe satu per task (fault satu path tidak menggagalkan yang lain). */
+const OPTICAL_PROBE_IGD_PATHS = [
+  'InternetGatewayDevice.WANDevice.1.X_GponInterfaceConfig.',
+  'InternetGatewayDevice.WANDevice.1.X_GponInterafceConfig.',
+  'InternetGatewayDevice.WANDevice.1.WANOpticalInterface.',
+  'InternetGatewayDevice.WANDevice.1.X_ZTE-COM_WANPONInterfaceConfig.',
+  'InternetGatewayDevice.X_ALU_OntOpticalParam.',
+  'InternetGatewayDevice.X_CT-COM_GponInterfaceConfig.',
+  'InternetGatewayDevice.X_CT-COM_EponInterfaceConfig.',
+  'Device.Optical.Interface.1.',
+];
+
 function getAllCandidatePaths() {
-  return [...new Set([...getDeviceInfoFetchPaths(), ...getConnectedClientsFetchPaths()])];
+  return [...new Set([
+    ...getDeviceInfoFetchPaths(),
+    ...getConnectedClientsFetchPaths(),
+    ...OPTICAL_PROBE_IGD_PATHS,
+  ])];
 }
 
 function subtreePrefix(path) {
@@ -40,7 +56,11 @@ function detectVendor(keys) {
 }
 
 function isVendorSpecificPath(path) {
-  return /X_CMCC|X_CMHI|X_GponInterfaceConfig|WANOpticalInterface/i.test(path);
+  return /X_CMCC|X_CMHI|X_GponInterfaceConfig|WANOpticalInterface|X_ZTE|X_ALU|X_CT-COM|Optical\.Interface/i.test(path);
+}
+
+function isOpticalProbePath(path) {
+  return OPTICAL_PROBE_IGD_PATHS.includes(path);
 }
 
 function pathAllowedForVendor(path, vendor) {
@@ -77,6 +97,7 @@ export function resolveDeviceRefreshFetchPaths(device) {
   const filtered = candidates.filter((path) => {
     if (!pathAllowedForModel(path, vendor)) return false;
     if (!pathAllowedForVendor(path, vendor)) return false;
+    if (isOpticalProbePath(path) && (vendor.igd || !vendor.device)) return true;
     if (hasSubtree(keys, path)) return true;
     if (CORE_IGD_PATHS.includes(path) && (vendor.igd || !vendor.device)) return true;
     if (CORE_DEVICE_PATHS.includes(path) && vendor.device && !vendor.igd) return true;

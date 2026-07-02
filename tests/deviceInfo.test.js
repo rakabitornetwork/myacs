@@ -54,8 +54,27 @@ describe('extractDeviceInfo', () => {
   it('fetch paths use subtrees only', async () => {
     const { getDeviceInfoFetchPaths } = await import('../app/helpers/deviceInfo.js');
     const paths = getDeviceInfoFetchPaths();
-    assert.ok(paths.length <= 16);
+    assert.ok(paths.length <= 20);
     assert.ok(paths.every((p) => p.endsWith('.')));
     assert.ok(paths.some((p) => p.includes('X_CMCC_EponInterfaceConfig')));
+  });
+
+  it('reads ZICG F650 style PPP on WANConnectionDevice.2 and GPON optical', () => {
+    const info = extractDeviceInfo({
+      manufacturer: 'ZICG',
+      model: 'F650',
+      parameters: {
+        'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID': 'ABADI',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username': 'user@ppp',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Enable': '1',
+        'InternetGatewayDevice.WANDevice.1.X_GponInterfaceConfig.RXPower': '-19.5',
+        'InternetGatewayDevice.WANDevice.1.X_GponInterfaceConfig.TransceiverTemperature': '42',
+      },
+    });
+
+    assert.equal(info.pppoeUsername, 'user@ppp');
+    assert.equal(info.ssid, 'ABADI');
+    assert.ok(info.rxPower.includes('dBm'));
+    assert.equal(info.temperature, '42.0\u00A0°C');
   });
 });

@@ -6,6 +6,7 @@ import Badge from '@/Components/Badge';
 import AcsBadge from '@/Components/AcsBadge';
 import Flash from '@/Components/Flash';
 import { Panel, PanelHeader } from '@/Components/Panel';
+import DashboardCharts from '@/Components/DashboardCharts';
 
 function formatDate(date) {
   if (!date) return '—';
@@ -42,7 +43,7 @@ function DualAcsBanner({ acs }) {
   );
 }
 
-export default function Dashboard({ stats, recentDevices, acs, system, flash }) {
+export default function Dashboard({ stats, charts, recentDevices, acs, system, flash }) {
   const onlineRate =
     stats.devices > 0 ? Math.round((stats.online / stats.devices) * 100) : 0;
 
@@ -128,6 +129,8 @@ export default function Dashboard({ stats, recentDevices, acs, system, flash }) 
         <StatCard label="Presets" value={stats.presets} icon={Settings2} />
         <StatCard label="Files" value={stats.files} icon={FileBox} />
       </div>
+
+      <DashboardCharts charts={charts} />
 
       <Panel className="mt-2">
         <PanelHeader

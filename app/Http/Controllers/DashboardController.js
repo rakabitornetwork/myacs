@@ -28,6 +28,7 @@ import {
   connectionRequestCredentialStatus,
   hasConnectionRequestCredentials,
 } from '../../helpers/connectionRequestCreds.js';
+import { aggregateDashboardCharts } from '../../helpers/dashboardCharts.js';
 
 function redirectDevice(res, device) {
   return res.redirect(`/devices/${device._id}`);
@@ -75,6 +76,7 @@ export async function dashboard(req, res) {
     pendingTasks,
     faultCount,
     recentDevices,
+    chartDevices,
   ] = await Promise.all([
     Device.countDocuments(),
     Device.countDocuments({ isOnline: true }),
@@ -83,6 +85,7 @@ export async function dashboard(req, res) {
     Task.countDocuments({ status: 'pending' }),
     Fault.countDocuments({ resolved: false }),
     Device.find().sort({ lastInform: -1 }).limit(5).lean(),
+    Device.find({}, { manufacturer: 1, model: 1, productClass: 1, parameters: 1 }).lean(),
   ]);
 
   let system = null;
@@ -124,6 +127,7 @@ export async function dashboard(req, res) {
       presets: await Preset.countDocuments(),
       files: await AcsFile.countDocuments(),
     },
+    charts: aggregateDashboardCharts(chartDevices),
     recentDevices: recentDevices.map((d) => ({
       id: d._id.toString(),
       deviceId: d.deviceId,

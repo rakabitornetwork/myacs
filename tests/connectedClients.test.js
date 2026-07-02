@@ -119,9 +119,39 @@ describe('extractConnectedClients', () => {
     assert.equal(result.wifiAssociationTotal, 3);
   });
 
+  it('parses CMCC Host.1 with realme device and LAN DHCP config', () => {
+    const result = extractConnectedClients({
+      parameters: {
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.HostName': 'realme-GT-7',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.IPAddress': '192.168.1.2',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.MACAddress': '86:35:ed:6d:07:dc',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.InterfaceType': '802.11',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.Active': '1',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.AddressSource': 'DHCP',
+        'InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPLeaseTime': '86400',
+        'InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.MinAddress': '192.168.1.2',
+        'InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.MaxAddress': '192.168.1.254',
+        'InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.SubnetMask': '255.255.255.0',
+        'InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPServerEnable': 'true',
+      },
+    });
+
+    assert.equal(result.count, 1);
+    assert.equal(result.clients[0].hostName, 'realme-GT-7');
+    assert.equal(result.clients[0].macAddress, '86:35:ED:6D:07:DC');
+    assert.equal(result.clients[0].interfaceType, 'WiFi');
+    assert.equal(result.clients[0].isActive, true);
+    assert.equal(result.clients[0].addressSource, 'DHCP');
+    assert.equal(result.lanConfig?.dhcpLeaseTimeFormatted, '24 jam');
+    assert.equal(result.lanConfig?.minAddress, '192.168.1.2');
+    assert.equal(result.lanConfig?.maxAddress, '192.168.1.254');
+    assert.equal(result.lanConfig?.dhcpServerEnable, 'Aktif');
+  });
+
   it('exposes fetch subtrees for TR-069 refresh', () => {
     const paths = getConnectedClientsFetchPaths();
     assert.ok(paths.some((p) => p.includes('Hosts')));
+    assert.ok(paths.some((p) => p.includes('LANHostConfigManagement')));
     assert.ok(paths.every((p) => p.endsWith('.')));
   });
 });

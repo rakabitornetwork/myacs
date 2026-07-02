@@ -247,7 +247,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
             <div className="mt-4 border-t border-zinc-100 pt-4 md:mt-3 md:pt-3">
               <PanelHeader
                 title="Perangkat Terhubung"
-                subtitle="Klien WiFi/LAN di belakang ONU — dari Hosts & AssociatedDevice TR-069"
+                subtitle="Hosts.Host, LAN DHCP — dari TR-069 GenieACS/MyACS"
               />
               <ConnectedClients data={device.connectedClients} />
             </div>

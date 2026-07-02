@@ -4,13 +4,48 @@ function cell(value) {
   return value && String(value).trim() && value !== '—' ? value : '—';
 }
 
+function activeLabel(client) {
+  if (client.active === true) return 'Aktif';
+  if (client.active === false) return 'Nonaktif';
+  return '—';
+}
+
+function LanConfigSummary({ lanConfig }) {
+  if (!lanConfig) return null;
+
+  const rows = [
+    ['DHCP Server', lanConfig.dhcpServerEnable],
+    ['DHCP Lease', lanConfig.dhcpLeaseTimeFormatted || lanConfig.dhcpLeaseTime],
+    ['Rentang IP', lanConfig.minAddress && lanConfig.maxAddress
+      ? `${lanConfig.minAddress} – ${lanConfig.maxAddress}`
+      : ''],
+    ['Subnet Mask', lanConfig.subnetMask],
+  ].filter(([, value]) => value && String(value).trim());
+
+  if (!rows.length) return null;
+
+  return (
+    <dl className="mb-3 grid grid-cols-1 gap-2 rounded-lg border border-zinc-100 bg-zinc-50/80 px-3.5 py-3 sm:grid-cols-2 md:mb-2 md:gap-x-4 md:px-3 md:py-2">
+      {rows.map(([label, value]) => (
+        <div key={label}>
+          <dt className="ui-label">{label}</dt>
+          <dd className="mt-0.5 ui-mono text-[14px] text-zinc-800 md:text-[13px]">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export default function ConnectedClients({ data }) {
   const clients = data?.clients || [];
   const count = data?.count ?? clients.length;
   const hasDetails = data?.hasDetails ?? clients.length > 0;
+  const lanConfig = data?.lanConfig;
 
   return (
     <div>
+      <LanConfigSummary lanConfig={lanConfig} />
+
       <div className="mb-3 flex flex-wrap items-center gap-2 md:mb-2">
         <Badge status={count > 0 ? 'Online' : 'Offline'} dot>
           {count} terhubung
@@ -32,7 +67,14 @@ export default function ConnectedClients({ data }) {
           <div className="md:hidden">
             {clients.map((client, index) => (
               <div key={`${client.macAddress}-${index}`} className="ui-connected-card">
-                <p className="font-medium text-zinc-900">{cell(client.hostName)}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium text-zinc-900">{cell(client.hostName)}</p>
+                  {client.active !== undefined && client.active !== null && (
+                    <Badge status={client.isActive ? 'Online' : 'Offline'} dot>
+                      {activeLabel(client)}
+                    </Badge>
+                  )}
+                </div>
                 <dl className="mt-2 grid grid-cols-1 gap-2 text-[14px] md:text-[13px]">
                   <div>
                     <dt className="ui-label">IP Address</dt>
@@ -46,9 +88,15 @@ export default function ConnectedClients({ data }) {
                     <dt className="ui-label">Device Type</dt>
                     <dd className="mt-0.5">{cell(client.interfaceType)}</dd>
                   </div>
+                  {client.addressSource && client.addressSource !== '—' && (
+                    <div>
+                      <dt className="ui-label">Address Source</dt>
+                      <dd className="mt-0.5">{cell(client.addressSource)}</dd>
+                    </div>
+                  )}
                   {client.leaseTimeRemaining && (
                     <div>
-                      <dt className="ui-label">Status</dt>
+                      <dt className="ui-label">Lease</dt>
                       <dd className="mt-0.5">{client.leaseTimeRemaining}</dd>
                     </div>
                   )}
@@ -65,7 +113,9 @@ export default function ConnectedClients({ data }) {
                   <th>IP Address</th>
                   <th>MAC Address</th>
                   <th>Device Type</th>
-                  <th>Status</th>
+                  <th>Active</th>
+                  <th>Source</th>
+                  <th>Lease</th>
                 </tr>
               </thead>
               <tbody>
@@ -75,6 +125,8 @@ export default function ConnectedClients({ data }) {
                     <td className="ui-mono whitespace-nowrap">{cell(client.ipAddress)}</td>
                     <td className="ui-mono whitespace-nowrap">{cell(client.macAddress)}</td>
                     <td>{cell(client.interfaceType)}</td>
+                    <td>{activeLabel(client)}</td>
+                    <td>{cell(client.addressSource)}</td>
                     <td className="text-zinc-600">{cell(client.leaseTimeRemaining) || '—'}</td>
                   </tr>
                 ))}

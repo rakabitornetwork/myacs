@@ -2,10 +2,20 @@ import { flattenParameterMap } from './parameters.js';
 
 const FETCH_SUBTREES = [
   'InternetGatewayDevice.LANDevice.1.Hosts.',
+  'InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.',
+  'InternetGatewayDevice.LANDevice.1.X_CMCC_HostCustomise.',
   'InternetGatewayDevice.LANDevice.1.WLANConfiguration.',
   'Device.Hosts.',
   'Device.WiFi.AccessPoint.',
 ];
+
+const LAN_CONFIG_FIELDS = {
+  dhcpLeaseTime: /\.LANHostConfigManagement\.DHCPLeaseTime$/i,
+  dhcpServerEnable: /\.LANHostConfigManagement\.DHCPServerEnable$/i,
+  minAddress: /\.LANHostConfigManagement\.MinAddress$/i,
+  maxAddress: /\.LANHostConfigManagement\.MaxAddress$/i,
+  subnetMask: /\.LANHostConfigManagement\.SubnetMask$/i,
+};
 
 const HOST_ENTRY_RE = /^(?:InternetGatewayDevice\.LANDevice\.\d+\.Hosts\.Host|Device\.Hosts\.Host)\.(\d+)\.(.+)$/i;
 const WLAN_ASSOC_RE = /^InternetGatewayDevice\.LANDevice\.\d+\.WLANConfiguration\.(\d+)\.AssociatedDevice\.(\d+)\.(.+)$/i;
@@ -15,6 +25,24 @@ const HOST_NUMBER_RE = /^(?:InternetGatewayDevice\.LANDevice\.\d+\.Hosts\.HostNu
 const WLAN_TOTAL_ASSOC_RE = /^InternetGatewayDevice\.LANDevice\.\d+\.WLANConfiguration\.(\d+)\.TotalAssociations$/i;
 const WLAN_ENABLE_RE = /^InternetGatewayDevice\.LANDevice\.\d+\.WLANConfiguration\.(\d+)\.Enable$/i;
 const WLAN_SSID_RE = /^InternetGatewayDevice\.LANDevice\.\d+\.WLANConfiguration\.(\d+)\.SSID$/i;
+
+export function formatDhcpLeaseTime(value) {
+  const sec = parseInt(String(value).replace(/[^\d]/g, ''), 10);
+  if (Number.isNaN(sec) || sec <= 0) return '';
+
+  if (sec % 86400 === 0) {
+    const days = sec / 86400;
+    return days === 1 ? '24 jam' : `${days} hari`;
+  }
+  if (sec % 3600 === 0) return `${sec / 3600} jam`;
+  if (sec >= 3600) {
+    const hours = Math.floor(sec / 3600);
+    const mins = Math.floor((sec % 3600) / 60);
+    return mins ? `${hours} jam ${mins} menit` : `${hours} jam`;
+  }
+  if (sec >= 60) return `${Math.floor(sec / 60)} menit`;
+  return `${sec} detik`;
+}
 
 export function formatLeaseTimeRemaining(value) {
   if (!value) return '';
@@ -104,7 +132,8 @@ function setField(target, segment, value) {
     return;
   }
   if (key === 'layer2interface') {
-    const formatted = formatInterfaceType(value);
+    const formatted = formatInterfaceType(value) || String(value).trim();
+    if (formatted) target.layer2Interface = formatted;
     if (formatted && !target.interfaceType) target.interfaceType = formatted;
     return;
   }
@@ -127,6 +156,13 @@ function setField(target, segment, value) {
   }
   if (key === 'associateddeviceauthenticationstate') {
     target.authState = String(value).trim();
+    return;
+  }
+  if (key.includes('xcmccstats') || key.includes('hoststats')) {
+    if (/bytes|packets|rate|signal|rssi/i.test(key)) {
+      target.stats = target.stats || {};
+      target.stats[key] = String(value).trim();
+    }
     return;
   }
   if (key === 'lastrequestedunicastcipher' || key === 'lastdatadownlinkrate' || key === 'lastdatauplinkrate') {
@@ -155,10 +191,42 @@ function finalizeClient(raw) {
     addressSource: raw.addressSource || '—',
     leaseTimeRemaining: raw.leaseTimeRemaining || '',
     authState: raw.authState || '',
+    active: raw.active,
+    isActive: raw.active !== false,
+    layer2Interface: raw.layer2Interface || '',
     source: raw.source || 'lan',
     wlanIndex: raw.wlanIndex || null,
     wlanSsid: raw.wlanSsid || '',
   };
+}
+
+function extractLanHostConfig(flat) {
+  const config = {
+    dhcpLeaseTime: '',
+    dhcpLeaseTimeFormatted: '',
+    dhcpServerEnable: '',
+    minAddress: '',
+    maxAddress: '',
+    subnetMask: '',
+  };
+
+  for (const [path, value] of Object.entries(flat)) {
+    if (LAN_CONFIG_FIELDS.dhcpLeaseTime.test(path)) {
+      config.dhcpLeaseTime = String(value).trim();
+      config.dhcpLeaseTimeFormatted = formatDhcpLeaseTime(value);
+    } else if (LAN_CONFIG_FIELDS.dhcpServerEnable.test(path)) {
+      config.dhcpServerEnable = isTruthy(value) ? 'Aktif' : (String(value).trim() ? 'Nonaktif' : '');
+    } else if (LAN_CONFIG_FIELDS.minAddress.test(path)) {
+      config.minAddress = String(value).trim();
+    } else if (LAN_CONFIG_FIELDS.maxAddress.test(path)) {
+      config.maxAddress = String(value).trim();
+    } else if (LAN_CONFIG_FIELDS.subnetMask.test(path)) {
+      config.subnetMask = String(value).trim();
+    }
+  }
+
+  const hasData = Object.values(config).some((v) => v && v !== '');
+  return hasData ? config : null;
 }
 
 function dedupeClients(list) {
@@ -290,6 +358,7 @@ export function extractConnectedClients(device) {
     hostNumberOfEntries,
     wifiAssociationTotal,
     hasDetails: clients.length > 0,
+    lanConfig: extractLanHostConfig(flat),
     countSource: clients.length
       ? 'list'
       : hostNumberOfEntries

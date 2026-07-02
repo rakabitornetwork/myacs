@@ -21,22 +21,29 @@ export default function DeviceInfoCells({ info, showSecrets = false }) {
 export function DeviceInfoGrid({ info, showSecrets = true }) {
   const i = info || {};
   const rows = [
-    ['Merk ONU', i.brand],
-    ['Type ONU', i.onuType],
-    ['PPPoE Username', i.pppoeUsername],
-    ['PPPoE Password', showSecrets ? i.pppoePassword : i.pppoePasswordMasked],
-    ['SSID', i.ssid],
-    ['Password SSID', showSecrets ? i.ssidPassword : i.ssidPasswordMasked],
-    ['RX Power', i.rxPower],
-    ['Temperature', i.temperature],
+    ['Merk ONU', i.brand, ''],
+    ['Type ONU', i.onuType, ''],
+    ['PPPoE Username', i.pppoeUsername, ''],
+    [
+      'PPPoE Password',
+      showSecrets ? i.pppoePassword : i.pppoePasswordMasked,
+      i.pppoePasswordNote,
+    ],
+    ['SSID', i.ssid, ''],
+    ['Password SSID', showSecrets ? i.ssidPassword : i.ssidPasswordMasked, ''],
+    ['RX Power', i.rxPower, ''],
+    ['Temperature', i.temperature, ''],
   ];
 
   return (
     <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
-      {rows.map(([label, value]) => (
+      {rows.map(([label, value, note]) => (
         <div key={label}>
           <dt className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{label}</dt>
           <dd className="mt-0.5 break-all text-[11px] text-zinc-800">{cell(value)}</dd>
+          {note && !value && (
+            <p className="mt-0.5 text-[10px] italic text-zinc-400">{note}</p>
+          )}
         </div>
       ))}
     </dl>

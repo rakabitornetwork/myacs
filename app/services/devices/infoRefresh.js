@@ -1,5 +1,5 @@
 import Task from '../../models/Task.js';
-import { getDeviceInfoParamPaths, deviceInfoIsComplete, extractDeviceInfo } from '../../helpers/deviceInfo.js';
+import { getDeviceInfoFetchPaths, deviceInfoIsComplete, extractDeviceInfo } from '../../helpers/deviceInfo.js';
 
 const REFRESH_TASK_NAME = 'Refresh device info';
 const REFRESH_COOLDOWN_MS = parseInt(process.env.DEVICE_INFO_REFRESH_COOLDOWN_MS || '1800000', 10);
@@ -30,7 +30,7 @@ export async function queueDeviceInfoRefresh(device, { force = false } = {}) {
     deviceId: device.deviceId,
     name: REFRESH_TASK_NAME,
     method: 'GetParameterValues',
-    payload: { names: getDeviceInfoParamPaths() },
+    payload: { names: getDeviceInfoFetchPaths() },
     priority: 1,
   });
 

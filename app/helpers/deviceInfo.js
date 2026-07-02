@@ -17,13 +17,17 @@ const PARAM_PATHS = {
     'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.SSID',
     'InternetGatewayDevice.LANDevice.1.WLANConfiguration.2.SSID',
     'InternetGatewayDevice.LANDevice.1.WLANConfiguration.3.SSID',
+    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.4.SSID',
     'Device.WiFi.SSID.1.SSID',
     'Device.WiFi.Radio.1.SSID',
   ],
   ssidPassword: [
-    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.PreSharedKey.1.PreSharedKey',
+    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.WPAKeyPassphrase',
     'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.KeyPassphrase',
-    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.2.PreSharedKey.1.PreSharedKey',
+    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.PreSharedKey.1.KeyPassphrase',
+    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.PreSharedKey.1.PreSharedKey',
+    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.2.WPAKeyPassphrase',
+    'InternetGatewayDevice.LANDevice.1.WLANConfiguration.2.KeyPassphrase',
     'Device.WiFi.AccessPoint.1.Security.KeyPassphrase',
     'Device.WiFi.AccessPoint.1.Security.X_CMCC_KeyPassphrase',
   ],
@@ -31,30 +35,195 @@ const PARAM_PATHS = {
     'InternetGatewayDevice.DeviceInfo.Temperature',
     'InternetGatewayDevice.X_CMHI_DeviceInfo.Temperature',
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.TransceiverTemperature',
+    'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.Temperature',
+    'InternetGatewayDevice.X_CMHI_Status.Temperature',
     'Device.DeviceInfo.TemperatureStatus.Temperature',
     'Device.Optical.Interface.1.Temperature',
   ],
   rxPower: [
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.RXPower',
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.RxPower',
+    'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.ReceivePower',
     'InternetGatewayDevice.X_CMHI_Optical.RxPower',
+    'InternetGatewayDevice.X_CMHI_Optical.RXPower',
     'InternetGatewayDevice.X_CMHI_Optical.Diagnostic.RXPower',
-    'Device.Optical.Interface.1.RxPower',
     'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.X_CMHI_RxPower',
+    'InternetGatewayDevice.WANDevice.1.WANOpticalInterface.OpticalSignalLevel',
+    'InternetGatewayDevice.WANDevice.1.WANOpticalInterface.RXPower',
+    'Device.Optical.Interface.1.RxPower',
+    'Device.Optical.Interface.1.OpticalSignalLevel',
   ],
 };
 
-const FUZZY_OR = {
-  pppoeUsername: [['wanpppconnection', 'username']],
-  pppoePassword: [['wanpppconnection', 'password']],
-  ssid: [['wlanconfiguration', 'ssid'], ['wifi', 'ssid']],
-  ssidPassword: [['keypassphrase'], ['presharedkey']],
-  temperature: [['temperature']],
-  rxPower: [['rxpower']],
+/** Subtree paths untuk GetParameterValues (akhiri dengan titik) */
+const FETCH_SUBTREES = [
+  'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.',
+  'InternetGatewayDevice.LANDevice.1.WLANConfiguration.',
+  'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.',
+  'InternetGatewayDevice.WANDevice.1.WANOpticalInterface.',
+  'InternetGatewayDevice.X_CMHI_Optical.',
+  'InternetGatewayDevice.X_CMHI_Status.',
+  'InternetGatewayDevice.X_CMHI_DeviceInfo.',
+  'InternetGatewayDevice.DeviceInfo.',
+];
+
+const FIELD_SCAN = {
+  ssid: {
+    endsWith: ['.ssid'],
+    excludes: ['bssid', 'ssidmask', 'ssidadvertisement'],
+  },
+  ssidPassword: {
+    includesAny: [
+      ['keypassphrase'],
+      ['wpakeypassphrase'],
+      ['wpa', 'passphrase'],
+      ['presharedkey', 'keypassphrase'],
+    ],
+    excludes: ['username', 'wanpppconnection'],
+  },
+  pppoePassword: {
+    includesAll: [['wanpppconnection', 'password']],
+    excludes: ['ssid', 'wlan'],
+  },
+  rxPower: {
+    includesAny: [
+      ['rxpower'],
+      ['rx', 'power'],
+      ['receivepower'],
+      ['opticalsignallevel'],
+      ['optical', 'rx'],
+    ],
+    excludes: ['txpower', 'tx', 'transmit'],
+  },
+  temperature: {
+    includesAny: [
+      ['transceivertemperature'],
+      ['.temperature'],
+      ['temperaturestatus'],
+    ],
+    excludes: ['txpower'],
+  },
 };
 
 export function getDeviceInfoParamPaths() {
   return [...new Set(Object.values(PARAM_PATHS).flat())];
+}
+
+export function getDeviceInfoFetchPaths() {
+  return [...FETCH_SUBTREES];
+}
+
+function matchesExcludes(key, excludes = []) {
+  const lower = key.toLowerCase();
+  return excludes.some((ex) => lower.includes(ex.toLowerCase()));
+}
+
+function findByScan(flat, rules) {
+  for (const [key, val] of Object.entries(flat)) {
+    if (val === undefined || val === null || String(val).trim() === '') continue;
+    if (matchesExcludes(key, rules.excludes)) continue;
+
+    const lower = key.toLowerCase();
+
+    if (rules.endsWith?.some((s) => lower.endsWith(s.toLowerCase()))) {
+      return String(val).trim();
+    }
+
+    if (rules.includesAll) {
+      for (const parts of rules.includesAll) {
+        if (parts.every((p) => lower.includes(p.toLowerCase()))) {
+          return String(val).trim();
+        }
+      }
+    }
+
+    if (rules.includesAny) {
+      for (const parts of rules.includesAny) {
+        if (parts.every((p) => lower.includes(p.toLowerCase()))) {
+          return String(val).trim();
+        }
+      }
+    }
+  }
+  return '';
+}
+
+function isEnabledValue(value) {
+  return value === '1' || value === 'true' || value === true || value === 1;
+}
+
+function wlanIndexFromPath(path) {
+  const match = path.match(/WLANConfiguration\.(\d+)\./i);
+  return match ? match[1] : null;
+}
+
+function findWifiCredentials(flat) {
+  const candidates = [];
+
+  for (const [key, val] of Object.entries(flat)) {
+    if (!key.toLowerCase().endsWith('.ssid')) continue;
+    if (matchesExcludes(key, FIELD_SCAN.ssid.excludes)) continue;
+    if (val === undefined || val === null || String(val).trim() === '') continue;
+
+    const index = wlanIndexFromPath(key);
+    const prefix = index
+      ? key.replace(/\.SSID$/i, '')
+      : key.slice(0, key.length - '.SSID'.length);
+    const enableKey = `${prefix}.Enable`;
+    const enabled = isEnabledValue(flat[enableKey]);
+
+    const passwordPaths = index
+      ? [
+          `InternetGatewayDevice.LANDevice.1.WLANConfiguration.${index}.WPAKeyPassphrase`,
+          `InternetGatewayDevice.LANDevice.1.WLANConfiguration.${index}.KeyPassphrase`,
+          `InternetGatewayDevice.LANDevice.1.WLANConfiguration.${index}.PreSharedKey.1.KeyPassphrase`,
+          `InternetGatewayDevice.LANDevice.1.WLANConfiguration.${index}.PreSharedKey.1.PreSharedKey`,
+        ]
+      : [];
+
+    let password = '';
+    for (const passwordPath of passwordPaths) {
+      const candidate = flat[passwordPath];
+      if (candidate !== undefined && candidate !== null && String(candidate).trim() !== '') {
+        password = String(candidate).trim();
+        break;
+      }
+    }
+
+    if (!password) {
+      for (const [passKey, passVal] of Object.entries(flat)) {
+        if (passVal === undefined || passVal === null || String(passVal).trim() === '') continue;
+        if (!passKey.startsWith(prefix)) continue;
+        const lower = passKey.toLowerCase();
+        if (
+          lower.includes('keypassphrase')
+          || lower.includes('wpakeypassphrase')
+          || (lower.includes('presharedkey') && lower.endsWith('.presharedkey'))
+        ) {
+          password = String(passVal).trim();
+          break;
+        }
+      }
+    }
+
+    candidates.push({
+      ssid: String(val).trim(),
+      password,
+      enabled,
+      index: index ? parseInt(index, 10) : 999,
+    });
+  }
+
+  if (!candidates.length) {
+    return { ssid: '', ssidPassword: '' };
+  }
+
+  candidates.sort((a, b) => {
+    if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
+    return a.index - b.index;
+  });
+
+  return { ssid: candidates[0].ssid, ssidPassword: candidates[0].password };
 }
 
 function findParamValue(flat, field) {
@@ -66,15 +235,10 @@ function findParamValue(flat, field) {
     }
   }
 
-  const groups = FUZZY_OR[field] || [];
-  for (const parts of groups) {
-    for (const [key, val] of Object.entries(flat)) {
-      if (val === undefined || val === null || String(val).trim() === '') continue;
-      const lower = key.toLowerCase();
-      if (parts.every((part) => lower.includes(part.toLowerCase()))) {
-        return String(val).trim();
-      }
-    }
+  const scan = FIELD_SCAN[field];
+  if (scan) {
+    const found = findByScan(flat, scan);
+    if (found) return found;
   }
 
   return '';
@@ -105,8 +269,13 @@ export function extractDeviceInfo(device) {
 
   const pppoeUsername = findParamValue(flat, 'pppoeUsername');
   const pppoePassword = findParamValue(flat, 'pppoePassword');
-  const ssid = findParamValue(flat, 'ssid');
-  const ssidPassword = findParamValue(flat, 'ssidPassword');
+  let ssid = findParamValue(flat, 'ssid');
+  let ssidPassword = findParamValue(flat, 'ssidPassword');
+  if (!ssid || !ssidPassword) {
+    const wifi = findWifiCredentials(flat);
+    if (!ssid) ssid = wifi.ssid;
+    if (!ssidPassword) ssidPassword = wifi.ssidPassword;
+  }
   const temperatureRaw = findParamValue(flat, 'temperature');
   const rxPowerRaw = findParamValue(flat, 'rxPower');
 
@@ -116,6 +285,7 @@ export function extractDeviceInfo(device) {
     pppoeUsername,
     pppoePassword,
     pppoePasswordMasked: maskSecret(pppoePassword),
+    pppoePasswordNote: pppoePassword ? '' : 'ONU sering tidak expose password PPPoE via TR-069',
     ssid,
     ssidPassword,
     ssidPasswordMasked: maskSecret(ssidPassword),

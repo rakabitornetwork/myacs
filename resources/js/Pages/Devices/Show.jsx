@@ -186,9 +186,9 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
             <div className="mt-3 border-t border-zinc-100 pt-3">
               <PanelHeader title="Info ONU" subtitle="PPPoE, WiFi, optical — dari parameter TR-069" />
               <DeviceInfoGrid info={device.info} showSecrets={canWrite} />
-              {!device.info?.pppoeUsername && !device.info?.ssid && (
+              {(!device.info?.ssid || !device.info?.rxPowerRaw) && (
                 <p className="mt-2 text-[11px] text-zinc-500">
-                  Data belum tersedia. Klik <strong>Refresh Info</strong> untuk mengambil parameter dari ONU.
+                  WiFi/optical belum lengkap? Klik <strong>Refresh Info</strong>, tunggu ~30 detik, lalu muat ulang halaman.
                 </p>
               )}
             </div>

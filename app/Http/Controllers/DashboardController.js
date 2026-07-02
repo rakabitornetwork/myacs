@@ -20,7 +20,7 @@ import { validateConfig } from '../../config/validate.js';
 import config from '../../config/index.js';
 import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestCredentials, markConnectionRequestSent, retryWakeForPendingTasks } from '../../services/tasks/queue.js';
 import { parametersToEntries } from '../../helpers/parameters.js';
-import { extractDeviceInfo, getDeviceInfoParamPaths } from '../../helpers/deviceInfo.js';
+import { extractDeviceInfo, getDeviceInfoFetchPaths } from '../../helpers/deviceInfo.js';
 import { queueDeviceInfoRefresh } from '../../services/devices/infoRefresh.js';
 import {
   getConnectionRequestCredentials,
@@ -326,7 +326,7 @@ export async function createRefreshInfoTask(req, res) {
 
   if (isGenieacsDevice(device)) {
     return runGenieacsAction(device, req, res, () =>
-      genieacsGetParameterValues(device.deviceId, getDeviceInfoParamPaths()),
+      genieacsGetParameterValues(device.deviceId, getDeviceInfoFetchPaths()),
     );
   }
 

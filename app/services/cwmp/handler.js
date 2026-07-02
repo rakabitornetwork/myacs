@@ -274,7 +274,11 @@ async function processInformBackground(deviceKey, info, clientIp, sessionId) {
     }
 
     await releaseStaleRunningTasks(deviceKey);
-    await queueDeviceInfoRefresh(device);
+    const queued = await queueDeviceInfoRefresh(device);
+    if (queued) {
+      await CwmpSession.updateOne({ deviceId: deviceKey }, { awaitingDispatch: true });
+      console.log(`[cwmp] ${deviceKey} queued Refresh device info`);
+    }
   } catch (err) {
     console.error(`[cwmp] ${deviceKey} inform background error:`, err.message);
   }
@@ -326,22 +330,32 @@ async function replyInform(req, res, envelope, raw, clientIp) {
 }
 
 async function shouldDispatchAfterEmptyPost(deviceKey) {
-  const [session, pending] = await Promise.all([
-    CwmpSession.findOne({ deviceId: deviceKey }).lean(),
-    countPendingTasks(deviceKey),
-  ]);
-
-  if (!pending) return false;
-  if (!session?.awaitingDispatch) return false;
+  const session = await CwmpSession.findOne({ deviceId: deviceKey }).lean();
+  if (!session) return false;
 
   const ageMs = Date.now() - new Date(session.lastSeen || 0).getTime();
-  return ageMs <= DISPATCH_SESSION_MAX_AGE_MS;
+  if (ageMs > DISPATCH_SESSION_MAX_AGE_MS) return false;
+
+  const pending = await countPendingTasks(deviceKey);
+  return pending > 0;
 }
 
 async function finishEmptyPost(deviceKey, res, requestId) {
   if (deviceKey && (await shouldDispatchAfterEmptyPost(deviceKey))) {
     console.log(`[cwmp] empty POST from ${deviceKey} — dispatch task`);
     return dispatchNextTask(deviceKey, res, requestId);
+  }
+
+  if (deviceKey) {
+    const session = await CwmpSession.findOne({ deviceId: deviceKey }).lean();
+    const ageMs = Date.now() - new Date(session?.lastSeen || 0).getTime();
+    if (ageMs <= 2500) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      if (await shouldDispatchAfterEmptyPost(deviceKey)) {
+        console.log(`[cwmp] empty POST from ${deviceKey} — dispatch task (after inform)`);
+        return dispatchNextTask(deviceKey, res, requestId);
+      }
+    }
   }
 
   sendEmptyHttp(res);

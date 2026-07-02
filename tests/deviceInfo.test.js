@@ -33,7 +33,26 @@ describe('extractDeviceInfo', () => {
     assert.equal(maskSecret(''), '');
   });
 
-  it('formats rx power', () => {
-    assert.equal(formatRxPower('-21.5'), '-21.50 dBm');
+  it('finds SSID by suffix scan when path differs', () => {
+    const info = extractDeviceInfo({
+      manufacturer: 'CMHI',
+      model: 'MJM-01',
+      parameters: {
+        'InternetGatewayDevice.LANDevice.1.WLANConfiguration.5.SSID': 'WiFi-CMHI',
+        'InternetGatewayDevice.LANDevice.1.WLANConfiguration.5.Enable': '1',
+        'InternetGatewayDevice.LANDevice.1.WLANConfiguration.5.WPAKeyPassphrase': 'pass1234',
+        'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.RxPower': '-22.3',
+      },
+    });
+    assert.equal(info.ssid, 'WiFi-CMHI');
+    assert.equal(info.ssidPassword, 'pass1234');
+    assert.equal(info.rxPower, '-22.30 dBm');
+  });
+
+  it('fetch paths use subtrees only', async () => {
+    const { getDeviceInfoFetchPaths } = await import('../app/helpers/deviceInfo.js');
+    const paths = getDeviceInfoFetchPaths();
+    assert.ok(paths.length <= 10);
+    assert.ok(paths.every((p) => p.endsWith('.')));
   });
 });

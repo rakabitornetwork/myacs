@@ -5,7 +5,7 @@ import Preset from '../../models/Preset.js';
 import AcsFile from '../../models/AcsFile.js';
 import { sendConnectionRequest } from '../../services/connectionRequest.js';
 import { syncDevicesFromGenieacs } from '../../jobs/genieacsSync.js';
-import { acsInfoForClient, isGenieacsDevice, isGenieacsNbiConfigured } from '../../helpers/acs.js';
+import { acsInfoForClient, isGenieacsDevice, isGenieacsNbiConfigured, getCwmpPublicUrl } from '../../helpers/acs.js';
 import {
   genieacsReboot,
   genieacsFactoryReset,
@@ -104,7 +104,7 @@ export async function dashboard(req, res) {
       mongodb: true,
       genieacsMongo: Boolean(config.genieacs.mongoUri),
       acsMode: config.acsMode,
-      cwmpUrl: config.cwmp.enabled ? `${config.appUrl}${config.cwmp.path}` : null,
+      cwmpUrl: getCwmpPublicUrl(),
       port: config.port,
       appUrl: config.appUrl,
       warnings: validation.warnings,

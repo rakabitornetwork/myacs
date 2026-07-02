@@ -5,6 +5,7 @@ import MongoStore from 'connect-mongo';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import config from './app/config/index.js';
+import { getCwmpPublicUrl } from './app/helpers/acs.js';
 import { logConfigValidation } from './app/config/validate.js';
 import { connectDatabase } from './app/database.js';
 import { ensureDefaultUser } from './app/seed.js';
@@ -112,7 +113,7 @@ function logStartup() {
   console.log(`[myacs] server running at ${config.appUrl} (port ${config.port})`);
 
   if (config.cwmp.enabled) {
-    console.log(`[myacs] CWMP (CPE baru): ${config.appUrl}${config.cwmp.path}`);
+    console.log(`[myacs] CWMP (CPE baru): ${getCwmpPublicUrl()}`);
   }
 
   if (config.acsMode === 'dual') {

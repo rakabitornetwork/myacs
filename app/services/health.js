@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import config from '../config/index.js';
 import { validateConfig } from '../config/validate.js';
+import { getCwmpPublicUrl } from '../helpers/acs.js';
 
 export async function healthCheck() {
   const checks = {
@@ -8,7 +9,7 @@ export async function healthCheck() {
     genieacsMongo: null,
     acsMode: config.acsMode,
     cwmpEnabled: config.cwmp.enabled,
-    cwmpUrl: config.cwmp.enabled ? `${config.appUrl}${config.cwmp.path}` : null,
+    cwmpUrl: getCwmpPublicUrl(),
     uptime: Math.floor(process.uptime()),
     version: process.env.npm_package_version || '1.0.0',
   };

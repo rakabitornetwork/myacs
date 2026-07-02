@@ -33,6 +33,8 @@ const config = {
   cwmp: {
     path: process.env.CWMP_PATH || '/cwmp',
     enabled: acsMode === 'dual' || acsMode === 'standalone',
+    /** URL lengkap untuk CPE (ONU) — bisa beda protokol dari APP_URL panel */
+    publicUrl: (process.env.CWMP_PUBLIC_URL || '').trim(),
     crUsername: process.env.CWMP_CR_USERNAME || '',
     crPassword: process.env.CWMP_CR_PASSWORD || '',
     crAutoProvision: process.env.CWMP_CR_AUTO_PROVISION === 'true',

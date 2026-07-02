@@ -32,7 +32,10 @@ function DualAcsBanner({ acs }) {
         </div>
         <div className="rounded border border-sky-100 bg-white/80 px-2 py-1">
           <span className="font-medium text-sky-700">CPE baru → MyACS</span>
-          <p className="ui-mono mt-0.5 text-[10px] text-zinc-500">{acs.cwmpUrl}</p>
+          <p className="ui-mono mt-0.5 break-all text-[10px] text-zinc-500">
+            {acs.cwmpUrl || '—'}
+          </p>
+          <p className="mt-0.5 text-[9px] text-zinc-400">Isi URL ini di ONU (TR-069 ACS)</p>
         </div>
       </div>
     </div>
@@ -72,13 +75,13 @@ export default function Dashboard({ stats, recentDevices, acs, system, flash }) 
               </p>
             </div>
             <div className="rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Port / URL</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Panel URL</p>
               <p className="ui-mono mt-0.5 text-[11px] text-zinc-700">
                 :{system.port} → {system.appUrl}
               </p>
             </div>
             <div className="rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">CWMP</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">CWMP (CPE)</p>
               <p className="ui-mono mt-0.5 break-all text-[10px] text-zinc-600">
                 {system.cwmpUrl || '—'}
               </p>

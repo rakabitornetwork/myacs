@@ -7,7 +7,7 @@ export default function Error({ status = 404, message = 'Halaman tidak ditemukan
       <Head title={`Error ${status}`} />
       <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-100 px-4">
         <Logo className="mb-4 h-10 w-10" />
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Error</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Error</p>
         <h1 className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-zinc-900">
           {status}
         </h1>

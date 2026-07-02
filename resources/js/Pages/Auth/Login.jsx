@@ -32,12 +32,12 @@ export default function Login({ errors = {}, status }) {
               <Logo className="h-8 w-8" />
               <div>
                 <p className="text-sm font-semibold text-white">MyACS</p>
-                <p className="text-[11px] text-zinc-500">TR-069 Auto Configuration Server</p>
+                <p className="text-[13px] text-zinc-500">TR-069 Auto Configuration Server</p>
               </div>
             </div>
 
             <div className="max-w-sm">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-400">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-400">
                 TeslaTech Platform
               </p>
               <h2 className="mt-2 text-2xl font-semibold leading-tight tracking-tight text-white">
@@ -51,7 +51,7 @@ export default function Login({ errors = {}, status }) {
                 {['CWMP 1.0', 'Task Queue', 'Presets', 'Multi-device'].map((f) => (
                   <div
                     key={f}
-                    className="rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5 text-[11px] text-zinc-400"
+                    className="rounded-md border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5 text-[13px] text-zinc-400"
                   >
                     {f}
                   </div>
@@ -59,7 +59,7 @@ export default function Login({ errors = {}, status }) {
               </div>
             </div>
 
-            <p className="font-mono text-[10px] text-zinc-600">myacs.teslatech.my.id</p>
+            <p className="font-mono text-[11px] text-zinc-600">myacs.teslatech.my.id</p>
           </div>
         </div>
 
@@ -69,7 +69,7 @@ export default function Login({ errors = {}, status }) {
               <Logo className="h-7 w-7" />
               <div>
                 <p className="text-sm font-semibold text-zinc-900">MyACS</p>
-                <p className="text-[10px] text-zinc-500">TeslaTech TR-069</p>
+                <p className="text-[11px] text-zinc-500">TeslaTech TR-069</p>
               </div>
             </div>
 
@@ -80,7 +80,7 @@ export default function Login({ errors = {}, status }) {
                 </div>
                 <div>
                   <h1 className="text-sm font-semibold text-zinc-900">Sign in</h1>
-                  <p className="text-[11px] text-zinc-500">Akses panel administrasi ACS</p>
+                  <p className="text-[13px] text-zinc-500">Akses panel administrasi ACS</p>
                 </div>
               </div>
 
@@ -92,7 +92,7 @@ export default function Login({ errors = {}, status }) {
 
               <form onSubmit={submit} className="space-y-3">
                 <div>
-                  <label htmlFor="email" className="mb-1 block text-[11px] font-medium text-zinc-600">
+                  <label htmlFor="email" className="mb-1 block text-[13px] font-medium text-zinc-600">
                     Email
                   </label>
                   <input
@@ -104,11 +104,11 @@ export default function Login({ errors = {}, status }) {
                     placeholder="amon@teslatech.my.id"
                     autoComplete="email"
                   />
-                  {errors.email && <p className="mt-1 text-[11px] text-red-600">{errors.email}</p>}
+                  {errors.email && <p className="mt-1 text-[13px] text-red-600">{errors.email}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="mb-1 block text-[11px] font-medium text-zinc-600">
+                  <label htmlFor="password" className="mb-1 block text-[13px] font-medium text-zinc-600">
                     Password
                   </label>
                   <input
@@ -120,7 +120,7 @@ export default function Login({ errors = {}, status }) {
                     autoComplete="current-password"
                   />
                   {errors.password && (
-                    <p className="mt-1 text-[11px] text-red-600">{errors.password}</p>
+                    <p className="mt-1 text-[13px] text-red-600">{errors.password}</p>
                   )}
                 </div>
 

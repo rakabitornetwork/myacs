@@ -9,7 +9,7 @@ export default function Flash({ flash }) {
 
   return (
     <div
-      className={`mb-2 rounded-md px-2.5 py-1.5 text-xs ring-1 ${styles[flash.type] || styles.success}`}
+      className={`mb-3 rounded-md px-3 py-2 text-[13px] ring-1 ${styles[flash.type] || styles.success}`}
     >
       {flash.message}
     </div>

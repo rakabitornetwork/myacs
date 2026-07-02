@@ -50,7 +50,7 @@ export default function FilesIndex({ files, uploadMaxMb, flash }) {
       title="Files"
       actions={
         <button type="button" onClick={() => setShowUpload(!showUpload)} className="ui-btn-primary">
-          <Upload className="h-3 w-3" />
+          <Upload className="h-3.5 w-3.5" />
           Upload
         </button>
       }
@@ -62,7 +62,7 @@ export default function FilesIndex({ files, uploadMaxMb, flash }) {
         <Panel className="mb-2 p-3">
           <form onSubmit={handleUpload} className="grid gap-2 sm:grid-cols-4">
             <div>
-              <label className="mb-1 block text-[11px] font-medium text-zinc-600">Nama</label>
+              <label className="mb-1 block text-[13px] font-medium text-zinc-600">Nama</label>
               <input
                 className="ui-input"
                 value={name}
@@ -71,7 +71,7 @@ export default function FilesIndex({ files, uploadMaxMb, flash }) {
               />
             </div>
             <div>
-              <label className="mb-1 block text-[11px] font-medium text-zinc-600">Tipe</label>
+              <label className="mb-1 block text-[13px] font-medium text-zinc-600">Tipe</label>
               <select className="ui-input" value={type} onChange={(e) => setType(e.target.value)}>
                 <option value="firmware">Firmware</option>
                 <option value="config">Config</option>
@@ -79,7 +79,7 @@ export default function FilesIndex({ files, uploadMaxMb, flash }) {
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-[11px] font-medium text-zinc-600">
+              <label className="mb-1 block text-[13px] font-medium text-zinc-600">
                 File (max {uploadMaxMb}MB)
               </label>
               <input
@@ -127,7 +127,7 @@ export default function FilesIndex({ files, uploadMaxMb, flash }) {
                   <tr key={f.id}>
                     <td className="font-medium text-zinc-900">{f.name}</td>
                     <td>
-                      <span className="rounded bg-zinc-100 px-1 py-0.5 text-[10px] font-medium uppercase text-zinc-600">
+                      <span className="rounded bg-zinc-100 px-1 py-0.5 text-[11px] font-medium uppercase text-zinc-600">
                         {f.type}
                       </span>
                     </td>
@@ -143,7 +143,7 @@ export default function FilesIndex({ files, uploadMaxMb, flash }) {
                         }}
                         className="ui-btn-secondary text-red-600 hover:bg-red-50"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </td>
                   </tr>

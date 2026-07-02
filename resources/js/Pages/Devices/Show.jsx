@@ -81,7 +81,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
       actions={
         <>
           <Link href="/devices" className="ui-btn-secondary">
-            <ArrowLeft className="h-3 w-3" />
+            <ArrowLeft className="h-3.5 w-3.5" />
             Back
           </Link>
           {canAct ? (
@@ -92,7 +92,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 className="ui-btn-secondary"
                 disabled={!isGenieacs && !device.connectionRequestUrl}
               >
-                <Zap className="h-3 w-3" />
+                <Zap className="h-3.5 w-3.5" />
                 Conn. Request
               </button>
               <button
@@ -100,7 +100,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 onClick={() => router.post(`/devices/${device.id}/refresh-info`)}
                 className="ui-btn-secondary"
               >
-                <Search className="h-3 w-3" />
+                <Search className="h-3.5 w-3.5" />
                 Refresh Info
               </button>
               {acs?.genieacsMongoConfigured && device.managedByMyacs ? (
@@ -109,7 +109,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                   onClick={() => router.post(`/devices/${device.id}/import-genieacs`)}
                   className="ui-btn-secondary"
                 >
-                  <Download className="h-3 w-3" />
+                  <Download className="h-3.5 w-3.5" />
                   Import GenieACS
                 </button>
               ) : null}
@@ -118,7 +118,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 onClick={() => router.post(`/devices/${device.id}/reboot`)}
                 className="ui-btn-danger"
               >
-                <RotateCcw className="h-3 w-3" />
+                <RotateCcw className="h-3.5 w-3.5" />
                 Reboot
               </button>
             </>
@@ -164,7 +164,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                   <p className="ui-mono text-sm font-semibold text-zinc-900">{device.deviceId}</p>
                   <AcsBadge source={device.source} />
                 </div>
-                <p className="mt-0.5 text-[11px] text-zinc-500">
+                <p className="mt-0.5 text-[13px] text-zinc-500">
                   {device.manufacturer} {device.model}
                 </p>
               </div>
@@ -185,10 +185,10 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 ['Events', (device.events || []).join(', ') || '—'],
               ].map(([label, value]) => (
                 <div key={label}>
-                  <dt className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                  <dt className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                     {label}
                   </dt>
-                  <dd className="mt-0.5 break-all text-[11px] text-zinc-800">{value || '—'}</dd>
+                  <dd className="mt-0.5 break-all text-[13px] text-zinc-800">{value || '—'}</dd>
                 </div>
               ))}
             </dl>
@@ -197,7 +197,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
               <PanelHeader title="Info ONU" subtitle="PPPoE, WiFi, optical — dari parameter TR-069" />
               <DeviceInfoGrid info={device.info} showSecrets={canWrite} />
               {(!device.info?.ssid || !device.info?.rxPowerRaw) && (
-                <p className="mt-2 text-[11px] text-zinc-500">
+                <p className="mt-2 text-[13px] text-zinc-500">
                   WiFi/optical belum lengkap? Klik <strong>Refresh Info</strong>, tunggu ~30 detik, lalu muat ulang halaman.
                 </p>
               )}
@@ -205,10 +205,10 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
 
             {device.connectionRequestUrl && (
               <div className="mt-2 rounded-md bg-zinc-50 px-2 py-1.5 ring-1 ring-zinc-100">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                   Connection Request URL
                 </p>
-                <p className="ui-mono mt-0.5 break-all text-[10px] text-zinc-600">
+                <p className="ui-mono mt-0.5 break-all text-[11px] text-zinc-600">
                   {device.connectionRequestUrl}
                 </p>
               </div>
@@ -217,7 +217,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
             {canAct && firmwareFiles.length > 0 && (
               <div className="mt-2 flex items-end gap-1.5 rounded-md border border-zinc-100 bg-zinc-50/50 p-2">
                 <div className="min-w-0 flex-1">
-                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                     Push Firmware
                   </label>
                   <select
@@ -233,7 +233,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                   </select>
                 </div>
                 <button type="button" onClick={pushFirmware} className="ui-btn-primary shrink-0">
-                  <Download className="h-3 w-3" />
+                  <Download className="h-3.5 w-3.5" />
                   Queue
                 </button>
               </div>
@@ -245,12 +245,12 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
               <PanelHeader title="Manual Tasks" subtitle="Get / Set parameter, upload & factory reset" />
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 <form onSubmit={submitGetParams} className="space-y-1.5 rounded-md border border-zinc-100 p-2">
-                  <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                    <Search className="h-3 w-3" />
+                  <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                    <Search className="h-3.5 w-3.5" />
                     Get Parameter Values
                   </div>
                   <textarea
-                    className="ui-input min-h-[4rem] font-mono text-[11px]"
+                    className="ui-input min-h-[4rem] font-mono text-[13px]"
                     value={getNames}
                     onChange={(e) => setGetNames(e.target.value)}
                     placeholder="InternetGatewayDevice.DeviceInfo."
@@ -261,17 +261,17 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 </form>
 
                 <form onSubmit={submitGetParamNames} className="space-y-1.5 rounded-md border border-zinc-100 p-2">
-                  <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                    <ListTree className="h-3 w-3" />
+                  <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                    <ListTree className="h-3.5 w-3.5" />
                     Get Parameter Names
                   </div>
                   <input
-                    className="ui-input font-mono text-[11px]"
+                    className="ui-input font-mono text-[13px]"
                     value={paramNamesPath}
                     onChange={(e) => setParamNamesPath(e.target.value)}
                     placeholder="InternetGatewayDevice."
                   />
-                  <label className="flex items-center gap-1.5 text-[10px] text-zinc-500">
+                  <label className="flex items-center gap-1.5 text-[11px] text-zinc-500">
                     <input
                       type="checkbox"
                       checked={paramNamesNextLevel}
@@ -285,18 +285,18 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 </form>
 
                 <form onSubmit={submitSetParams} className="space-y-1.5 rounded-md border border-zinc-100 p-2">
-                  <div className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                    <Settings2 className="h-3 w-3" />
+                  <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                    <Settings2 className="h-3.5 w-3.5" />
                     Set Parameter Value
                   </div>
                   <input
-                    className="ui-input font-mono text-[11px]"
+                    className="ui-input font-mono text-[13px]"
                     value={setPath}
                     onChange={(e) => setSetPath(e.target.value)}
                     placeholder="Device.ManagementServer.PeriodicInformInterval"
                   />
                   <input
-                    className="ui-input font-mono text-[11px]"
+                    className="ui-input font-mono text-[13px]"
                     value={setValue}
                     onChange={(e) => setSetValue(e.target.value)}
                     placeholder="Value"
@@ -312,8 +312,8 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 className="mt-2 flex flex-wrap items-end gap-1.5 rounded-md border border-zinc-100 p-2"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="mb-1 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                    <Upload className="h-3 w-3" />
+                  <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                    <Upload className="h-3.5 w-3.5" />
                     Upload dari CPE
                   </div>
                   <select
@@ -339,7 +339,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 }}
                 className="ui-btn-danger mt-2 w-full sm:w-auto"
               >
-                <AlertTriangle className="h-3 w-3" />
+                <AlertTriangle className="h-3.5 w-3.5" />
                 Factory Reset
               </button>
             </Panel>
@@ -391,15 +391,15 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                       <Badge status={task.status}>{task.status}</Badge>
                     </div>
                   </div>
-                  <p className="ui-mono mt-0.5 text-[10px] text-zinc-500">{task.method}</p>
+                  <p className="ui-mono mt-0.5 text-[11px] text-zinc-500">{task.method}</p>
                   <div className="mt-0.5 flex items-center justify-between gap-2">
-                    <p className="text-[10px] tabular-nums text-zinc-400">{formatDate(task.createdAt)}</p>
+                    <p className="text-[11px] tabular-nums text-zinc-400">{formatDate(task.createdAt)}</p>
                     {canAct && task.status === 'pending' && (
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => router.post(`/tasks/${task.id}/retry`)}
-                          className="shrink-0 text-[10px] font-medium text-blue-600 hover:text-blue-700"
+                          className="shrink-0 text-[11px] font-medium text-blue-600 hover:text-blue-700"
                         >
                           Retry
                         </button>
@@ -410,7 +410,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                               router.post(`/tasks/${task.id}/cancel`);
                             }
                           }}
-                          className="shrink-0 text-[10px] font-medium text-red-600 hover:text-red-700"
+                          className="shrink-0 text-[11px] font-medium text-red-600 hover:text-red-700"
                         >
                           Batalkan
                         </button>

@@ -10,7 +10,7 @@ export default function PresetsIndex({ presets }) {
       title="Presets"
       actions={
         <Link href="/presets/create" className="ui-btn-primary">
-          <Plus className="h-3 w-3" />
+          <Plus className="h-3.5 w-3.5" />
           New Preset
         </Link>
       }
@@ -34,17 +34,17 @@ export default function PresetsIndex({ presets }) {
                   {preset.isEnabled ? 'On' : 'Off'}
                 </Badge>
               </div>
-              <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-zinc-500">
+              <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-zinc-500">
                 {preset.description || 'No description'}
               </p>
-              <div className="mt-2 flex items-center gap-3 border-t border-zinc-100 pt-2 text-[10px] text-zinc-400">
+              <div className="mt-2 flex items-center gap-3 border-t border-zinc-100 pt-2 text-[11px] text-zinc-400">
                 <span className="tabular-nums">W:{preset.weight}</span>
                 <span className="tabular-nums">{preset.configurationsCount} cfg</span>
                 {preset.tags?.length > 0 && <span className="truncate">{preset.tags.join(', ')}</span>}
               </div>
               <div className="mt-2 flex gap-1">
                 <Link href={`/presets/${preset.id}/edit`} className="ui-btn-secondary flex-1">
-                  <Pencil className="h-3 w-3" />
+                  <Pencil className="h-3.5 w-3.5" />
                   Edit
                 </Link>
                 <button
@@ -53,7 +53,7 @@ export default function PresetsIndex({ presets }) {
                   className="ui-btn-secondary"
                   title="Toggle"
                 >
-                  <Power className="h-3 w-3" />
+                  <Power className="h-3.5 w-3.5" />
                 </button>
                 <button
                   type="button"
@@ -64,7 +64,7 @@ export default function PresetsIndex({ presets }) {
                   }}
                   className="ui-btn-secondary text-red-600 hover:bg-red-50"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             </Panel>

@@ -26,13 +26,13 @@ function DualAcsBanner({ acs }) {
       <div className="mt-1.5 grid gap-1 sm:grid-cols-2">
         <div className="rounded border border-violet-100 bg-white/80 px-2 py-1">
           <span className="font-medium text-violet-700">CPE lama → GenieACS</span>
-          <p className="ui-mono mt-0.5 text-[10px] text-zinc-500">
+          <p className="ui-mono mt-0.5 text-[11px] text-zinc-500">
             {acs.genieacsCwmpUrl || 'http://VPS:7547'}
           </p>
         </div>
         <div className="rounded border border-sky-100 bg-white/80 px-2 py-1">
           <span className="font-medium text-sky-700">CPE baru → MyACS</span>
-          <p className="ui-mono mt-0.5 break-all text-[10px] text-zinc-500">
+          <p className="ui-mono mt-0.5 break-all text-[11px] text-zinc-500">
             {acs.cwmpUrl || '—'}
           </p>
           <p className="mt-0.5 text-[9px] text-zinc-400">Isi URL ini di ONU (TR-069 ACS)</p>
@@ -65,30 +65,30 @@ export default function Dashboard({ stats, recentDevices, acs, system, flash }) 
           <PanelHeader title="System Status" subtitle="Admin — kesehatan layanan & deploy" />
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Health</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Health</p>
               <p className="mt-0.5 text-sm font-semibold capitalize text-zinc-800">{system.health}</p>
             </div>
             <div className="rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">MongoDB</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">MongoDB</p>
               <p className="mt-0.5 text-sm font-semibold text-zinc-800">
                 {system.mongodb ? 'Connected' : 'Disconnected'}
               </p>
             </div>
             <div className="rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Panel URL</p>
-              <p className="ui-mono mt-0.5 text-[11px] text-zinc-700">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Panel URL</p>
+              <p className="ui-mono mt-0.5 text-[13px] text-zinc-700">
                 :{system.port} → {system.appUrl}
               </p>
             </div>
             <div className="rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">CWMP (CPE)</p>
-              <p className="ui-mono mt-0.5 break-all text-[10px] text-zinc-600">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">CWMP (CPE)</p>
+              <p className="ui-mono mt-0.5 break-all text-[11px] text-zinc-600">
                 {system.cwmpUrl || '—'}
               </p>
             </div>
           </div>
           {(system.deployNotes?.length > 0 || system.warnings?.length > 0) && (
-            <ul className="mt-2 space-y-1 text-[11px] text-amber-800">
+            <ul className="mt-2 space-y-1 text-[13px] text-amber-800">
               {[...(system.deployNotes || []), ...(system.warnings || [])].map((note) => (
                 <li key={note} className="rounded border border-amber-100 bg-amber-50 px-2 py-1">
                   ⚠ {note}
@@ -96,7 +96,7 @@ export default function Dashboard({ stats, recentDevices, acs, system, flash }) 
               ))}
             </ul>
           )}
-          <p className="mt-2 text-[10px] text-zinc-400">
+          <p className="mt-2 text-[11px] text-zinc-400">
             Health API:{' '}
             <a href="/health" target="_blank" rel="noreferrer" className="text-brand-600 hover:underline">
               /health
@@ -140,11 +140,11 @@ export default function Dashboard({ stats, recentDevices, acs, system, flash }) 
                   onClick={() => router.post('/sync/genieacs')}
                   className="ui-btn-secondary"
                 >
-                  <RefreshCw className="h-3 w-3" />
+                  <RefreshCw className="h-3.5 w-3.5" />
                   Sync GenieACS
                 </button>
               )}
-              <Link href="/devices" className="text-[11px] font-medium text-brand-600 hover:underline">
+              <Link href="/devices" className="text-[13px] font-medium text-brand-600 hover:underline">
                 View all →
               </Link>
             </div>

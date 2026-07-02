@@ -26,7 +26,7 @@ export default function FaultsIndex({ faults, pagination, unresolvedCount, showR
       actions={
         <div className="flex items-center gap-1.5">
           {unresolvedCount > 0 && (
-            <span className="rounded-md bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-rose-700 ring-1 ring-rose-500/20">
+            <span className="rounded-md bg-rose-500/10 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-rose-700 ring-1 ring-rose-500/20">
               {unresolvedCount} aktif
             </span>
           )}
@@ -36,7 +36,7 @@ export default function FaultsIndex({ faults, pagination, unresolvedCount, showR
               onClick={() => router.post('/faults/resolve-all')}
               className="ui-btn-secondary"
             >
-              <CheckCheck className="h-3 w-3" />
+              <CheckCheck className="h-3.5 w-3.5" />
               Resolve all
             </button>
           )}
@@ -96,7 +96,7 @@ export default function FaultsIndex({ faults, pagination, unresolvedCount, showR
                         <button
                           type="button"
                           onClick={() => router.post(`/faults/${fault.id}/resolve`)}
-                          className="ui-btn-secondary text-[10px]"
+                          className="ui-btn-secondary text-[11px]"
                         >
                           Resolve
                         </button>
@@ -111,14 +111,14 @@ export default function FaultsIndex({ faults, pagination, unresolvedCount, showR
 
         {pagination.lastPage > 1 && (
           <div className="flex items-center justify-between border-t border-zinc-100 px-3 py-2">
-            <p className="text-[10px] text-zinc-500">
+            <p className="text-[11px] text-zinc-500">
               Halaman {pagination.page} / {pagination.lastPage}
             </p>
             <div className="flex gap-1">
               {pagination.page > 1 && (
                 <Link
                   href={`/faults?page=${pagination.page - 1}${showResolved ? '&resolved=1' : ''}`}
-                  className="ui-btn-secondary text-[10px]"
+                  className="ui-btn-secondary text-[11px]"
                 >
                   Prev
                 </Link>
@@ -126,7 +126,7 @@ export default function FaultsIndex({ faults, pagination, unresolvedCount, showR
               {pagination.page < pagination.lastPage && (
                 <Link
                   href={`/faults?page=${pagination.page + 1}${showResolved ? '&resolved=1' : ''}`}
-                  className="ui-btn-secondary text-[10px]"
+                  className="ui-btn-secondary text-[11px]"
                 >
                   Next
                 </Link>

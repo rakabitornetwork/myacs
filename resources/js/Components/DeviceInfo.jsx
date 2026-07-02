@@ -39,10 +39,10 @@ export function DeviceInfoGrid({ info, showSecrets = true }) {
     <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
       {rows.map(([label, value, note]) => (
         <div key={label}>
-          <dt className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{label}</dt>
-          <dd className="mt-0.5 break-all text-[11px] text-zinc-800">{cell(value)}</dd>
+          <dt className="ui-label">{label}</dt>
+          <dd className="mt-0.5 break-all ui-text">{cell(value)}</dd>
           {note && !value && (
-            <p className="mt-0.5 text-[10px] italic text-zinc-400">{note}</p>
+            <p className="mt-0.5 ui-caption">{note}</p>
           )}
         </div>
       ))}

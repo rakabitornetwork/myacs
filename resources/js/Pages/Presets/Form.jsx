@@ -55,7 +55,7 @@ export default function PresetsForm({ preset, errors = {} }) {
       title={isEdit ? 'Edit Preset' : 'New Preset'}
       actions={
         <Link href="/presets" className="ui-btn-secondary">
-          <ArrowLeft className="h-3 w-3" />
+          <ArrowLeft className="h-3.5 w-3.5" />
           Back
         </Link>
       }
@@ -66,16 +66,16 @@ export default function PresetsForm({ preset, errors = {} }) {
         <form onSubmit={submit} className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-[11px] font-medium text-zinc-600">Nama *</label>
+              <label className="mb-1 block text-[13px] font-medium text-zinc-600">Nama *</label>
               <input
                 className="ui-input"
                 value={data.name}
                 onChange={(e) => setData('name', e.target.value)}
               />
-              {errors.name && <p className="mt-1 text-[11px] text-red-600">{errors.name}</p>}
+              {errors.name && <p className="mt-1 text-[13px] text-red-600">{errors.name}</p>}
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-[11px] font-medium text-zinc-600">Deskripsi</label>
+              <label className="mb-1 block text-[13px] font-medium text-zinc-600">Deskripsi</label>
               <textarea
                 className="ui-input min-h-[60px] resize-y"
                 value={data.description}
@@ -83,7 +83,7 @@ export default function PresetsForm({ preset, errors = {} }) {
               />
             </div>
             <div>
-              <label className="mb-1 block text-[11px] font-medium text-zinc-600">Weight</label>
+              <label className="mb-1 block text-[13px] font-medium text-zinc-600">Weight</label>
               <input
                 type="number"
                 className="ui-input"
@@ -92,7 +92,7 @@ export default function PresetsForm({ preset, errors = {} }) {
               />
             </div>
             <div>
-              <label className="mb-1 block text-[11px] font-medium text-zinc-600">Tags (comma)</label>
+              <label className="mb-1 block text-[13px] font-medium text-zinc-600">Tags (comma)</label>
               <input
                 className="ui-input"
                 placeholder="default, ont"
@@ -101,7 +101,7 @@ export default function PresetsForm({ preset, errors = {} }) {
               />
             </div>
             <div className="sm:col-span-2">
-              <label className="mb-1 block text-[11px] font-medium text-zinc-600">
+              <label className="mb-1 block text-[13px] font-medium text-zinc-600">
                 Precondition (JS expression, optional)
               </label>
               <input
@@ -127,16 +127,16 @@ export default function PresetsForm({ preset, errors = {} }) {
 
           <div>
             <div className="mb-2 flex items-center justify-between">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+              <label className="text-[13px] font-semibold uppercase tracking-wider text-zinc-500">
                 Konfigurasi Parameter
               </label>
               <button type="button" onClick={addConfig} className="ui-btn-secondary">
-                <Plus className="h-3 w-3" />
+                <Plus className="h-3.5 w-3.5" />
                 Add
               </button>
             </div>
             {errors.configurations && (
-              <p className="mb-2 text-[11px] text-red-600">{errors.configurations}</p>
+              <p className="mb-2 text-[13px] text-red-600">{errors.configurations}</p>
             )}
             <div className="space-y-2">
               {data.configurations.map((cfg, i) => (
@@ -166,7 +166,7 @@ export default function PresetsForm({ preset, errors = {} }) {
                     className="ui-btn-secondary sm:col-span-1"
                     disabled={data.configurations.length === 1}
                   >
-                    <Trash2 className="h-3 w-3" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ))}

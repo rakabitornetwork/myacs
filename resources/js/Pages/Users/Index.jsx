@@ -40,7 +40,7 @@ export default function UsersIndex({ users, roles, flash }) {
       title="Users"
       actions={
         <button type="button" onClick={() => setShowForm(!showForm)} className="ui-btn-primary">
-          <UserPlus className="h-3 w-3" />
+          <UserPlus className="h-3.5 w-3.5" />
           Tambah User
         </button>
       }
@@ -95,7 +95,7 @@ export default function UsersIndex({ users, roles, flash }) {
               </button>
             </div>
           </form>
-          <p className="mt-2 text-[10px] text-zinc-400">
+          <p className="mt-2 text-[11px] text-zinc-400">
             <strong>admin</strong> — full access · <strong>operator</strong> — kelola device/task ·{' '}
             <strong>viewer</strong> — read only
           </p>
@@ -134,7 +134,7 @@ export default function UsersIndex({ users, roles, flash }) {
                     <button
                       type="button"
                       onClick={() => router.post(`/users/${user.id}/toggle`)}
-                      className="ui-btn-secondary text-[10px]"
+                      className="ui-btn-secondary text-[11px]"
                     >
                       {user.isActive ? 'Disable' : 'Enable'}
                     </button>

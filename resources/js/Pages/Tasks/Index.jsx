@@ -33,7 +33,7 @@ export default function TasksIndex({ tasks }) {
             counts[s] ? (
               <span
                 key={s}
-                className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium capitalize tabular-nums text-zinc-500"
+                className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] font-medium capitalize tabular-nums text-zinc-500"
               >
                 {s}: {counts[s]}
               </span>
@@ -86,12 +86,12 @@ export default function TasksIndex({ tasks }) {
                               router.post(`/tasks/${task.id}/cancel`);
                             }
                           }}
-                          className="ui-btn-secondary text-[10px] text-red-600 hover:text-red-700"
+                          className="ui-btn-secondary text-[11px] text-red-600 hover:text-red-700"
                         >
                           Batalkan
                         </button>
                       ) : (
-                        <span className="text-[10px] text-zinc-300">—</span>
+                        <span className="text-[11px] text-zinc-300">—</span>
                       )}
                     </td>
                   </tr>

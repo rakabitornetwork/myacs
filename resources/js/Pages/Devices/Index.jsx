@@ -35,7 +35,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs }) {
     <AppLayout
       title="Devices"
       actions={
-        <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-zinc-500">
+        <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[11px] font-medium tabular-nums text-zinc-500">
           {pagination.total} total
         </span>
       }
@@ -53,7 +53,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs }) {
               key={opt.value}
               type="button"
               onClick={() => setSourceFilter(opt.value)}
-              className={`rounded-md px-2 py-1 text-[11px] font-medium transition ${
+              className={`rounded-md px-2 py-1 text-[13px] font-medium transition ${
                 source === opt.value
                   ? 'bg-brand-600 text-white'
                   : 'bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50'
@@ -149,7 +149,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs }) {
       </Panel>
 
       {pagination.lastPage > 1 && (
-        <div className="mt-2 flex items-center justify-between px-1 text-[11px] text-zinc-500">
+        <div className="mt-2 flex items-center justify-between px-1 text-[13px] text-zinc-500">
           <span className="tabular-nums">
             {pagination.page}/{pagination.lastPage} · {pagination.total} devices
           </span>

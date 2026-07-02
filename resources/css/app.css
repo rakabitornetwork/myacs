@@ -23,8 +23,9 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
+  /* Medium-high density: readable, still compact */
   body {
-    @apply bg-zinc-100 text-zinc-900 text-[13px] leading-snug;
+    @apply bg-zinc-100 text-zinc-900 text-sm leading-normal;
   }
 
   ::selection {
@@ -38,11 +39,11 @@
   }
 
   .ui-panel-header {
-    @apply flex items-center justify-between border-b border-zinc-100 px-3 py-2;
+    @apply flex items-center justify-between border-b border-zinc-100 px-3.5 py-2.5;
   }
 
   .ui-panel-title {
-    @apply text-[11px] font-semibold uppercase tracking-wider text-zinc-500;
+    @apply text-xs font-semibold uppercase tracking-wider text-zinc-500;
   }
 
   .ui-table-wrap {
@@ -50,7 +51,7 @@
   }
 
   .ui-table {
-    @apply w-full text-left text-xs;
+    @apply w-full text-left text-[13px];
   }
 
   .ui-table thead tr {
@@ -58,11 +59,11 @@
   }
 
   .ui-table th {
-    @apply px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-500 whitespace-nowrap;
+    @apply px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 whitespace-nowrap;
   }
 
   .ui-table td {
-    @apply px-3 py-1.5 text-zinc-700 border-b border-zinc-50;
+    @apply px-3.5 py-2 text-[13px] text-zinc-700 border-b border-zinc-50;
   }
 
   .ui-table tbody tr {
@@ -70,27 +71,27 @@
   }
 
   .ui-input {
-    @apply w-full rounded-md border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/15;
+    @apply w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-[13px] text-zinc-900 placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/15;
   }
 
   .ui-btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition;
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition;
   }
 
   .ui-btn-primary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50;
   }
 
   .ui-btn-secondary {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50;
   }
 
   .ui-btn-danger {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition bg-amber-600 text-white hover:bg-amber-700;
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition bg-amber-600 text-white hover:bg-amber-700;
   }
 
   .ui-badge {
-    @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+    @apply inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide;
   }
 
   .ui-link {
@@ -98,14 +99,31 @@
   }
 
   .ui-mono {
-    @apply font-mono text-[11px];
+    @apply font-mono text-[13px];
   }
 
   .ui-stat {
-    @apply rounded-md border border-zinc-200/90 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] flex items-center gap-2.5 px-3 py-2;
+    @apply rounded-md border border-zinc-200/90 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] flex items-center gap-3 px-3.5 py-2.5;
   }
 
   .ui-empty {
-    @apply px-3 py-8 text-center text-xs text-zinc-400;
+    @apply px-3.5 py-10 text-center text-[13px] text-zinc-400;
+  }
+
+  /* Semantic typography — medium-high density */
+  .ui-label {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-zinc-400;
+  }
+
+  .ui-meta {
+    @apply text-[11px] text-zinc-500;
+  }
+
+  .ui-text {
+    @apply text-[13px] text-zinc-800;
+  }
+
+  .ui-caption {
+    @apply text-[11px] italic text-zinc-400;
   }
 }

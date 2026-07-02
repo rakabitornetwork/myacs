@@ -8,7 +8,7 @@ export function PanelHeader({ title, subtitle, action, children }) {
       {title ? (
         <div>
           <h2 className="ui-panel-title">{title}</h2>
-          {subtitle ? <p className="text-[10px] text-zinc-400">{subtitle}</p> : null}
+          {subtitle ? <p className="ui-meta">{subtitle}</p> : null}
         </div>
       ) : (
         children

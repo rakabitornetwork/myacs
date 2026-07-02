@@ -9,14 +9,14 @@ export default function StatCard({ label, value, icon: Icon, color = 'brand', su
   return (
     <div className="ui-stat">
       {Icon && (
-        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${iconColors[color]}`}>
-          <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${iconColors[color]}`}>
+          <Icon className="h-4 w-4" strokeWidth={2.25} />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[10px] font-medium uppercase tracking-wider text-zinc-500">{label}</p>
-        <p className="text-lg font-semibold tabular-nums tracking-tight text-zinc-900">{value}</p>
-        {sub && <p className="text-[10px] text-zinc-400">{sub}</p>}
+        <p className="truncate text-[11px] font-medium uppercase tracking-wider text-zinc-500">{label}</p>
+        <p className="text-xl font-semibold tabular-nums tracking-tight text-zinc-900">{value}</p>
+        {sub && <p className="text-[11px] text-zinc-400">{sub}</p>}
       </div>
     </div>
   );

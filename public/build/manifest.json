@@ -13,15 +13,15 @@
       "_vendor-react-DwE3M5Z3.js"
     ]
   },
-  "_DeviceInfo-DPUAjI0x.js": {
-    "file": "assets/DeviceInfo-DPUAjI0x.js",
+  "_DeviceInfo-CCi1bQJq.js": {
+    "file": "assets/DeviceInfo-CCi1bQJq.js",
     "name": "DeviceInfo",
     "imports": [
       "_vendor-react-DwE3M5Z3.js"
     ]
   },
-  "_Flash-p3lPLSeM.js": {
-    "file": "assets/Flash-p3lPLSeM.js",
+  "_Flash-AGpnzOjx.js": {
+    "file": "assets/Flash-AGpnzOjx.js",
     "name": "Flash",
     "imports": [
       "_vendor-react-DwE3M5Z3.js"
@@ -34,8 +34,8 @@
       "_vendor-react-DwE3M5Z3.js"
     ]
   },
-  "_Panel-DMhd4Wq5.js": {
-    "file": "assets/Panel-DMhd4Wq5.js",
+  "_Panel-BFg21oa_.js": {
+    "file": "assets/Panel-BFg21oa_.js",
     "name": "Panel",
     "imports": [
       "_vendor-react-DwE3M5Z3.js",
@@ -63,7 +63,7 @@
     "name": "vendor-react"
   },
   "resources/js/Pages/Auth/Login.jsx": {
-    "file": "assets/Login-DlIp1TSS.js",
+    "file": "assets/Login-BbfSEZPK.js",
     "name": "Login",
     "src": "resources/js/Pages/Auth/Login.jsx",
     "isDynamicEntry": true,
@@ -75,56 +75,56 @@
     ]
   },
   "resources/js/Pages/Dashboard.jsx": {
-    "file": "assets/Dashboard-BAmBfkzl.js",
+    "file": "assets/Dashboard-DQvjC48e.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Dashboard.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DwE3M5Z3.js",
       "_vendor-inertia-Dke8vPqV.js",
-      "_Panel-DMhd4Wq5.js",
+      "_Panel-BFg21oa_.js",
       "_Badge-D2rcc4qe.js",
       "_AcsBadge-56DW-69w.js",
-      "_Flash-p3lPLSeM.js",
+      "_Flash-AGpnzOjx.js",
       "_vendor-icons-DysBb4YA.js",
       "_Logo-GH4O6GOa.js"
     ]
   },
   "resources/js/Pages/Devices/Index.jsx": {
-    "file": "assets/Index-DmClgNZR.js",
+    "file": "assets/Index-DL5ZzIKI.js",
     "name": "Index",
     "src": "resources/js/Pages/Devices/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DwE3M5Z3.js",
       "_vendor-inertia-Dke8vPqV.js",
-      "_Panel-DMhd4Wq5.js",
+      "_Panel-BFg21oa_.js",
       "_Badge-D2rcc4qe.js",
       "_AcsBadge-56DW-69w.js",
-      "_DeviceInfo-DPUAjI0x.js",
+      "_DeviceInfo-CCi1bQJq.js",
       "_vendor-icons-DysBb4YA.js",
       "_Logo-GH4O6GOa.js"
     ]
   },
   "resources/js/Pages/Devices/Show.jsx": {
-    "file": "assets/Show-BF7Jjr-B.js",
+    "file": "assets/Show-BOclTQXv.js",
     "name": "Show",
     "src": "resources/js/Pages/Devices/Show.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DwE3M5Z3.js",
       "_vendor-inertia-Dke8vPqV.js",
-      "_Panel-DMhd4Wq5.js",
+      "_Panel-BFg21oa_.js",
       "_Badge-D2rcc4qe.js",
       "_AcsBadge-56DW-69w.js",
-      "_Flash-p3lPLSeM.js",
-      "_DeviceInfo-DPUAjI0x.js",
+      "_Flash-AGpnzOjx.js",
+      "_DeviceInfo-CCi1bQJq.js",
       "_vendor-icons-DysBb4YA.js",
       "_Logo-GH4O6GOa.js"
     ]
   },
   "resources/js/Pages/Error.jsx": {
-    "file": "assets/Error-mNmEoR_b.js",
+    "file": "assets/Error-DZlwjgYC.js",
     "name": "Error",
     "src": "resources/js/Pages/Error.jsx",
     "isDynamicEntry": true,
@@ -135,92 +135,92 @@
     ]
   },
   "resources/js/Pages/Faults/Index.jsx": {
-    "file": "assets/Index-DppcTYIr.js",
+    "file": "assets/Index-lEC_iMzW.js",
     "name": "Index",
     "src": "resources/js/Pages/Faults/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DwE3M5Z3.js",
       "_vendor-inertia-Dke8vPqV.js",
-      "_Panel-DMhd4Wq5.js",
+      "_Panel-BFg21oa_.js",
       "_Badge-D2rcc4qe.js",
-      "_Flash-p3lPLSeM.js",
+      "_Flash-AGpnzOjx.js",
       "_vendor-icons-DysBb4YA.js",
       "_Logo-GH4O6GOa.js"
     ]
   },
   "resources/js/Pages/Files/Index.jsx": {
-    "file": "assets/Index-B4UVsX8s.js",
+    "file": "assets/Index-D1NqKISY.js",
     "name": "Index",
     "src": "resources/js/Pages/Files/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DwE3M5Z3.js",
       "_vendor-inertia-Dke8vPqV.js",
-      "_Panel-DMhd4Wq5.js",
-      "_Flash-p3lPLSeM.js",
+      "_Panel-BFg21oa_.js",
+      "_Flash-AGpnzOjx.js",
       "_vendor-icons-DysBb4YA.js",
       "_Logo-GH4O6GOa.js"
     ]
   },
   "resources/js/Pages/Presets/Form.jsx": {
-    "file": "assets/Form-Z-5COoEO.js",
+    "file": "assets/Form-moTL0sfL.js",
     "name": "Form",
     "src": "resources/js/Pages/Presets/Form.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DwE3M5Z3.js",
       "_vendor-inertia-Dke8vPqV.js",
-      "_Panel-DMhd4Wq5.js",
+      "_Panel-BFg21oa_.js",
       "_vendor-icons-DysBb4YA.js",
       "_Logo-GH4O6GOa.js"
     ]
   },
   "resources/js/Pages/Presets/Index.jsx": {
-    "file": "assets/Index-DrnnTjQj.js",
+    "file": "assets/Index-BoTiomuW.js",
     "name": "Index",
     "src": "resources/js/Pages/Presets/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DwE3M5Z3.js",
       "_vendor-inertia-Dke8vPqV.js",
-      "_Panel-DMhd4Wq5.js",
+      "_Panel-BFg21oa_.js",
       "_Badge-D2rcc4qe.js",
       "_vendor-icons-DysBb4YA.js",
       "_Logo-GH4O6GOa.js"
     ]
   },
   "resources/js/Pages/Tasks/Index.jsx": {
-    "file": "assets/Index-uds7PmgQ.js",
+    "file": "assets/Index-BgZ8guGj.js",
     "name": "Index",
     "src": "resources/js/Pages/Tasks/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DwE3M5Z3.js",
       "_vendor-inertia-Dke8vPqV.js",
-      "_Panel-DMhd4Wq5.js",
+      "_Panel-BFg21oa_.js",
       "_Badge-D2rcc4qe.js",
       "_Logo-GH4O6GOa.js",
       "_vendor-icons-DysBb4YA.js"
     ]
   },
   "resources/js/Pages/Users/Index.jsx": {
-    "file": "assets/Index-BvLBg6gR.js",
+    "file": "assets/Index-B-XP5Orf.js",
     "name": "Index",
     "src": "resources/js/Pages/Users/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DwE3M5Z3.js",
       "_vendor-inertia-Dke8vPqV.js",
-      "_Panel-DMhd4Wq5.js",
+      "_Panel-BFg21oa_.js",
       "_Badge-D2rcc4qe.js",
-      "_Flash-p3lPLSeM.js",
+      "_Flash-AGpnzOjx.js",
       "_vendor-icons-DysBb4YA.js",
       "_Logo-GH4O6GOa.js"
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-s4bsW1zF.js",
+    "file": "assets/app-n9G4jrIr.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
@@ -242,7 +242,7 @@
       "resources/js/Pages/Users/Index.jsx"
     ],
     "css": [
-      "assets/app-CKmEQp5H.css"
+      "assets/app-Ch-lpIfz.css"
     ]
   }
 }

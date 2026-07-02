@@ -5,6 +5,7 @@ const PARAM_PATHS = {
   pppoeUsername: [
     'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username',
     'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.2.WANPPPConnection.1.Username',
+    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.5.WANPPPConnection.1.Username',
     'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.2.Username',
     'Device.PPP.Interface.1.Username',
     'VirtualParameters.pppUsername',
@@ -50,6 +51,7 @@ const PARAM_PATHS = {
   ],
   temperature: [
     'VirtualParameters.gettemp',
+    'InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.TransceiverTemperature',
     'InternetGatewayDevice.WANDevice.1.X_CMCC_EponInterfaceConfig.TransceiverTemperature',
     'InternetGatewayDevice.DeviceInfo.Temperature',
     'InternetGatewayDevice.X_CMHI_DeviceInfo.Temperature',
@@ -67,6 +69,7 @@ const PARAM_PATHS = {
   ],
   rxPower: [
     'VirtualParameters.RXPower',
+    'InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.RXPower',
     'InternetGatewayDevice.WANDevice.1.X_CMCC_EponInterfaceConfig.RXPower',
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.RXPower',
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.RxPower',
@@ -88,6 +91,12 @@ const PARAM_PATHS = {
     'VirtualParameters.rxPower',
     'VirtualParameters.RXPOWER',
     'VirtualParameters.OpticalPower',
+  ],
+  routeProtocolRxPpp: [
+    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.5.WANPPPConnection.1.RouteProtocolRx',
+  ],
+  routeProtocolRxIp: [
+    'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.6.WANIPConnection.1.RouteProtocolRx',
   ],
 };
 
@@ -134,6 +143,7 @@ const FETCH_SUBTREES = [
   'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.',
   'InternetGatewayDevice.LANDevice.1.WLANConfiguration.',
   'InternetGatewayDevice.WANDevice.1.X_CMCC_EponInterfaceConfig.',
+  'InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.',
   'InternetGatewayDevice.WANDevice.1.X_CMCC_GponInterfaceConfig.',
   'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.',
   'InternetGatewayDevice.WANDevice.1.X_GponInterfaceConfig.',
@@ -173,6 +183,12 @@ const FIELD_SCAN = {
     ],
     excludes: ['connectionrequest', 'admin', 'managementserver', 'ssid', 'wlan'],
   },
+  routeProtocolRxPpp: {
+    includesAll: [['wanpppconnection', 'routeprotocolrx']],
+  },
+  routeProtocolRxIp: {
+    includesAll: [['wanipconnection', 'routeprotocolrx']],
+  },
   rxPower: {
     includesAny: [
       ['rxpower'],
@@ -182,8 +198,9 @@ const FIELD_SCAN = {
       ['optical', 'rx'],
       ['gponinterfaceconfig', 'rxpower'],
       ['gponinterafceconfig', 'rxpower'],
+      ['eponinterfaceconfig', 'rxpower'],
     ],
-    excludes: ['txpower', 'tx', 'transmit'],
+    excludes: ['txpower', 'tx', 'transmit', 'routeprotocol'],
   },
   temperature: {
     includesAny: [
@@ -192,6 +209,7 @@ const FIELD_SCAN = {
       ['temperaturestatus'],
       ['gponinterfaceconfig', 'temperature'],
       ['gponinterafceconfig', 'temperature'],
+      ['eponinterfaceconfig', 'transceivertemperature'],
     ],
     excludes: ['txpower'],
   },
@@ -432,12 +450,16 @@ export function extractDeviceInfo(device) {
   const rxPowerRaw = findParamValue(flat, 'rxPower');
   const modelName = findModelName(flat, device);
   const ipTr069 = findIpTr069(flat);
+  const routeProtocolRxPpp = findParamValue(flat, 'routeProtocolRxPpp');
+  const routeProtocolRxIp = findParamValue(flat, 'routeProtocolRxIp');
 
   return {
     brand: device?.manufacturer || '',
     modelName,
     onuType: modelName,
     ipTr069,
+    routeProtocolRxPpp,
+    routeProtocolRxIp,
     pppoeUsername,
     pppoePassword,
     pppoePasswordMasked: maskSecret(pppoePassword),

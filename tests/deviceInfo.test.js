@@ -58,6 +58,7 @@ describe('extractDeviceInfo', () => {
     assert.ok(paths.length <= 20);
     assert.ok(paths.every((p) => p.endsWith('.')));
     assert.ok(paths.some((p) => p.includes('X_CMCC_EponInterfaceConfig')));
+    assert.ok(paths.some((p) => p.includes('X_CT-COM_EponInterfaceConfig')));
   });
 
   it('reads ZICG F650 style PPP on WANConnectionDevice.2 and GPON optical', () => {
@@ -93,13 +94,33 @@ describe('extractDeviceInfo', () => {
     assert.equal(info.onuType, 'F650-GPON');
   });
 
-  it('reads VirtualParameters.IPTR069', () => {
+  it('reads CT-COM EPON raw optical and RouteProtocolRx', () => {
     const info = extractDeviceInfo({
       parameters: {
-        'VirtualParameters.IPTR069': '192.168.1.100',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.5.WANPPPConnection.1.RouteProtocolRx': 'PPPoE',
+        'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.6.WANIPConnection.1.RouteProtocolRx': 'DHCP',
+        'InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.RXPower': '8570',
+        'InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.TransceiverTemperature': '12062',
+        'VirtualParameters.RXPower': '-21.00',
+        'VirtualParameters.gettemp': '48',
       },
     });
 
-    assert.equal(info.ipTr069, '192.168.1.100');
+    assert.equal(info.routeProtocolRxPpp, 'PPPoE');
+    assert.equal(info.routeProtocolRxIp, 'DHCP');
+    assert.equal(info.rxPower, '-21.00\u00A0dBm');
+    assert.equal(info.temperature, '48.0\u00A0°C');
+  });
+
+  it('parses CT-COM EPON raw RX when VirtualParameters empty', () => {
+    const info = extractDeviceInfo({
+      parameters: {
+        'InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.RXPower': '8570',
+        'InternetGatewayDevice.WANDevice.1.X_CT-COM_EponInterfaceConfig.TransceiverTemperature': '12062',
+      },
+    });
+
+    assert.ok(info.rxPower.includes('dBm'));
+    assert.equal(info.temperature, '47.1\u00A0°C');
   });
 });

@@ -50,6 +50,8 @@ export function DeviceInfoGrid({ info, showSecrets = true }) {
     ],
     ['SSID', i.ssid, '', null],
     ['Password SSID', showSecrets ? i.ssidPassword : i.ssidPasswordMasked, i.ssidPasswordNote, null],
+    ['Route Protocol Rx (PPP)', i.routeProtocolRxPpp, '', null],
+    ['Route Protocol Rx (IP)', i.routeProtocolRxIp, '', null],
     ['RX Power', i.rxPower, i.rxPowerNote, i.rxPowerStatus],
     ['Temperature', i.temperature, '', i.temperatureStatus],
     ['IP TR069', i.ipTr069, i.ipTr069Note, null],

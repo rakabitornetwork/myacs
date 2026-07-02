@@ -230,7 +230,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                   <AcsBadge source={device.source} />
                 </div>
                 <p className="mt-1 ui-meta">
-                  {[device.manufacturer, device.model].filter(Boolean).join(' ') || '—'}
+                  {[device.manufacturer, device.info?.modelName || device.model].filter(Boolean).join(' ') || '—'}
                 </p>
               </div>
               <Badge status={device.isOnline ? 'Online' : 'Offline'} dot>
@@ -242,6 +242,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
               {[
                 ['Serial', device.serialNumber],
                 ['OUI', device.oui],
+                ['Model Name', device.info?.modelName || device.model],
                 ['Product Class', device.productClass],
                 ['Software', device.softwareVersion],
                 ['Hardware', device.hardwareVersion],

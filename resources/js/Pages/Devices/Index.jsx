@@ -95,7 +95,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs, flash 
                 <th>Serial</th>
                 <th>Manufacturer / Model</th>
                 <th>Merk</th>
-                <th>Type</th>
+                <th>Model</th>
                 <th>PPPoE</th>
                 <th>Pass PPPoE</th>
                 <th>SSID</th>
@@ -131,7 +131,9 @@ export default function DevicesIndex({ devices, pagination, filters, acs, flash 
                     <td className="ui-mono text-zinc-500">{device.serialNumber || '—'}</td>
                     <td>
                       <span className="text-zinc-800">{device.manufacturer || '—'}</span>
-                      {device.model && <span className="text-zinc-400"> / {device.model}</span>}
+                      {(device.info?.modelName || device.model) && (
+                        <span className="text-zinc-400"> / {device.info?.modelName || device.model}</span>
+                      )}
                     </td>
                     <DeviceInfoCells info={device.info} />
                     <td className="ui-mono text-zinc-500">{device.softwareVersion || '—'}</td>

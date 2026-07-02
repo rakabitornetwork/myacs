@@ -19,6 +19,7 @@ describe('extractDeviceInfo', () => {
     });
 
     assert.equal(info.brand, 'CMHI');
+    assert.equal(info.modelName, 'MJM-01');
     assert.equal(info.onuType, 'MJM-01');
     assert.equal(info.pppoeUsername, 'user@test');
     assert.equal(info.pppoePassword, 'secret123');
@@ -76,5 +77,19 @@ describe('extractDeviceInfo', () => {
     assert.equal(info.ssid, 'ABADI');
     assert.ok(info.rxPower.includes('dBm'));
     assert.equal(info.temperature, '42.0\u00A0°C');
+  });
+
+  it('reads ModelName from InternetGatewayDevice.DeviceInfo parameters', () => {
+    const info = extractDeviceInfo({
+      manufacturer: 'ZICG',
+      model: 'F650',
+      productClass: 'ONU',
+      parameters: {
+        'InternetGatewayDevice.DeviceInfo.ModelName': 'F650-GPON',
+      },
+    });
+
+    assert.equal(info.modelName, 'F650-GPON');
+    assert.equal(info.onuType, 'F650-GPON');
   });
 });

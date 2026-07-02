@@ -20,7 +20,7 @@ export default function DeviceInfoCells({ info, showSecrets = false }) {
   return (
     <>
       <td>{cell(i.brand)}</td>
-      <td>{cell(i.onuType)}</td>
+      <td>{cell(i.modelName || i.onuType)}</td>
       <td className="ui-mono">{cell(i.pppoeUsername)}</td>
       <td className="ui-mono">{showSecrets ? cell(i.pppoePassword) : cell(i.pppoePasswordMasked)}</td>
       <td className="ui-mono">{cell(i.ssid)}</td>
@@ -39,7 +39,7 @@ export function DeviceInfoGrid({ info, showSecrets = true }) {
   const i = info || {};
   const rows = [
     ['Merk ONU', i.brand, '', null],
-    ['Type ONU', i.onuType, '', null],
+    ['Model Name', i.modelName || i.onuType, '', null],
     ['PPPoE Username', i.pppoeUsername, i.pppoeUsernameNote, null],
     [
       'PPPoE Password',

@@ -91,6 +91,21 @@ const PARAM_PATHS = {
   ],
 };
 
+const MODEL_NAME_PATHS = [
+  'InternetGatewayDevice.DeviceInfo.ModelName',
+  'Device.DeviceInfo.ModelName',
+];
+
+function findModelName(flat, device) {
+  for (const path of MODEL_NAME_PATHS) {
+    const val = flat[path];
+    if (val !== undefined && val !== null && String(val).trim()) {
+      return String(val).trim();
+    }
+  }
+  return device?.model || device?.productClass || '';
+}
+
 /** Subtree paths untuk GetParameterValues (akhiri dengan titik) */
 const FETCH_SUBTREES = [
   'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.',
@@ -392,10 +407,12 @@ export function extractDeviceInfo(device) {
   }
   const temperatureRaw = findParamValue(flat, 'temperature');
   const rxPowerRaw = findParamValue(flat, 'rxPower');
+  const modelName = findModelName(flat, device);
 
   return {
     brand: device?.manufacturer || '',
-    onuType: device?.model || device?.productClass || '',
+    modelName,
+    onuType: modelName,
     pppoeUsername,
     pppoePassword,
     pppoePasswordMasked: maskSecret(pppoePassword),

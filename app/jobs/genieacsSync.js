@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import config from '../config/index.js';
 import Device from '../models/Device.js';
+import { pickInfoParameters } from '../helpers/genieacsParams.js';
 
 let genieConn = null;
 
@@ -19,6 +20,7 @@ function mapGenieDevice(doc) {
   const deviceId = String(doc._id);
   const lastInform = doc._lastInform ? new Date(doc._lastInform) : null;
   const onlineThreshold = Date.now() - config.deviceOfflineMinutes * 60 * 1000;
+  const infoParams = pickInfoParameters(doc);
 
   return {
     deviceId,
@@ -48,6 +50,7 @@ function mapGenieDevice(doc) {
     isOnline: lastInform ? lastInform.getTime() > onlineThreshold : false,
     tags: [...(doc._tags || []), 'genieacs'],
     source: 'genieacs',
+    parameters: infoParams,
   };
 }
 
@@ -82,7 +85,11 @@ export async function syncDevicesFromGenieacs() {
       continue;
     }
 
-    await Device.findOneAndUpdate({ deviceId: mapped.deviceId }, { $set: mapped }, { upsert: true });
+    await Device.findOneAndUpdate(
+      { deviceId: mapped.deviceId },
+      { $set: mapped },
+      { upsert: true },
+    );
     synced++;
   }
 

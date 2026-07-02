@@ -4,6 +4,10 @@ export function isGenieacsNbiConfigured() {
   return Boolean(config.genieacs.nbiUrl?.trim());
 }
 
+export function isGenieacsMongoConfigured() {
+  return Boolean(config.genieacs.mongoUri?.trim());
+}
+
 /** URL ACS untuk CPE — gunakan CWMP_PUBLIC_URL jika di-set, else APP_URL + path */
 export function resolveCwmpPublicUrl({ publicUrl, appUrl, path, enabled }) {
   if (!enabled) return null;
@@ -32,6 +36,7 @@ export function acsInfoForClient() {
     genieacsCwmpUrl: config.genieacs.cwmpUrl || null,
     genieacsNbiUrl: config.genieacs.nbiUrl || null,
     genieacsNbiConfigured: isGenieacsNbiConfigured(),
+    genieacsMongoConfigured: isGenieacsMongoConfigured(),
     syncEnabled: config.genieacs.syncEnabled,
   };
 }

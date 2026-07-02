@@ -5,7 +5,7 @@ import Preset from '../../models/Preset.js';
 import AcsFile from '../../models/AcsFile.js';
 import { sendConnectionRequest } from '../../services/connectionRequest.js';
 import { syncDevicesFromGenieacs } from '../../jobs/genieacsSync.js';
-import { acsInfoForClient, isGenieacsDevice, isGenieacsNbiConfigured, getCwmpPublicUrl } from '../../helpers/acs.js';
+import { acsInfoForClient, isGenieacsDevice, isGenieacsNbiConfigured, isGenieacsMongoConfigured, getCwmpPublicUrl } from '../../helpers/acs.js';
 import {
   genieacsReboot,
   genieacsFactoryReset,
@@ -22,6 +22,7 @@ import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestC
 import { parametersToEntries } from '../../helpers/parameters.js';
 import { extractDeviceInfo, getDeviceInfoFetchPaths } from '../../helpers/deviceInfo.js';
 import { queueDeviceInfoRefresh } from '../../services/devices/infoRefresh.js';
+import { importGenieacsParamsForDevice } from '../../services/genieacs/importParams.js';
 import {
   getConnectionRequestCredentials,
   connectionRequestCredentialStatus,
@@ -337,6 +338,28 @@ export async function createRefreshInfoTask(req, res) {
 
   await wakeDeviceConnection(device);
   return flashAndRedirect(req, res, device, 'success', 'Refresh info device diantrikan — tunggu beberapa detik');
+}
+
+export async function importGenieacsParams(req, res) {
+  const device = await Device.findById(req.params.id);
+  if (!device) return res.status(404).send('Device not found');
+
+  if (!isGenieacsMongoConfigured()) {
+    return flashAndRedirect(req, res, device, 'error', 'GENIEACS_MONGODB_URI belum dikonfigurasi');
+  }
+
+  const result = await importGenieacsParamsForDevice(device.deviceId);
+  if (!result.ok) {
+    return flashAndRedirect(req, res, device, 'error', result.error);
+  }
+
+  return flashAndRedirect(
+    req,
+    res,
+    device,
+    'success',
+    `Diimpor ${result.imported} parameter info dari GenieACS`,
+  );
 }
 
 export async function createGetParamsTask(req, res) {

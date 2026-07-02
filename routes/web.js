@@ -26,6 +26,7 @@ router.get('/devices/:id', requireAuth, DashboardController.devicesShow);
 router.post('/devices/:id/reboot', requireAuth, requireWrite, DashboardController.createRebootTask);
 router.post('/devices/:id/factory-reset', requireAuth, requireWrite, DashboardController.createFactoryResetTask);
 router.post('/devices/:id/refresh-info', requireAuth, requireWrite, DashboardController.createRefreshInfoTask);
+router.post('/devices/:id/import-genieacs', requireAuth, requireWrite, DashboardController.importGenieacsParams);
 router.post('/devices/:id/tasks/get-parameters', requireAuth, requireWrite, DashboardController.createGetParamsTask);
 router.post('/devices/:id/tasks/get-parameter-names', requireAuth, requireWrite, DashboardController.createGetParamNamesTask);
 router.post('/devices/:id/tasks/set-parameters', requireAuth, requireWrite, DashboardController.createSetParamsTask);

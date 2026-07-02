@@ -103,6 +103,16 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 <Search className="h-3 w-3" />
                 Refresh Info
               </button>
+              {acs?.genieacsMongoConfigured && device.managedByMyacs ? (
+                <button
+                  type="button"
+                  onClick={() => router.post(`/devices/${device.id}/import-genieacs`)}
+                  className="ui-btn-secondary"
+                >
+                  <Download className="h-3 w-3" />
+                  Import GenieACS
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={() => router.post(`/devices/${device.id}/reboot`)}

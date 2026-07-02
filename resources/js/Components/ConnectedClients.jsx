@@ -16,10 +16,14 @@ function LanConfigSummary({ lanConfig }) {
   const rows = [
     ['DHCP Server', lanConfig.dhcpServerEnable],
     ['DHCP Lease', lanConfig.dhcpLeaseTimeFormatted || lanConfig.dhcpLeaseTime],
+    ['Gateway', lanConfig.ipRouters],
+    ['DNS', lanConfig.dnsServers],
+    ['Domain', lanConfig.domainName],
     ['Rentang IP', lanConfig.minAddress && lanConfig.maxAddress
       ? `${lanConfig.minAddress} – ${lanConfig.maxAddress}`
       : ''],
     ['Subnet Mask', lanConfig.subnetMask],
+    ['Passthrough Lease', lanConfig.passthroughLeaseFormatted || lanConfig.passthroughLease],
   ].filter(([, value]) => value && String(value).trim());
 
   if (!rows.length) return null;
@@ -97,7 +101,7 @@ export default function ConnectedClients({ data }) {
                   {client.leaseTimeRemaining && (
                     <div>
                       <dt className="ui-label">Lease</dt>
-                      <dd className="mt-0.5">{client.leaseTimeRemaining}</dd>
+                      <dd className="mt-0.5 whitespace-nowrap">{client.leaseTimeRemaining}</dd>
                     </div>
                   )}
                 </dl>
@@ -127,7 +131,7 @@ export default function ConnectedClients({ data }) {
                     <td>{cell(client.interfaceType)}</td>
                     <td>{activeLabel(client)}</td>
                     <td>{cell(client.addressSource)}</td>
-                    <td className="text-zinc-600">{cell(client.leaseTimeRemaining) || '—'}</td>
+                    <td className="text-zinc-600 whitespace-nowrap">{cell(client.leaseTimeRemaining) || '—'}</td>
                   </tr>
                 ))}
               </tbody>

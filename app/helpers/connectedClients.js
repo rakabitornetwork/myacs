@@ -15,6 +15,10 @@ const LAN_CONFIG_FIELDS = {
   minAddress: /\.LANHostConfigManagement\.MinAddress$/i,
   maxAddress: /\.LANHostConfigManagement\.MaxAddress$/i,
   subnetMask: /\.LANHostConfigManagement\.SubnetMask$/i,
+  dnsServers: /\.LANHostConfigManagement\.DNSServers$/i,
+  ipRouters: /\.LANHostConfigManagement\.IPRouters$/i,
+  domainName: /\.LANHostConfigManagement\.DomainName$/i,
+  passthroughLease: /\.LANHostConfigManagement\.PassthroughLease$/i,
 };
 
 const HOST_ENTRY_RE = /^(?:InternetGatewayDevice\.LANDevice\.\d+\.Hosts\.Host|Device\.Hosts\.Host)\.(\d+)\.(.+)$/i;
@@ -46,21 +50,28 @@ export function formatDhcpLeaseTime(value) {
 
 export function formatLeaseTimeRemaining(value) {
   if (!value) return '';
-  let text = String(value).trim();
+  const text = String(value).trim();
   if (!text) return '';
+
+  if (/^\d+$/.test(text)) {
+    const formatted = formatDhcpLeaseTime(text);
+    return formatted ? `Sisa lease: ${formatted}` : '';
+  }
 
   const compact = text.match(/(\d+)\s*Hour.*?(\d+)\s*Minute.*?(\d+)\s*Second/i);
   if (compact) {
     return `Sisa lease: ${compact[1]} jam ${compact[2]} menit ${compact[3]} detik`;
   }
 
-  return text
+  const formatted = text
     .replace(/Remaining\s*lease\s*term/i, 'Sisa lease: ')
     .replace(/(\d+)\s*Hour/gi, '$1 jam ')
     .replace(/(\d+)\s*Minute/gi, '$1 menit ')
     .replace(/(\d+)\s*Second/gi, '$1 detik')
     .replace(/\s+/g, ' ')
     .trim();
+
+  return formatted.startsWith('Sisa lease') ? formatted : formatted;
 }
 
 export function formatAddressSource(value) {
@@ -194,6 +205,7 @@ function finalizeClient(raw) {
     active: raw.active,
     isActive: raw.active !== false,
     layer2Interface: raw.layer2Interface || '',
+    hostIndex: raw.hostIndex ?? null,
     source: raw.source || 'lan',
     wlanIndex: raw.wlanIndex || null,
     wlanSsid: raw.wlanSsid || '',
@@ -208,24 +220,41 @@ function extractLanHostConfig(flat) {
     minAddress: '',
     maxAddress: '',
     subnetMask: '',
+    dnsServers: '',
+    ipRouters: '',
+    domainName: '',
+    passthroughLease: '',
+    passthroughLeaseFormatted: '',
   };
 
   for (const [path, value] of Object.entries(flat)) {
+    const str = String(value).trim();
+    if (!str) continue;
+
     if (LAN_CONFIG_FIELDS.dhcpLeaseTime.test(path)) {
-      config.dhcpLeaseTime = String(value).trim();
+      config.dhcpLeaseTime = str;
       config.dhcpLeaseTimeFormatted = formatDhcpLeaseTime(value);
     } else if (LAN_CONFIG_FIELDS.dhcpServerEnable.test(path)) {
-      config.dhcpServerEnable = isTruthy(value) ? 'Aktif' : (String(value).trim() ? 'Nonaktif' : '');
+      config.dhcpServerEnable = isTruthy(value) ? 'Aktif' : 'Nonaktif';
     } else if (LAN_CONFIG_FIELDS.minAddress.test(path)) {
-      config.minAddress = String(value).trim();
+      config.minAddress = str;
     } else if (LAN_CONFIG_FIELDS.maxAddress.test(path)) {
-      config.maxAddress = String(value).trim();
+      config.maxAddress = str;
     } else if (LAN_CONFIG_FIELDS.subnetMask.test(path)) {
-      config.subnetMask = String(value).trim();
+      config.subnetMask = str;
+    } else if (LAN_CONFIG_FIELDS.dnsServers.test(path)) {
+      config.dnsServers = str;
+    } else if (LAN_CONFIG_FIELDS.ipRouters.test(path)) {
+      config.ipRouters = str;
+    } else if (LAN_CONFIG_FIELDS.domainName.test(path)) {
+      config.domainName = str;
+    } else if (LAN_CONFIG_FIELDS.passthroughLease.test(path)) {
+      config.passthroughLease = str;
+      config.passthroughLeaseFormatted = formatDhcpLeaseTime(value);
     }
   }
 
-  const hasData = Object.values(config).some((v) => v && v !== '');
+  const hasData = Object.entries(config).some(([key, val]) => val && val !== '' && !key.endsWith('Formatted'));
   return hasData ? config : null;
 }
 
@@ -299,7 +328,10 @@ export function extractConnectedClients(device) {
 
     const hostMatch = path.match(HOST_ENTRY_RE);
     if (hostMatch) {
-      const entry = ensureEntry(hostEntries, hostMatch[1], { source: 'lan' });
+      const entry = ensureEntry(hostEntries, hostMatch[1], {
+        source: 'lan',
+        hostIndex: parseInt(hostMatch[1], 10),
+      });
       setField(entry, hostMatch[2], value);
       continue;
     }

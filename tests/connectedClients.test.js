@@ -57,6 +57,8 @@ describe('extractConnectedClients', () => {
       formatLeaseTimeRemaining('Remaining lease term23Hour48Minute33Second'),
       'Sisa lease: 23 jam 48 menit 33 detik',
     );
+    assert.equal(formatLeaseTimeRemaining('86366'), 'Sisa lease: 23 jam 59 menit');
+    assert.equal(formatLeaseTimeRemaining('86304'), 'Sisa lease: 23 jam 58 menit');
   });
 
   it('ignores N/A host names but keeps IP/MAC', () => {
@@ -146,6 +148,46 @@ describe('extractConnectedClients', () => {
     assert.equal(result.lanConfig?.minAddress, '192.168.1.2');
     assert.equal(result.lanConfig?.maxAddress, '192.168.1.254');
     assert.equal(result.lanConfig?.dhcpServerEnable, 'Aktif');
+  });
+
+  it('parses multiple sparse CMCC hosts with numeric lease remaining', () => {
+    const result = extractConnectedClients({
+      parameters: {
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.10.HostName': 'OPPO-A3x',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.10.IPAddress': '192.168.1.5',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.10.MACAddress': 'C2:B3:6A:60:63:38',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.10.InterfaceType': '802.11',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.8.HostName': 'A14-milik-Khilwa',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.8.IPAddress': '192.168.1.7',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.8.MACAddress': '66:03:3F:1A:10:66',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.8.InterfaceType': '802.11',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.7.IPAddress': '192.168.1.2',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.7.MACAddress': 'E2:D6:64:5E:9F:4D',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.7.InterfaceType': '802.11',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.7.LeaseTimeRemaining': '86304',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.5.LeaseTimeRemaining': '86366',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.73.HostName': 'OPPO-A16e',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.73.IPAddress': '192.168.1.2',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.73.MACAddress': '9A:81:2A:25:46:71',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.73.InterfaceType': '802.11',
+        'InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DHCPLeaseTime': '86400',
+        'InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.DNSServers': '192.168.1.1',
+        'InternetGatewayDevice.LANDevice.1.LANHostConfigManagement.IPRouters': '192.168.1.1',
+      },
+    });
+
+    assert.equal(result.count, 4);
+    assert.equal(result.clients.length, 4);
+
+    const unnamed = result.clients.find((c) => c.macAddress === 'E2:D6:64:5E:9F:4D');
+    assert.equal(unnamed?.hostName, '—');
+    assert.equal(unnamed?.leaseTimeRemaining, 'Sisa lease: 23 jam 58 menit');
+
+    const oppo = result.clients.find((c) => c.hostName === 'OPPO-A3x');
+    assert.equal(oppo?.ipAddress, '192.168.1.5');
+
+    assert.equal(result.lanConfig?.dnsServers, '192.168.1.1');
+    assert.equal(result.lanConfig?.ipRouters, '192.168.1.1');
   });
 
   it('exposes fetch subtrees for TR-069 refresh', () => {

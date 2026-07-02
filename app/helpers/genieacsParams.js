@@ -100,7 +100,7 @@ const HOST_PARAM_PATTERNS = [
   /hosts\.hostnumberofentries/i,
   /associateddevice\.\d+/i,
   /wlanconfiguration\.\d+\.totalassociations/i,
-  /lanhostconfigmanagement\.(dhcplease|dhcpserver|minaddress|maxaddress|subnetmask)/i,
+  /lanhostconfigmanagement\.(dhcplease|dhcpserver|minaddress|maxaddress|subnetmask|dnsservers|iprouters|domainname|passthrough)/i,
   /x_cmcc_hostcustomise/i,
 ];
 

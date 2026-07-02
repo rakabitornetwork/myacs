@@ -104,6 +104,17 @@ export async function genieacsUpload(deviceId, { fileType, url }) {
   });
 }
 
+export async function genieacsRefreshObject(deviceId, objectName) {
+  return genieacsPostTask(deviceId, {
+    name: 'refreshObject',
+    objectName,
+  });
+}
+
+export async function genieacsRefreshHosts(deviceId) {
+  return genieacsRefreshObject(deviceId, 'InternetGatewayDevice.LANDevice.1.Hosts.');
+}
+
 export function isGenieacsNbiConfigured() {
   return Boolean(config.genieacs.nbiUrl?.trim());
 }

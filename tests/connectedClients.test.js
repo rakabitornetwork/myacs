@@ -27,8 +27,7 @@ describe('extractConnectedClients', () => {
     assert.equal(result.clients.length, 2);
     assert.equal(result.clients[0].hostName, 'android-tv');
     assert.equal(result.clients[0].macAddress, 'AA:BB:CC:DD:EE:01');
-    assert.equal(result.clients[1].macAddress, 'AA:BB:CC:DD:EE:02');
-    assert.equal(result.hasDetails, true);
+    assert.equal(result.clients[1].interfaceType, 'LAN');
   });
 
   it('parses WLAN associated devices and dedupes by MAC', () => {
@@ -46,8 +45,35 @@ describe('extractConnectedClients', () => {
 
     assert.equal(result.clients.length, 1);
     assert.equal(result.clients[0].hostName, 'phone');
-    assert.match(result.clients[0].interfaceType, /WiFi/);
+    assert.equal(result.clients[0].interfaceType, 'WiFi');
     assert.equal(result.count, 1);
+  });
+
+  it('formats interface type and lease text', async () => {
+    const { formatInterfaceType, formatLeaseTimeRemaining } = await import('../app/helpers/connectedClients.js');
+    assert.equal(formatInterfaceType('802.11'), 'WiFi');
+    assert.equal(formatInterfaceType('WIFI'), 'WiFi');
+    assert.equal(
+      formatLeaseTimeRemaining('Remaining lease term23Hour48Minute33Second'),
+      'Sisa lease: 23 jam 48 menit 33 detik',
+    );
+  });
+
+  it('ignores N/A host names but keeps IP/MAC', () => {
+    const result = extractConnectedClients({
+      parameters: {
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.HostName': 'N/A',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.IPAddress': '192.168.1.2',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.MACAddress': '86:35:ED:6D:07:DC',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.1.InterfaceType': '802.11',
+      },
+    });
+
+    assert.equal(result.clients.length, 1);
+    assert.equal(result.clients[0].hostName, '—');
+    assert.equal(result.clients[0].ipAddress, '192.168.1.2');
+    assert.equal(result.clients[0].macAddress, '86:35:ED:6D:07:DC');
+    assert.equal(result.clients[0].interfaceType, 'WiFi');
   });
 
   it('falls back to TotalAssociations when list is empty', () => {

@@ -16,6 +16,41 @@ const WLAN_TOTAL_ASSOC_RE = /^InternetGatewayDevice\.LANDevice\.\d+\.WLANConfigu
 const WLAN_ENABLE_RE = /^InternetGatewayDevice\.LANDevice\.\d+\.WLANConfiguration\.(\d+)\.Enable$/i;
 const WLAN_SSID_RE = /^InternetGatewayDevice\.LANDevice\.\d+\.WLANConfiguration\.(\d+)\.SSID$/i;
 
+export function formatLeaseTimeRemaining(value) {
+  if (!value) return '';
+  let text = String(value).trim();
+  if (!text) return '';
+
+  const compact = text.match(/(\d+)\s*Hour.*?(\d+)\s*Minute.*?(\d+)\s*Second/i);
+  if (compact) {
+    return `Sisa lease: ${compact[1]} jam ${compact[2]} menit ${compact[3]} detik`;
+  }
+
+  return text
+    .replace(/Remaining\s*lease\s*term/i, 'Sisa lease: ')
+    .replace(/(\d+)\s*Hour/gi, '$1 jam ')
+    .replace(/(\d+)\s*Minute/gi, '$1 menit ')
+    .replace(/(\d+)\s*Second/gi, '$1 detik')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function formatInterfaceType(value) {
+  if (!value) return '';
+  const v = String(value).trim();
+  const lower = v.toLowerCase();
+  if (lower === 'wifi' || lower === '802.11' || lower.includes('wlan')) return 'WiFi';
+  if (lower === 'ethernet' || lower === 'lan') return 'LAN';
+  return v;
+}
+
+function normalizeHostName(value) {
+  if (!value) return '';
+  const v = String(value).trim();
+  if (!v || /^n\/?a$/i.test(v)) return '';
+  return v;
+}
+
 function normMac(value) {
   if (!value) return '';
   const hex = String(value).replace(/[^a-fA-F0-9]/g, '').toUpperCase();
@@ -38,7 +73,7 @@ function setField(target, segment, value) {
   const key = fieldKey(segment);
 
   if (key === 'hostname' || key === 'hostdescription' || key === 'devicename') {
-    target.hostName = String(value).trim();
+    target.hostName = normalizeHostName(value);
     return;
   }
   if (key === 'ipaddress' || key === 'associateddeviceipaddress' || key === 'layer3ipv4address') {
@@ -50,7 +85,11 @@ function setField(target, segment, value) {
     return;
   }
   if (key === 'interfacetype' || key === 'interfacename') {
-    target.interfaceType = String(value).trim();
+    target.interfaceType = formatInterfaceType(value);
+    return;
+  }
+  if (key === 'devicetype' || key === 'xcmccdevicetype') {
+    target.deviceType = formatInterfaceType(value);
     return;
   }
   if (key === 'active') {
@@ -61,8 +100,13 @@ function setField(target, segment, value) {
     target.addressSource = String(value).trim();
     return;
   }
-  if (key === 'leasetimeremaining') {
-    target.leaseTimeRemaining = String(value).trim();
+  if (key === 'leasetimeremaining' || key === 'leaseleft' || key === 'remaininglease') {
+    target.leaseTimeRemaining = formatLeaseTimeRemaining(value);
+    return;
+  }
+  if (key === 'status' && !target.leaseTimeRemaining) {
+    const formatted = formatLeaseTimeRemaining(value);
+    if (formatted) target.leaseTimeRemaining = formatted;
     return;
   }
   if (key === 'associateddeviceauthenticationstate') {
@@ -91,7 +135,7 @@ function finalizeClient(raw) {
     hostName: hostName || '—',
     ipAddress: ip || '—',
     macAddress: mac || '—',
-    interfaceType: raw.interfaceType || raw.interface || '—',
+    interfaceType: raw.deviceType || raw.interfaceType || raw.interface || '—',
     addressSource: raw.addressSource || '—',
     leaseTimeRemaining: raw.leaseTimeRemaining || '',
     authState: raw.authState || '',

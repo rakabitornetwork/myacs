@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import config from '../../config/index.js';
 import Device from '../../models/Device.js';
-import { pickInfoParameters, categorizeInfoPaths } from '../../helpers/genieacsParams.js';
+import { pickDeviceSyncParameters, categorizeInfoPaths } from '../../helpers/genieacsParams.js';
 import { paramUpdatesFromMap } from '../../helpers/parameters.js';
 
 let genieConn = null;
@@ -65,7 +65,7 @@ export async function importGenieacsParamsForDevice(deviceId) {
     return { ok: false, error: 'Device tidak ditemukan di GenieACS (MongoDB/NBI)' };
   }
 
-  const params = pickInfoParameters(doc);
+  const params = pickDeviceSyncParameters(doc);
   const count = Object.keys(params).length;
   if (!count) {
     return { ok: false, error: 'Tidak ada parameter info di GenieACS untuk device ini' };
@@ -89,7 +89,7 @@ export async function inspectGenieacsDevice(deviceId) {
   const doc = await fetchGenieacsDeviceDoc(deviceId);
   if (!doc) return null;
 
-  const params = pickInfoParameters(doc);
+  const params = pickDeviceSyncParameters(doc);
   return {
     deviceId,
     genieacsId: doc._id,

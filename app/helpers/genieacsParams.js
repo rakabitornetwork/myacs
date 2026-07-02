@@ -95,6 +95,32 @@ export function pickInfoParameters(doc = {}) {
   );
 }
 
+const HOST_PARAM_PATTERNS = [
+  /hosts\.host\.\d+/i,
+  /hosts\.hostnumberofentries/i,
+  /associateddevice\.\d+/i,
+  /wlanconfiguration\.\d+\.totalassociations/i,
+  /x_cmcc_hostcustomise/i,
+];
+
+export function isHostParameterPath(path) {
+  return HOST_PARAM_PATTERNS.some((re) => re.test(path));
+}
+
+export function pickHostParameters(doc = {}) {
+  const flat = flattenGenieacsDocument(doc);
+  return Object.fromEntries(
+    Object.entries(flat).filter(([path]) => isHostParameterPath(path)),
+  );
+}
+
+export function pickDeviceSyncParameters(doc = {}) {
+  return {
+    ...pickInfoParameters(doc),
+    ...pickHostParameters(doc),
+  };
+}
+
 export function categorizeInfoPaths(flat = {}) {
   const groups = {
     pppoeUsername: [],

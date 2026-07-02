@@ -15,13 +15,14 @@ import {
   genieacsGetParameterNames,
   genieacsUpload,
   genieacsDownload,
+  genieacsRefreshHosts,
 } from '../../services/genieacs/nbi.js';
 import { validateConfig } from '../../config/validate.js';
 import config from '../../config/index.js';
 import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestCredentials, markConnectionRequestSent, retryWakeForPendingTasks } from '../../services/tasks/queue.js';
 import { parametersToEntries } from '../../helpers/parameters.js';
 import { extractDeviceInfo, getDeviceInfoFetchPaths } from '../../helpers/deviceInfo.js';
-import { extractConnectedClients } from '../../helpers/connectedClients.js';
+import { resolveConnectedClientsForDevice } from '../../services/devices/connectedClients.js';
 import { queueDeviceInfoRefresh, getDeviceRefreshFetchPaths } from '../../services/devices/infoRefresh.js';
 import { importGenieacsParamsForDevice } from '../../services/genieacs/importParams.js';
 import {
@@ -227,6 +228,8 @@ export async function devicesShow(req, res) {
     .sort({ createdAt: -1 })
     .lean();
 
+  const connectedClients = await resolveConnectedClientsForDevice(device);
+
   return req.inertia.render('Devices/Show', {
     device: {
       id: device._id.toString(),
@@ -246,7 +249,7 @@ export async function devicesShow(req, res) {
       events: device.events || [],
       parameters,
       info: extractDeviceInfo(device),
-      connectedClients: extractConnectedClients(device),
+      connectedClients,
       source: device.source || 'myacs',
       managedByMyacs: !isGenieacsDevice(device),
       canManage:
@@ -332,9 +335,10 @@ export async function createRefreshInfoTask(req, res) {
   if (!device) return res.status(404).send('Device not found');
 
   if (isGenieacsDevice(device)) {
-    return runGenieacsAction(device, req, res, () =>
-      genieacsGetParameterValues(device.deviceId, getDeviceRefreshFetchPaths()),
-    );
+    return runGenieacsAction(device, req, res, async () => {
+      await genieacsRefreshHosts(device.deviceId);
+      await genieacsGetParameterValues(device.deviceId, getDeviceRefreshFetchPaths());
+    });
   }
 
   const queued = await queueDeviceInfoRefresh(device, { force: true });

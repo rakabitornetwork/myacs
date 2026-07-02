@@ -21,6 +21,7 @@
   html {
     @apply antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    touch-action: manipulation;
   }
 
   /* Mobile: medium density · Desktop (md+): medium-high */

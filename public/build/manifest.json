@@ -228,7 +228,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-DYW9LN-F.js",
+    "file": "assets/app-Dy0QVzmd.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
@@ -250,7 +250,7 @@
       "resources/js/Pages/Users/Index.jsx"
     ],
     "css": [
-      "assets/app-CiNNHpuW.css"
+      "assets/app-CtxOIrpj.css"
     ]
   }
 }

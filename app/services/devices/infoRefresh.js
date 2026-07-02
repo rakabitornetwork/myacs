@@ -1,15 +1,11 @@
 import Task from '../../models/Task.js';
-import { getDeviceInfoFetchPaths, deviceInfoIsComplete, extractDeviceInfo } from '../../helpers/deviceInfo.js';
-import { getConnectedClientsFetchPaths } from '../../helpers/connectedClients.js';
+import { deviceInfoIsComplete, extractDeviceInfo } from '../../helpers/deviceInfo.js';
+import { getDeviceRefreshFetchPaths, resolveDeviceRefreshFetchPaths } from '../../helpers/refreshPaths.js';
 
 const REFRESH_TASK_NAME = 'Refresh device info';
 const REFRESH_COOLDOWN_MS = parseInt(process.env.DEVICE_INFO_REFRESH_COOLDOWN_MS || '1800000', 10);
 
-function getDeviceRefreshFetchPaths() {
-  return [...new Set([...getDeviceInfoFetchPaths(), ...getConnectedClientsFetchPaths()])];
-}
-
-export { getDeviceRefreshFetchPaths };
+export { getDeviceRefreshFetchPaths, resolveDeviceRefreshFetchPaths };
 
 export async function queueDeviceInfoRefresh(device, { force = false } = {}) {
   if (!device?.deviceId || device.source === 'genieacs') return false;
@@ -33,13 +29,16 @@ export async function queueDeviceInfoRefresh(device, { force = false } = {}) {
     if (cooldown) return false;
   }
 
-  await Task.create({
-    deviceId: device.deviceId,
-    name: REFRESH_TASK_NAME,
-    method: 'GetParameterValues',
-    payload: { names: getDeviceRefreshFetchPaths() },
-    priority: 1,
-  });
+  const paths = resolveDeviceRefreshFetchPaths(device);
+  await Task.insertMany(
+    paths.map((name) => ({
+      deviceId: device.deviceId,
+      name: REFRESH_TASK_NAME,
+      method: 'GetParameterValues',
+      payload: { names: [name] },
+      priority: 1,
+    })),
+  );
 
   return true;
 }

@@ -366,7 +366,10 @@ export async function createRefreshInfoTask(req, res) {
   if (isGenieacsDevice(device)) {
     return runGenieacsAction(device, req, res, async () => {
       await genieacsRefreshHosts(device.deviceId);
-      await genieacsGetParameterValues(device.deviceId, getDeviceRefreshFetchPaths());
+      const paths = getDeviceRefreshFetchPaths(device);
+      for (const name of paths) {
+        await genieacsGetParameterValues(device.deviceId, [name]);
+      }
     });
   }
 

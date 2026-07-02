@@ -23,16 +23,16 @@ function DualAcsBanner({ acs }) {
 
   return (
     <div className="ui-banner-violet mb-2">
-      <strong className="font-bold text-violet-950">Mode Dual ACS</strong> — CPE terpisah:
+      <strong className="text-violet-800">Mode Dual ACS</strong> — CPE terpisah:
       <div className="mt-1.5 grid gap-1 sm:grid-cols-2">
         <div className="ui-banner-chip-violet">
-          <span className="font-semibold text-violet-950">CPE lama → GenieACS</span>
+          <span className="font-medium text-violet-700">CPE lama → GenieACS</span>
           <p className="ui-mono mt-0.5 text-[11px] text-zinc-500">
             {acs.genieacsCwmpUrl || 'http://VPS:7547'}
           </p>
         </div>
         <div className="ui-banner-chip-sky">
-          <span className="font-semibold text-sky-950">CPE baru → MyACS</span>
+          <span className="font-medium text-sky-700">CPE baru → MyACS</span>
           <p className="ui-mono mt-0.5 break-all text-[11px] text-zinc-500">
             {acs.cwmpUrl || '—'}
           </p>

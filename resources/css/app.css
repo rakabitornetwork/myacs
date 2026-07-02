@@ -27,7 +27,7 @@
   body {
     @apply text-zinc-900 leading-relaxed md:text-sm md:leading-normal;
     font-size: 15px;
-    background: linear-gradient(155deg, #c8d4ea 0%, #b8c8e8 35%, #a8b8de 70%, #9aacd4 100%);
+    background: linear-gradient(160deg, #eceff4 0%, #f1f3f7 45%, #e9edf3 100%);
     background-attachment: fixed;
   }
 
@@ -38,57 +38,51 @@
   }
 
   ::selection {
-    @apply bg-brand-500/30 text-brand-950;
+    @apply bg-brand-500/20 text-brand-900;
   }
 }
 
 @layer components {
   .ui-panel {
-    @apply rounded-lg border shadow-[0_2px_4px_rgba(15,23,42,0.08),0_8px_24px_rgba(51,102,255,0.18)];
-    border-color: #7da3f5;
-    background: linear-gradient(150deg, #d4e2ff 0%, #b8cdfc 42%, #9eb8ff 100%);
+    @apply rounded-lg border border-zinc-200/90 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_4px_14px_rgba(51,102,255,0.06)];
+    background: linear-gradient(155deg, #ffffff 0%, #f8faff 42%, #f0f4ff 100%);
   }
 
   .ui-panel-header {
-    @apply flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 md:px-3.5 md:py-2.5;
-    border-color: #6b93f0;
-    background: linear-gradient(90deg, #8eb8ff 0%, #6b93f0 38%, #a8c4ff 100%);
+    @apply flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 md:px-3.5 md:py-2.5;
+    background: linear-gradient(90deg, #f5f7fb 0%, #f9fafb 55%, #ffffff 100%);
   }
 
   .ui-panel-title {
-    @apply text-sm font-bold uppercase tracking-wider text-brand-950 md:text-xs;
+    @apply text-sm font-semibold uppercase tracking-wider text-zinc-500 md:text-xs;
   }
 
   .ui-mini-card {
-    @apply rounded-md border px-3 py-2.5 shadow-md md:px-2.5 md:py-2;
-    border-color: #7da3f5;
-    background: linear-gradient(145deg, #c5d8ff 0%, #a8c4ff 55%, #8eb8ff 100%);
+    @apply rounded-md border border-zinc-100 bg-zinc-50/90 px-3 py-2.5 shadow-sm md:px-2.5 md:py-2;
+    background: linear-gradient(145deg, #fafbfc 0%, #f4f6f9 100%);
   }
 
   .ui-inset-card {
-    @apply rounded-md border p-3 shadow-md md:p-2;
-    border-color: #8eb8ff;
-    background: linear-gradient(160deg, #d9e6ff 0%, #bcd4ff 55%, #a8c4ff 100%);
+    @apply rounded-md border border-zinc-100 p-3 shadow-sm md:p-2;
+    background: linear-gradient(160deg, #fcfcfd 0%, #f6f7f9 100%);
   }
 
   .ui-banner-violet {
-    @apply mb-2 rounded-lg border border-violet-400 px-4 py-3 text-sm text-violet-950 shadow-md md:px-3 md:py-2 md:text-xs;
-    background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 45%, #a78bfa 100%);
+    @apply mb-2 rounded-lg border border-violet-200/80 px-4 py-3 text-sm text-zinc-700 shadow-sm md:px-3 md:py-2 md:text-xs;
+    background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 50%, #f0f4ff 100%);
   }
 
   .ui-banner-sky {
-    @apply mb-2 rounded-lg border border-sky-400 px-4 py-3 text-sm text-sky-950 shadow-md md:px-3 md:py-2 md:text-xs;
-    background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 50%, #38bdf8 100%);
+    @apply mb-2 rounded-lg border border-sky-200/80 px-4 py-3 text-sm text-zinc-700 shadow-sm md:px-3 md:py-2 md:text-xs;
+    background: linear-gradient(135deg, #f0f9ff 0%, #f0f4ff 50%, #f8fafc 100%);
   }
 
   .ui-banner-chip-violet {
-    @apply rounded border border-violet-400 px-3 py-1.5 text-sm shadow-sm md:px-2 md:py-1 md:text-xs;
-    background: linear-gradient(145deg, #e9d5ff 0%, #d8b4fe 100%);
+    @apply rounded border border-violet-100 bg-white/70 px-3 py-1.5 text-sm shadow-sm md:px-2 md:py-1 md:text-xs;
   }
 
   .ui-banner-chip-sky {
-    @apply rounded border border-sky-400 px-3 py-1.5 text-sm shadow-sm md:px-2 md:py-1 md:text-xs;
-    background: linear-gradient(145deg, #bae6fd 0%, #7dd3fc 100%);
+    @apply rounded border border-sky-100 bg-white/70 px-3 py-1.5 text-sm shadow-sm md:px-2 md:py-1 md:text-xs;
   }
 
   .ui-table-wrap {
@@ -108,19 +102,18 @@
   }
 
   .ui-table thead tr {
-    border-bottom: 2px solid #6b93f0;
-    background: linear-gradient(180deg, #a8c4ff 0%, #8eb8ff 55%, #7da3f5 100%);
+    @apply border-b border-zinc-100;
+    background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   }
 
   .ui-table th {
-    @apply whitespace-nowrap px-4 py-3 text-xs font-bold uppercase tracking-wider text-brand-950 md:px-3.5 md:py-2 md:text-[11px];
+    @apply whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-zinc-500 md:px-3.5 md:py-2 md:text-[11px];
   }
 
   .ui-table td {
-    @apply border-b px-4 py-3 text-zinc-800 md:px-3.5 md:py-2;
+    @apply border-b border-zinc-50 px-4 py-3 text-zinc-700 md:px-3.5 md:py-2;
     font-size: 15px;
-    border-color: #bcd4ff;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
+    background: transparent;
   }
 
   @media (min-width: 768px) {
@@ -134,14 +127,12 @@
   }
 
   .ui-table tbody tr:hover td {
-    background: linear-gradient(90deg, #d9e6ff 0%, #c5d8ff 100%);
+    @apply bg-zinc-50/80;
   }
 
   .ui-input {
-    @apply w-full rounded-md border px-3.5 py-2.5 text-zinc-900 placeholder:text-zinc-500 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/25 md:px-3 md:py-2;
+    @apply w-full rounded-md border border-zinc-200 bg-white px-3.5 py-2.5 text-zinc-900 placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/15 md:px-3 md:py-2;
     font-size: 16px;
-    border-color: #7da3f5;
-    background: linear-gradient(180deg, #ffffff 0%, #dce8ff 100%);
   }
 
   @media (min-width: 768px) {
@@ -151,7 +142,7 @@
   }
 
   .ui-btn {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-4 py-2.5 font-semibold transition md:min-h-0 md:px-3 md:py-2;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-4 py-2.5 font-medium transition md:min-h-0 md:px-3 md:py-2;
     font-size: 15px;
   }
 
@@ -162,10 +153,8 @@
   }
 
   .ui-btn-primary {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-4 py-2.5 font-semibold text-white transition disabled:opacity-50 md:min-h-0 md:px-3 md:py-2;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-brand-600 px-4 py-2.5 font-medium text-white transition hover:bg-brand-700 disabled:opacity-50 md:min-h-0 md:px-3 md:py-2;
     font-size: 15px;
-    background: linear-gradient(180deg, #5990ff 0%, #3366ff 40%, #1a4bff 100%);
-    box-shadow: 0 2px 6px rgba(19, 57, 235, 0.35);
   }
 
   @media (min-width: 768px) {
@@ -174,16 +163,9 @@
     }
   }
 
-  .ui-btn-primary:hover {
-    background: linear-gradient(180deg, #6b9fff 0%, #3d73ff 40%, #224fff 100%);
-  }
-
   .ui-btn-secondary {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-4 py-2.5 font-semibold text-brand-950 transition md:min-h-0 md:px-3 md:py-2;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-4 py-2.5 font-medium text-zinc-700 transition hover:bg-zinc-50 md:min-h-0 md:px-3 md:py-2;
     font-size: 15px;
-    border: 1px solid #6b93f0;
-    background: linear-gradient(180deg, #e8efff 0%, #c5d8ff 55%, #a8c4ff 100%);
-    box-shadow: 0 1px 3px rgba(51, 102, 255, 0.15);
   }
 
   @media (min-width: 768px) {
@@ -192,15 +174,9 @@
     }
   }
 
-  .ui-btn-secondary:hover {
-    background: linear-gradient(180deg, #dce8ff 0%, #b8cdfc 55%, #9eb8ff 100%);
-  }
-
   .ui-btn-danger {
-    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-4 py-2.5 font-semibold text-white transition md:min-h-0 md:px-3 md:py-2;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-amber-600 px-4 py-2.5 font-medium text-white transition hover:bg-amber-700 md:min-h-0 md:px-3 md:py-2;
     font-size: 15px;
-    background: linear-gradient(180deg, #fb923c 0%, #ea580c 45%, #c2410c 100%);
-    box-shadow: 0 2px 6px rgba(194, 65, 12, 0.35);
   }
 
   @media (min-width: 768px) {
@@ -209,16 +185,12 @@
     }
   }
 
-  .ui-btn-danger:hover {
-    background: linear-gradient(180deg, #fdba74 0%, #f97316 45%, #ea580c 100%);
-  }
-
   .ui-badge {
-    @apply inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-bold uppercase tracking-wide md:px-2 md:py-0.5 md:text-[11px];
+    @apply inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-semibold uppercase tracking-wide md:px-2 md:py-0.5 md:text-[11px];
   }
 
   .ui-link {
-    @apply font-semibold text-brand-800 hover:text-brand-950 hover:underline underline-offset-2;
+    @apply font-medium text-brand-600 hover:text-brand-700 hover:underline underline-offset-2;
   }
 
   .ui-mono {
@@ -226,31 +198,31 @@
   }
 
   .ui-stat {
-    @apply flex items-center gap-4 rounded-lg border px-4 py-3.5 shadow-[0_2px_6px_rgba(15,23,42,0.1),0_6px_18px_rgba(51,102,255,0.2)] md:gap-3 md:px-3.5 md:py-2.5;
+    @apply flex items-center gap-4 rounded-lg border border-zinc-200/90 bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] md:gap-3 md:px-3.5 md:py-2.5;
   }
 
   .ui-stat-brand {
-    border-color: #4d7fff;
-    background: linear-gradient(145deg, #bcd4ff 0%, #8eb8ff 42%, #5990ff 100%);
+    border-color: #d9e6ff;
+    background: linear-gradient(145deg, #ffffff 0%, #f3f7ff 50%, #e8efff 100%);
   }
 
   .ui-stat-green {
-    border-color: #10b981;
-    background: linear-gradient(145deg, #a7f3d0 0%, #6ee7b7 42%, #34d399 100%);
+    border-color: #bbf7d0;
+    background: linear-gradient(145deg, #ffffff 0%, #f0fdf4 50%, #dcfce7 100%);
   }
 
   .ui-stat-amber {
-    border-color: #f59e0b;
-    background: linear-gradient(145deg, #fde68a 0%, #fcd34d 42%, #fbbf24 100%);
+    border-color: #fde68a;
+    background: linear-gradient(145deg, #ffffff 0%, #fffbeb 50%, #fef3c7 100%);
   }
 
   .ui-stat-red {
-    border-color: #ef4444;
-    background: linear-gradient(145deg, #fecaca 0%, #fca5a5 42%, #f87171 100%);
+    border-color: #fecaca;
+    background: linear-gradient(145deg, #ffffff 0%, #fef2f2 50%, #fee2e2 100%);
   }
 
   .ui-empty {
-    @apply px-4 py-12 text-center font-medium text-zinc-700 md:px-3.5 md:py-10;
+    @apply px-4 py-12 text-center text-zinc-400 md:px-3.5 md:py-10;
     font-size: 15px;
   }
 
@@ -261,37 +233,37 @@
   }
 
   .ui-label {
-    @apply text-xs font-bold uppercase tracking-wider text-brand-950 md:text-[11px];
+    @apply text-xs font-semibold uppercase tracking-wider text-zinc-400 md:text-[11px];
   }
 
   .ui-meta {
-    @apply text-sm font-medium text-zinc-700 md:text-[11px];
+    @apply text-sm text-zinc-500 md:text-[11px];
   }
 
   .ui-text {
-    @apply text-[15px] font-medium text-zinc-900 md:text-[13px];
+    @apply text-[15px] text-zinc-800 md:text-[13px];
   }
 
   .ui-caption {
-    @apply text-sm italic text-zinc-600 md:text-[11px];
+    @apply text-sm italic text-zinc-400 md:text-[11px];
   }
 
   .ui-flash-success {
-    @apply mb-3 rounded-lg border border-emerald-500 px-4 py-3 font-medium text-emerald-950 shadow-md md:px-3 md:py-2;
+    @apply mb-3 rounded-lg border border-emerald-200/80 px-4 py-3 text-emerald-800 ring-1 ring-emerald-500/10 md:px-3 md:py-2;
     font-size: 15px;
-    background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 55%, #34d399 100%);
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
   }
 
   .ui-flash-warning {
-    @apply mb-3 rounded-lg border border-amber-500 px-4 py-3 font-medium text-amber-950 shadow-md md:px-3 md:py-2;
+    @apply mb-3 rounded-lg border border-amber-200/80 px-4 py-3 text-amber-800 ring-1 ring-amber-500/10 md:px-3 md:py-2;
     font-size: 15px;
-    background: linear-gradient(135deg, #fde68a 0%, #fcd34d 55%, #fbbf24 100%);
+    background: linear-gradient(135deg, #fffbeb 0%, #fefce8 100%);
   }
 
   .ui-flash-error {
-    @apply mb-3 rounded-lg border border-red-500 px-4 py-3 font-medium text-red-950 shadow-md md:px-3 md:py-2;
+    @apply mb-3 rounded-lg border border-red-200/80 px-4 py-3 text-red-800 ring-1 ring-red-500/10 md:px-3 md:py-2;
     font-size: 15px;
-    background: linear-gradient(135deg, #fecaca 0%, #fca5a5 55%, #f87171 100%);
+    background: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%);
   }
 
   @media (min-width: 768px) {
@@ -303,17 +275,16 @@
   }
 
   .ui-chart-tooltip {
-    @apply rounded-md border border-brand-400 px-3 py-2 text-[15px] shadow-lg md:px-2.5 md:py-1.5 md:text-[13px];
-    background: linear-gradient(145deg, #dce8ff 0%, #bcd4ff 100%);
+    @apply rounded-md border border-zinc-200 bg-white px-3 py-2 text-[15px] shadow-md md:px-2.5 md:py-1.5 md:text-[13px];
   }
 
   .ui-app-header {
-    @apply sticky top-0 z-30 flex min-h-[3rem] flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-brand-400 px-4 py-2 backdrop-blur-md md:h-11 md:min-h-0 md:flex-nowrap md:gap-2.5 md:px-3.5 md:py-0 lg:px-4;
-    background: linear-gradient(90deg, #c5d8ff 0%, #9eb8ff 45%, #b8cdfc 100%);
+    @apply sticky top-0 z-30 flex min-h-[3rem] flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-zinc-200/80 bg-white/90 px-4 py-2 backdrop-blur-md md:h-11 md:min-h-0 md:flex-nowrap md:gap-2.5 md:px-3.5 md:py-0 lg:px-4;
+    background: linear-gradient(90deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
   }
 
   .ui-app-title {
-    @apply text-lg font-bold tracking-tight text-zinc-900 md:text-base md:font-semibold;
+    @apply text-lg font-semibold tracking-tight text-zinc-900 md:text-base;
   }
 
   .ui-app-main {
@@ -329,10 +300,10 @@
   }
 
   .ui-stat-value {
-    @apply text-2xl font-bold tabular-nums tracking-tight text-zinc-950 md:text-xl;
+    @apply text-2xl font-semibold tabular-nums tracking-tight text-zinc-900 md:text-xl;
   }
 
   .ui-stat-label {
-    @apply truncate text-xs font-bold uppercase tracking-wider md:text-[11px];
+    @apply truncate text-xs font-medium uppercase tracking-wider text-zinc-500 md:text-[11px];
   }
 }

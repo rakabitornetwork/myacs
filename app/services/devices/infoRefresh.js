@@ -8,7 +8,7 @@ const REFRESH_COOLDOWN_MS = parseInt(process.env.DEVICE_INFO_REFRESH_COOLDOWN_MS
 export { getDeviceRefreshFetchPaths, resolveDeviceRefreshFetchPaths };
 
 export async function queueDeviceInfoRefresh(device, { force = false } = {}) {
-  if (!device?.deviceId || device.source === 'genieacs') return false;
+  if (!device?.deviceId) return false;
 
   const info = extractDeviceInfo(device);
   if (!force && deviceInfoIsComplete(info)) return false;

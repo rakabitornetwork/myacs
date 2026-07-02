@@ -6,8 +6,6 @@ import { getCwmpPublicUrl } from '../helpers/acs.js';
 export async function healthCheck() {
   const checks = {
     mongodb: false,
-    genieacsMongo: null,
-    acsMode: config.acsMode,
     cwmpEnabled: config.cwmp.enabled,
     cwmpUrl: getCwmpPublicUrl(),
     uptime: Math.floor(process.uptime()),
@@ -21,20 +19,6 @@ export async function healthCheck() {
     }
   } catch {
     checks.mongodb = false;
-  }
-
-  if (config.genieacs.syncEnabled && config.genieacs.mongoUri) {
-    try {
-      const conn = mongoose.createConnection(config.genieacs.mongoUri, {
-        serverSelectionTimeoutMS: 3000,
-      });
-      await conn.asPromise();
-      await conn.db.admin().ping();
-      checks.genieacsMongo = true;
-      await conn.close();
-    } catch {
-      checks.genieacsMongo = false;
-    }
   }
 
   const configResult = validateConfig();

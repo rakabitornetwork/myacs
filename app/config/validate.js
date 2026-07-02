@@ -24,19 +24,6 @@ export function validateConfig({ production = config.isProduction } = {}) {
     }
   }
 
-  if (config.acsMode === 'dual' || config.acsMode === 'genieacs-panel') {
-    if (!config.genieacs.mongoUri) {
-      errors.push('GENIEACS_MONGODB_URI wajib untuk mode dual / genieacs-panel');
-    }
-    if (config.acsMode === 'dual' && !config.genieacs.cwmpUrl) {
-      warnings.push('GENIEACS_CWMP_URL kosong — badge GenieACS tidak akan tampil');
-    }
-  }
-
-  if (config.acsMode === 'dual' && !config.genieacs.nbiUrl) {
-    warnings.push('GENIEACS_NBI_URL kosong — kontrol device GenieACS dari panel tidak aktif');
-  }
-
   return { errors, warnings, ok: errors.length === 0 };
 }
 

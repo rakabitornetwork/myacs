@@ -1,7 +1,6 @@
 import Task from '../../models/Task.js';
 import Device from '../../models/Device.js';
 import { sendConnectionRequest } from '../connectionRequest.js';
-import { isGenieacsDevice } from '../../helpers/acs.js';
 import { getConnectionRequestCredentials, hasConnectionRequestCredentials, CR_CREDENTIAL_PARAM_NAMES } from '../../helpers/connectionRequestCreds.js';
 
 export async function queueFetchConnectionRequestCredentials(device) {
@@ -21,7 +20,7 @@ export async function markConnectionRequestSent(deviceId) {
 }
 
 export async function wakeDeviceConnection(device) {
-  if (!device?.connectionRequestUrl || isGenieacsDevice(device)) return { ok: false, skipped: true };
+  if (!device?.connectionRequestUrl) return { ok: false, skipped: true };
 
   try {
     const credentials = getConnectionRequestCredentials(device);
@@ -42,7 +41,7 @@ export async function createTaskForDevice(device, taskData, { wake = true } = {}
     ...taskData,
   });
 
-  if (wake && !isGenieacsDevice(device)) {
+  if (wake) {
     await wakeDeviceConnection(device);
   }
 

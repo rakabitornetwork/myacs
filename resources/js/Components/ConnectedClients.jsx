@@ -56,12 +56,12 @@ export default function ConnectedClients({ data }) {
         </Badge>
         {!hasDetails && count > 0 && (
           <span className="ui-caption">
-            ONU melaporkan {count} koneksi — detail belum tersedia. Klik <strong>Refresh</strong> atau <strong>Import GenieACS</strong>.
+            ONU melaporkan {count} koneksi — detail belum tersedia. Klik <strong>Refresh</strong>.
           </span>
         )}
         {!hasDetails && count === 0 && (
           <span className="ui-caption">
-            Belum ada perangkat terdeteksi. Klik <strong>Refresh</strong> / <strong>Import GenieACS</strong> setelah ada klien WiFi/LAN.
+            Belum ada perangkat terdeteksi. Klik <strong>Refresh</strong> setelah ada klien WiFi/LAN.
           </span>
         )}
       </div>

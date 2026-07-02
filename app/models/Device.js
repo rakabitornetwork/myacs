@@ -19,7 +19,6 @@ const deviceSchema = new mongoose.Schema(
     connectionRequestUrl: { type: String },
     lastConnectionRequestAt: { type: Date },
     events: [{ type: String }],
-    source: { type: String, enum: ['myacs', 'genieacs'], default: 'myacs' },
   },
   { timestamps: true },
 );

@@ -1,13 +1,5 @@
 import config from '../config/index.js';
 
-export function isGenieacsNbiConfigured() {
-  return Boolean(config.genieacs.nbiUrl?.trim());
-}
-
-export function isGenieacsMongoConfigured() {
-  return Boolean(config.genieacs.mongoUri?.trim());
-}
-
 /** URL ACS untuk CPE — gunakan CWMP_PUBLIC_URL jika di-set, else APP_URL + path */
 export function resolveCwmpPublicUrl({ publicUrl, appUrl, path, enabled }) {
   if (!enabled) return null;
@@ -29,22 +21,8 @@ export function getCwmpPublicUrl() {
 
 export function acsInfoForClient() {
   return {
-    mode: config.acsMode,
     cwmpEnabled: config.cwmp.enabled,
     cwmpUrl: getCwmpPublicUrl(),
     appUrl: config.appUrl,
-    genieacsCwmpUrl: config.genieacs.cwmpUrl || null,
-    genieacsNbiUrl: config.genieacs.nbiUrl || null,
-    genieacsNbiConfigured: isGenieacsNbiConfigured(),
-    genieacsMongoConfigured: isGenieacsMongoConfigured(),
-    syncEnabled: config.genieacs.syncEnabled,
   };
-}
-
-export function isGenieacsDevice(device) {
-  return device?.source === 'genieacs';
-}
-
-export function isMyacsDevice(device) {
-  return !device?.source || device.source === 'myacs';
 }

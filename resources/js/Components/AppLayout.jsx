@@ -114,21 +114,7 @@ export default function AppLayout({ children, title, actions }) {
           <h1 className="ui-app-title min-w-0 flex-1 truncate max-md:order-2 max-md:w-full">{title}</h1>
           {actions ? <div className="ui-actions-bar max-md:order-4">{actions}</div> : null}
           <div className="ml-auto flex items-center gap-2 max-md:order-3 max-md:ml-0 max-md:w-auto">
-            {app?.mode === 'dual' ? (
-              <>
-                <span className="hidden items-center gap-1 rounded-md bg-violet-500/10 px-1.5 py-0.5 text-[11px] font-medium text-violet-700 ring-1 ring-violet-500/20 sm:inline-flex">
-                  Dual ACS
-                </span>
-                <span className="hidden items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-500/20 sm:inline-flex">
-                  <Radio className="h-3.5 w-3.5" />
-                  MyACS CWMP
-                </span>
-              </>
-            ) : app?.mode === 'genieacs-panel' ? (
-              <span className="hidden items-center gap-1 rounded-md bg-sky-500/10 px-1.5 py-0.5 text-[11px] font-medium text-sky-700 ring-1 ring-sky-500/20 sm:inline-flex">
-                GenieACS Panel
-              </span>
-            ) : app?.cwmpEnabled ? (
+            {app?.cwmpEnabled ? (
               <span className="hidden items-center gap-1 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-500/20 sm:inline-flex">
                 <Radio className="h-3 w-3" />
                 ACS Live

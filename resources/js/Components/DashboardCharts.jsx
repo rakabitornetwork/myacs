@@ -124,7 +124,7 @@ export default function DashboardCharts({ charts }) {
           title="Merk ONU"
           subtitle="Distribusi manufacturer"
           data={byBrand}
-          emptyHint="Belum ada data merk — tunggu Inform atau Import GenieACS"
+          emptyHint="Belum ada data merk — tunggu Inform dari CPE"
         />
         <DonutChartPanel
           title="PON Mode"
@@ -136,7 +136,7 @@ export default function DashboardCharts({ charts }) {
           title="RX Power"
           subtitle="Kualitas sinyal optik (dBm)"
           data={rxPower}
-          emptyHint="Belum ada data RX — klik Refresh Info / Import GenieACS"
+          emptyHint="Belum ada data RX — klik Refresh di halaman device"
         />
         <BarChartPanel
           title="Temperature"

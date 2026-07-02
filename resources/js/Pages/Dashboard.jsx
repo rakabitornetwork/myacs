@@ -1,9 +1,8 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Router, Wifi, ListTodo, AlertTriangle, Settings2, FileBox, RefreshCw } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import { Router, Wifi, ListTodo, AlertTriangle, Settings2, FileBox } from 'lucide-react';
 import AppLayout from '@/Components/AppLayout';
 import StatCard from '@/Components/StatCard';
 import Badge from '@/Components/Badge';
-import AcsBadge from '@/Components/AcsBadge';
 import Flash from '@/Components/Flash';
 import { Panel, PanelHeader } from '@/Components/Panel';
 import DashboardCharts from '@/Components/DashboardCharts';
@@ -18,31 +17,6 @@ function formatDate(date) {
   });
 }
 
-function DualAcsBanner({ acs }) {
-  if (acs?.mode !== 'dual') return null;
-
-  return (
-    <div className="ui-banner-violet mb-2">
-      <strong className="text-violet-800">Mode Dual ACS</strong> — CPE terpisah:
-      <div className="mt-1.5 grid gap-1 sm:grid-cols-2">
-        <div className="ui-banner-chip-violet">
-          <span className="font-medium text-violet-700">CPE lama → GenieACS</span>
-          <p className="ui-mono mt-0.5 text-[11px] text-zinc-500">
-            {acs.genieacsCwmpUrl || 'http://VPS:7547'}
-          </p>
-        </div>
-        <div className="ui-banner-chip-sky">
-          <span className="font-medium text-sky-700">CPE baru → MyACS</span>
-          <p className="ui-mono mt-0.5 break-all text-[11px] text-zinc-500">
-            {acs.cwmpUrl || '—'}
-          </p>
-          <p className="mt-0.5 text-[9px] text-zinc-400">Isi URL ini di ONU (TR-069 ACS)</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function Dashboard({ stats, charts, recentDevices, acs, system, flash }) {
   const onlineRate =
     stats.devices > 0 ? Math.round((stats.online / stats.devices) * 100) : 0;
@@ -50,14 +24,6 @@ export default function Dashboard({ stats, charts, recentDevices, acs, system, f
   return (
     <AppLayout title="Dashboard">
       <Head title="Dashboard" />
-
-      <DualAcsBanner acs={acs} />
-      {acs?.mode === 'genieacs-panel' && (
-        <div className="ui-banner-sky">
-          Mode panel GenieACS — CWMP hanya di GenieACS. Device disinkronkan dari database{' '}
-          <code className="ui-mono">genieacs</code>.
-        </div>
-      )}
 
       <Flash flash={flash} />
 
@@ -110,20 +76,13 @@ export default function Dashboard({ stats, charts, recentDevices, acs, system, f
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 md:gap-2">
         <StatCard label="Total Devices" value={stats.devices} icon={Router} />
-        {acs?.mode === 'dual' ? (
-          <>
-            <StatCard label="MyACS" value={stats.myacsDevices} icon={Router} color="brand" />
-            <StatCard label="GenieACS" value={stats.genieacsDevices} icon={Router} color="amber" />
-          </>
-        ) : (
-          <StatCard
-            label="Online"
-            value={stats.online}
-            icon={Wifi}
-            color="green"
-            sub={`${onlineRate}%`}
-          />
-        )}
+        <StatCard
+          label="Online"
+          value={stats.online}
+          icon={Wifi}
+          color="green"
+          sub={`${onlineRate}%`}
+        />
         <StatCard label="Pending" value={stats.pendingTasks} icon={ListTodo} color="amber" />
         <StatCard label="Faults" value={stats.faults} icon={AlertTriangle} color="red" />
         <StatCard label="Presets" value={stats.presets} icon={Settings2} />
@@ -136,28 +95,15 @@ export default function Dashboard({ stats, charts, recentDevices, acs, system, f
         <PanelHeader
           title="Recent Devices"
           action={
-            <div className="flex items-center gap-2">
-              {acs?.syncEnabled && (
-                <button
-                  type="button"
-                  onClick={() => router.post('/sync/genieacs')}
-                  className="ui-btn-secondary"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Sync GenieACS
-                </button>
-              )}
-              <Link href="/devices" className="text-[13px] font-medium text-brand-600 hover:underline">
-                View all →
-              </Link>
-            </div>
+            <Link href="/devices" className="text-[13px] font-medium text-brand-600 hover:underline">
+              View all →
+            </Link>
           }
         />
         <div className="ui-table-wrap">
           <table className="ui-table">
             <thead>
               <tr>
-                <th>ACS</th>
                 <th>Device ID</th>
                 <th>Manufacturer</th>
                 <th>Model</th>
@@ -168,16 +114,13 @@ export default function Dashboard({ stats, charts, recentDevices, acs, system, f
             <tbody>
               {recentDevices.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="ui-empty">
-                    Belum ada device. CPE MyACS → Inform ke {acs?.cwmpUrl || '/cwmp'}.
+                  <td colSpan={5} className="ui-empty">
+                    Belum ada device. CPE → Inform ke {acs?.cwmpUrl || '/cwmp'}.
                   </td>
                 </tr>
               ) : (
                 recentDevices.map((device) => (
                   <tr key={device.id}>
-                    <td>
-                      <AcsBadge source={device.source} />
-                    </td>
                     <td>
                       <Link href={`/devices/${device.id}`} className="ui-link ui-mono">
                         {device.deviceId}

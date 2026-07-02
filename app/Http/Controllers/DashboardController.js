@@ -5,27 +5,14 @@ import CwmpSession from '../../models/CwmpSession.js';
 import Preset from '../../models/Preset.js';
 import AcsFile from '../../models/AcsFile.js';
 import { sendConnectionRequest } from '../../services/connectionRequest.js';
-import { syncDevicesFromGenieacs } from '../../jobs/genieacsSync.js';
-import { acsInfoForClient, isGenieacsDevice, isGenieacsNbiConfigured, isGenieacsMongoConfigured, getCwmpPublicUrl } from '../../helpers/acs.js';
-import {
-  genieacsReboot,
-  genieacsFactoryReset,
-  genieacsConnectionRequest,
-  genieacsGetParameterValues,
-  genieacsSetParameterValues,
-  genieacsGetParameterNames,
-  genieacsUpload,
-  genieacsDownload,
-  genieacsRefreshHosts,
-} from '../../services/genieacs/nbi.js';
+import { acsInfoForClient, getCwmpPublicUrl } from '../../helpers/acs.js';
 import { validateConfig } from '../../config/validate.js';
 import config from '../../config/index.js';
 import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestCredentials, markConnectionRequestSent, retryWakeForPendingTasks } from '../../services/tasks/queue.js';
 import { parametersToEntries } from '../../helpers/parameters.js';
-import { extractDeviceInfo, getDeviceInfoFetchPaths } from '../../helpers/deviceInfo.js';
+import { extractDeviceInfo } from '../../helpers/deviceInfo.js';
 import { resolveConnectedClientsForDevice } from '../../services/devices/connectedClients.js';
-import { queueDeviceInfoRefresh, getDeviceRefreshFetchPaths } from '../../services/devices/infoRefresh.js';
-import { importGenieacsParamsForDevice } from '../../services/genieacs/importParams.js';
+import { queueDeviceInfoRefresh } from '../../services/devices/infoRefresh.js';
 import {
   getConnectionRequestCredentials,
   connectionRequestCredentialStatus,
@@ -42,25 +29,6 @@ function flashAndRedirect(req, res, device, type, message) {
   return redirectDevice(res, device);
 }
 
-async function runGenieacsAction(device, req, res, action) {
-  if (!isGenieacsNbiConfigured()) {
-    return flashAndRedirect(
-      req,
-      res,
-      device,
-      'warning',
-      'GenieACS NBI belum dikonfigurasi (GENIEACS_NBI_URL)',
-    );
-  }
-
-  try {
-    await action();
-    return flashAndRedirect(req, res, device, 'success', 'Task berhasil dikirim ke GenieACS');
-  } catch (err) {
-    return flashAndRedirect(req, res, device, 'error', err.message);
-  }
-}
-
 async function queueMyacsTask(req, res, device, taskData, label) {
   await createTaskForDevice(device, taskData);
   req.session.flash = {
@@ -74,8 +42,6 @@ export async function dashboard(req, res) {
   const [
     deviceCount,
     onlineCount,
-    myacsCount,
-    genieacsCount,
     pendingTasks,
     faultCount,
     recentDevices,
@@ -83,8 +49,6 @@ export async function dashboard(req, res) {
   ] = await Promise.all([
     Device.countDocuments(),
     Device.countDocuments({ isOnline: true }),
-    Device.countDocuments({ $or: [{ source: 'myacs' }, { source: { $exists: false } }] }),
-    Device.countDocuments({ source: 'genieacs' }),
     Task.countDocuments({ status: 'pending' }),
     Fault.countDocuments({ resolved: false }),
     Device.find().sort({ lastInform: -1 }).limit(5).lean(),
@@ -94,23 +58,11 @@ export async function dashboard(req, res) {
   let system = null;
   if (req.user?.role === 'admin') {
     const validation = validateConfig({ production: config.isProduction });
-    const deployNotes = [];
-
-    if (config.acsMode === 'dual' && config.port === 3000) {
-      deployNotes.push('PORT=3000 bentrok dengan GenieACS UI — set PORT=3001 di .env');
-    }
-    if (!config.genieacs.nbiUrl && config.acsMode === 'dual') {
-      deployNotes.push('GENIEACS_NBI_URL kosong — device GenieACS tidak bisa dikontrol dari panel');
-    }
-    if (validation.errors.length) {
-      deployNotes.push(...validation.errors);
-    }
+    const deployNotes = validation.errors.length ? [...validation.errors] : [];
 
     system = {
       health: 'ok',
       mongodb: true,
-      genieacsMongo: Boolean(config.genieacs.mongoUri),
-      acsMode: config.acsMode,
       cwmpUrl: getCwmpPublicUrl(),
       port: config.port,
       appUrl: config.appUrl,
@@ -123,8 +75,6 @@ export async function dashboard(req, res) {
     stats: {
       devices: deviceCount,
       online: onlineCount,
-      myacsDevices: myacsCount,
-      genieacsDevices: genieacsCount,
       pendingTasks,
       faults: faultCount,
       presets: await Preset.countDocuments(),
@@ -139,7 +89,6 @@ export async function dashboard(req, res) {
       serialNumber: d.serialNumber,
       lastInform: d.lastInform,
       isOnline: d.isOnline,
-      source: d.source,
     })),
     acs: acsInfoForClient(),
     system,
@@ -154,26 +103,18 @@ export async function dashboard(req, res) {
 export async function devicesIndex(req, res) {
   const page = Math.max(1, parseInt(req.query.page || '1', 10));
   const perPage = 20;
-  const source = (req.query.source || '').trim();
   const search = (req.query.search || '').trim();
 
-  const conditions = [];
-  if (source === 'myacs') {
-    conditions.push({ $or: [{ source: 'myacs' }, { source: { $exists: false } }] });
-  } else if (source === 'genieacs') {
-    conditions.push({ source: 'genieacs' });
-  }
-  if (search) {
-    conditions.push({
-      $or: [
-        { deviceId: { $regex: search, $options: 'i' } },
-        { serialNumber: { $regex: search, $options: 'i' } },
-        { manufacturer: { $regex: search, $options: 'i' } },
-        { model: { $regex: search, $options: 'i' } },
-      ],
-    });
-  }
-  const filter = conditions.length ? { $and: conditions } : {};
+  const filter = search
+    ? {
+        $or: [
+          { deviceId: { $regex: search, $options: 'i' } },
+          { serialNumber: { $regex: search, $options: 'i' } },
+          { manufacturer: { $regex: search, $options: 'i' } },
+          { model: { $regex: search, $options: 'i' } },
+        ],
+      }
+    : {};
 
   const [devices, total] = await Promise.all([
     Device.find(filter)
@@ -200,7 +141,6 @@ export async function devicesIndex(req, res) {
       lastInform: d.lastInform,
       isOnline: d.isOnline,
       tags: d.tags || [],
-      source: d.source || 'myacs',
       info: extractDeviceInfo(d),
     })),
     pagination: {
@@ -209,7 +149,7 @@ export async function devicesIndex(req, res) {
       total,
       lastPage: Math.ceil(total / perPage) || 1,
     },
-    filters: { search, source },
+    filters: { search },
     acs: acsInfoForClient(),
     flash,
   });
@@ -255,11 +195,6 @@ export async function devicesShow(req, res) {
       parameters,
       info: extractDeviceInfo(device),
       connectedClients,
-      source: device.source || 'myacs',
-      managedByMyacs: !isGenieacsDevice(device),
-      canManage:
-        !isGenieacsDevice(device) ||
-        (isGenieacsDevice(device) && isGenieacsNbiConfigured()),
     },
     tasks: tasks.map((t) => ({
       id: t._id.toString(),
@@ -288,7 +223,6 @@ export async function deleteDevice(req, res) {
   if (!device) return res.status(404).send('Device not found');
 
   const { deviceId } = device;
-  const wasGenieacs = isGenieacsDevice(device);
 
   await Promise.all([
     Task.deleteMany({ deviceId }),
@@ -299,9 +233,7 @@ export async function deleteDevice(req, res) {
 
   req.session.flash = {
     type: 'success',
-    message: wasGenieacs
-      ? `Device ${deviceId} dihapus dari MyACS. Jika masih ada di GenieACS dan sync aktif, bisa muncul lagi.`
-      : `Device ${deviceId} berhasil dihapus dari MyACS.`,
+    message: `Device ${deviceId} berhasil dihapus dari MyACS.`,
   };
 
   return res.redirect('/devices');
@@ -333,10 +265,6 @@ export async function createRebootTask(req, res) {
   const device = await Device.findById(req.params.id);
   if (!device) return res.status(404).send('Device not found');
 
-  if (isGenieacsDevice(device)) {
-    return runGenieacsAction(device, req, res, () => genieacsReboot(device.deviceId));
-  }
-
   return queueMyacsTask(req, res, device, {
     name: 'Reboot device',
     method: 'Reboot',
@@ -347,10 +275,6 @@ export async function createRebootTask(req, res) {
 export async function createFactoryResetTask(req, res) {
   const device = await Device.findById(req.params.id);
   if (!device) return res.status(404).send('Device not found');
-
-  if (isGenieacsDevice(device)) {
-    return runGenieacsAction(device, req, res, () => genieacsFactoryReset(device.deviceId));
-  }
 
   return queueMyacsTask(req, res, device, {
     name: 'Factory reset',
@@ -363,16 +287,6 @@ export async function createRefreshInfoTask(req, res) {
   const device = await Device.findById(req.params.id);
   if (!device) return res.status(404).send('Device not found');
 
-  if (isGenieacsDevice(device)) {
-    return runGenieacsAction(device, req, res, async () => {
-      await genieacsRefreshHosts(device.deviceId);
-      const paths = getDeviceRefreshFetchPaths(device);
-      for (const name of paths) {
-        await genieacsGetParameterValues(device.deviceId, [name]);
-      }
-    });
-  }
-
   const queued = await queueDeviceInfoRefresh(device, { force: true });
   if (!queued) {
     return flashAndRedirect(req, res, device, 'error', 'Refresh info sudah antri atau baru dijalankan');
@@ -380,28 +294,6 @@ export async function createRefreshInfoTask(req, res) {
 
   await wakeDeviceConnection(device);
   return flashAndRedirect(req, res, device, 'success', 'Refresh info device diantrikan — tunggu beberapa detik');
-}
-
-export async function importGenieacsParams(req, res) {
-  const device = await Device.findById(req.params.id);
-  if (!device) return res.status(404).send('Device not found');
-
-  if (!isGenieacsMongoConfigured()) {
-    return flashAndRedirect(req, res, device, 'error', 'GENIEACS_MONGODB_URI belum dikonfigurasi');
-  }
-
-  const result = await importGenieacsParamsForDevice(device.deviceId);
-  if (!result.ok) {
-    return flashAndRedirect(req, res, device, 'error', result.error);
-  }
-
-  return flashAndRedirect(
-    req,
-    res,
-    device,
-    'success',
-    `Diimpor ${result.imported} parameter info dari GenieACS`,
-  );
 }
 
 export async function createGetParamsTask(req, res) {
@@ -412,12 +304,6 @@ export async function createGetParamsTask(req, res) {
   const names = raw
     ? raw.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean)
     : ['Device.DeviceInfo.'];
-
-  if (isGenieacsDevice(device)) {
-    return runGenieacsAction(device, req, res, () =>
-      genieacsGetParameterValues(device.deviceId, names),
-    );
-  }
 
   return queueMyacsTask(req, res, device, {
     name: `Get: ${names.slice(0, 2).join(', ')}${names.length > 2 ? '…' : ''}`,
@@ -439,12 +325,6 @@ export async function createSetParamsTask(req, res) {
 
   const values = [{ name: path, value }];
 
-  if (isGenieacsDevice(device)) {
-    return runGenieacsAction(device, req, res, () =>
-      genieacsSetParameterValues(device.deviceId, values),
-    );
-  }
-
   return queueMyacsTask(req, res, device, {
     name: `Set: ${path}`,
     method: 'SetParameterValues',
@@ -458,12 +338,6 @@ export async function createGetParamNamesTask(req, res) {
 
   const parameterPath = (req.body.path || 'Device.').trim();
   const nextLevel = req.body.nextLevel === '1' || req.body.nextLevel === true;
-
-  if (isGenieacsDevice(device)) {
-    return runGenieacsAction(device, req, res, () =>
-      genieacsGetParameterNames(device.deviceId, parameterPath, nextLevel),
-    );
-  }
 
   return queueMyacsTask(req, res, device, {
     name: `Get names: ${parameterPath}`,
@@ -488,12 +362,6 @@ export async function createUploadTask(req, res) {
   task.payload = { ...task.payload, url: uploadUrl };
   await task.save();
 
-  if (isGenieacsDevice(device)) {
-    return runGenieacsAction(device, req, res, () =>
-      genieacsUpload(device.deviceId, { fileType, url: uploadUrl }),
-    );
-  }
-
   await wakeDeviceConnection(device);
   req.session.flash = {
     type: 'success',
@@ -505,10 +373,6 @@ export async function createUploadTask(req, res) {
 export async function connectionRequest(req, res) {
   const device = await Device.findById(req.params.id);
   if (!device) return res.status(404).send('Device not found');
-
-  if (isGenieacsDevice(device)) {
-    return runGenieacsAction(device, req, res, () => genieacsConnectionRequest(device.deviceId));
-  }
 
   try {
     const credentials = getConnectionRequestCredentials(device);
@@ -552,15 +416,6 @@ export async function createDownloadTask(req, res) {
   const file = await AcsFile.findById(req.body.fileId);
   if (!file) {
     return flashAndRedirect(req, res, device, 'error', 'File firmware tidak ditemukan');
-  }
-
-  if (isGenieacsDevice(device)) {
-    return runGenieacsAction(device, req, res, () =>
-      genieacsDownload(device.deviceId, {
-        url: file.url,
-        fileType: '1 Firmware Upgrade Image',
-      }),
-    );
   }
 
   await createTaskForDevice(device, {
@@ -648,9 +503,8 @@ export async function retryTask(req, res) {
   if (!task) {
     req.session.flash = { type: 'error', message: 'Task tidak ditemukan atau sudah diproses' };
   } else {
-    // Reset updatedAt and send Connection Request
     task.retries = Math.max(0, (task.retries || 0));
-    await task.save(); // touch updatedAt
+    await task.save();
 
     const result = await retryWakeForPendingTasks(task.deviceId);
     if (result.ok) {
@@ -665,23 +519,4 @@ export async function retryTask(req, res) {
 
   const back = req.headers.referer || '/tasks';
   return res.redirect(back);
-}
-
-export async function syncGenieacs(req, res) {
-  if (!config.genieacs.syncEnabled) {
-    req.session.flash = { type: 'error', message: 'Sync GenieACS tidak aktif di mode ini' };
-    return res.redirect('/dashboard');
-  }
-
-  try {
-    const { synced, removed } = await syncDevicesFromGenieacs();
-    req.session.flash = {
-      type: 'success',
-      message: `Sync GenieACS — ${synced} device diperbarui, ${removed} dihapus`,
-    };
-  } catch (err) {
-    req.session.flash = { type: 'error', message: `Sync gagal: ${err.message}` };
-  }
-
-  return res.redirect('/dashboard');
 }

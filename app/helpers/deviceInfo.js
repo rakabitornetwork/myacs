@@ -454,7 +454,7 @@ export function extractDeviceInfo(device) {
     rxPowerStatus: classifyRxPower(rxPowerRaw),
     temperatureStatus: classifyTemperature(temperatureRaw),
     rxPowerNote: rxPowerRaw ? '' : 'Klik Refresh untuk fetch subtree optical (GPON/EPON)',
-    ipTr069Note: ipTr069 ? '' : 'Hanya tersedia dari GenieACS (VirtualParameters.IPTR069)',
+    ipTr069Note: ipTr069 ? '' : 'Belum ter-fetch — klik Refresh atau tunggu Inform dari CPE',
   };
 }
 

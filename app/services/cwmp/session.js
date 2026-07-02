@@ -65,7 +65,7 @@ export async function resolveDeviceId(req) {
       if (ageMs <= SESSION_FALLBACK_MS) return ipSession.deviceId;
     }
 
-    const device = await Device.findOne({ ipAddress: clientIp, source: 'myacs' })
+    const device = await Device.findOne({ ipAddress: clientIp })
       .sort({ lastInform: -1 })
       .lean();
     if (device) return device.deviceId;

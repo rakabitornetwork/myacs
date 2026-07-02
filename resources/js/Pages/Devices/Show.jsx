@@ -14,7 +14,6 @@ import {
 import { useState } from 'react';
 import AppLayout from '@/Components/AppLayout';
 import Badge from '@/Components/Badge';
-import AcsBadge from '@/Components/AcsBadge';
 import Flash from '@/Components/Flash';
 import { Panel, PanelHeader } from '@/Components/Panel';
 import { DeviceInfoGrid } from '@/Components/DeviceInfo';
@@ -37,16 +36,14 @@ function formatParamValue(value) {
   return String(value);
 }
 
-function DeviceActions({ device, canAct, canDelete, isGenieacs, acs, layout = 'desktop' }) {
+function DeviceActions({ device, canAct, canDelete, layout = 'desktop' }) {
   const mobile = layout === 'mobile';
   const btn = mobile ? 'ui-btn-secondary w-full justify-center' : 'ui-btn-secondary';
   const danger = mobile ? 'ui-btn-danger w-full justify-center' : 'ui-btn-danger';
   const icon = 'h-4 w-4 shrink-0 md:h-3.5 md:w-3.5';
 
   const handleDelete = () => {
-    const msg = isGenieacs
-      ? `Hapus "${device.deviceId}" dari MyACS?\n\nDevice masih ada di GenieACS bisa muncul lagi saat sync.`
-      : `Hapus permanen "${device.deviceId}" dari MyACS?\n\nTask dan riwayat terkait juga dihapus.`;
+    const msg = `Hapus permanen "${device.deviceId}" dari MyACS?\n\nTask dan riwayat terkait juga dihapus.`;
     if (window.confirm(msg)) {
       router.delete(`/devices/${device.id}`);
     }
@@ -64,7 +61,7 @@ function DeviceActions({ device, canAct, canDelete, isGenieacs, acs, layout = 'd
             type="button"
             onClick={() => router.post(`/devices/${device.id}/connection-request`)}
             className={btn}
-            disabled={!isGenieacs && !device.connectionRequestUrl}
+            disabled={!device.connectionRequestUrl}
           >
             <Zap className={icon} />
             {mobile ? 'Conn.' : 'Conn. Request'}
@@ -77,16 +74,6 @@ function DeviceActions({ device, canAct, canDelete, isGenieacs, acs, layout = 'd
             <Search className={icon} />
             Refresh
           </button>
-          {acs?.genieacsMongoConfigured && device.managedByMyacs ? (
-            <button
-              type="button"
-              onClick={() => router.post(`/devices/${device.id}/import-genieacs`)}
-              className={btn}
-            >
-              <Download className={icon} />
-              {mobile ? 'Import' : 'Import GenieACS'}
-            </button>
-          ) : null}
           <button
             type="button"
             onClick={() => router.post(`/devices/${device.id}/reboot`)}
@@ -111,7 +98,7 @@ function DeviceActions({ device, canAct, canDelete, isGenieacs, acs, layout = 'd
   );
 }
 
-export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, acs, crCredentials }) {
+export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, crCredentials }) {
   const { auth } = usePage().props;
   const [selectedFirmware, setSelectedFirmware] = useState(firmwareFiles[0]?.id || '');
   const [getNames, setGetNames] = useState('InternetGatewayDevice.DeviceInfo.');
@@ -121,10 +108,8 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
   const [setPath, setSetPath] = useState('');
   const [setValue, setSetValue] = useState('');
   const paramEntries = Object.entries(device.parameters || {});
-  const canManage = device.canManage !== false;
   const canWrite = auth?.canWrite !== false;
-  const canAct = canManage && canWrite;
-  const isGenieacs = device.source === 'genieacs';
+  const canAct = canWrite;
 
   const pushFirmware = () => {
     if (!selectedFirmware || !canAct) return;
@@ -172,8 +157,6 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
             device={device}
             canAct={canAct}
             canDelete={auth?.canManage}
-            isGenieacs={isGenieacs}
-            acs={acs}
             layout="desktop"
           />
         </div>
@@ -187,13 +170,11 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
           device={device}
           canAct={canAct}
           canDelete={auth?.canManage}
-          isGenieacs={isGenieacs}
-          acs={acs}
           layout="mobile"
         />
       </div>
 
-      {!isGenieacs && device.connectionRequestUrl && crCredentials && !crCredentials.ready && (
+      {device.connectionRequestUrl && crCredentials && !crCredentials.ready && (
         <div className="ui-alert-amber">
           <strong>Connection Request</strong> memerlukan username/password CPE yang belum tersimpan.
           Klik <strong>Conn.</strong> untuk mengantrikan Get Parameter otomatis, atau set{' '}
@@ -208,16 +189,6 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
         </div>
       )}
 
-      {isGenieacs && (
-        <div className="ui-alert-violet">
-          Device ini dikelola oleh <strong>GenieACS</strong>
-          {acs?.genieacsCwmpUrl ? ` (${acs.genieacsCwmpUrl})` : ''}.
-          {canManage
-            ? ' Aksi dikirim via GenieACS NBI.'
-            : ' Konfigurasi GENIEACS_NBI_URL untuk mengontrol dari panel ini.'}
-        </div>
-      )}
-
       <div className="grid gap-3 lg:grid-cols-3 lg:gap-2">
         <div className="space-y-3 lg:col-span-2 lg:space-y-2">
           <Panel className="p-3.5 md:p-3">
@@ -227,7 +198,6 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                   <p className="ui-mono break-all text-sm font-semibold text-zinc-900 md:break-normal">
                     {device.deviceId}
                   </p>
-                  <AcsBadge source={device.source} />
                 </div>
                 <p className="mt-1 ui-meta">
                   {[device.manufacturer, device.info?.modelName || device.model].filter(Boolean).join(' ') || '—'}
@@ -271,7 +241,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
             <div className="mt-4 border-t border-zinc-100 pt-4 md:mt-3 md:pt-3">
               <PanelHeader
                 title="Perangkat Terhubung"
-                subtitle="Hosts.Host, LAN DHCP — dari TR-069 GenieACS/MyACS"
+                subtitle="Hosts.Host, LAN DHCP — dari parameter TR-069"
               />
               <ConnectedClients data={device.connectedClients} />
             </div>

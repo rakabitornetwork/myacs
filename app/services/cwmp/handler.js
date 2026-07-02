@@ -221,7 +221,7 @@ function sendCwmpXml(res, xml) {
   return res.send(xml);
 }
 
-/** TR-069: ACS menutup sesi — HTTP 200 tanpa body (CMHI/GenieACS compatible). */
+/** TR-069: ACS menutup sesi — HTTP 200 tanpa body. */
 function sendEmptyHttp(res) {
   return res.status(200).end();
 }
@@ -255,7 +255,6 @@ async function processInformBackground(deviceKey, info, clientIp, sessionId) {
           ipAddress: clientIp,
           lastInform: new Date(),
           isOnline: true,
-          source: 'myacs',
           events: info.events,
           ...paramUpdates,
         },

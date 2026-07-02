@@ -12,7 +12,6 @@ import { ensureDefaultUser } from './app/seed.js';
 import { inertiaMiddleware } from './app/middleware/inertia.js';
 import { attachUser } from './app/middleware/auth.js';
 import { startDeviceStatusJob } from './app/jobs/deviceStatus.js';
-import { startGenieacsSyncJob } from './app/jobs/genieacsSync.js';
 import { startTaskStaleJob } from './app/jobs/taskStale.js';
 import { startPendingTaskWakeJob } from './app/jobs/pendingTaskWake.js';
 import { healthCheck } from './app/services/health.js';
@@ -109,19 +108,10 @@ app.use((req, res) => {
 });
 
 function logStartup() {
-  console.log(`[myacs] ACS mode: ${config.acsMode}`);
   console.log(`[myacs] server running at ${config.appUrl} (port ${config.port})`);
 
   if (config.cwmp.enabled) {
-    console.log(`[myacs] CWMP (CPE baru): ${getCwmpPublicUrl()}`);
-  }
-
-  if (config.acsMode === 'dual') {
-    console.log(`[myacs] GenieACS CWMP (CPE lama): ${config.genieacs.cwmpUrl || 'port 7547'}`);
-  }
-
-  if (config.genieacs.syncEnabled && config.genieacs.mongoUri) {
-    console.log(`[myacs] syncing GenieACS devices from ${config.genieacs.mongoUri}`);
+    console.log(`[myacs] CWMP endpoint: ${getCwmpPublicUrl()}`);
   }
 }
 
@@ -130,7 +120,6 @@ async function start() {
   await connectDatabase();
   await ensureDefaultUser();
   startDeviceStatusJob();
-  startGenieacsSyncJob();
   startTaskStaleJob();
   startPendingTaskWakeJob();
 

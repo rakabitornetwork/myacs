@@ -3,7 +3,6 @@ import { Search } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/Components/AppLayout';
 import Badge from '@/Components/Badge';
-import AcsBadge from '@/Components/AcsBadge';
 import { Panel, PanelHeader } from '@/Components/Panel';
 import Flash from '@/Components/Flash';
 import DeviceInfoCells from '@/Components/DeviceInfo';
@@ -20,16 +19,10 @@ function formatDate(date) {
 
 export default function DevicesIndex({ devices, pagination, filters, acs, flash }) {
   const [search, setSearch] = useState(filters.search || '');
-  const [source, setSource] = useState(filters.source || '');
 
   const handleSearch = (e) => {
     e.preventDefault();
-    router.get('/devices', { search, source, page: 1 }, { preserveState: true });
-  };
-
-  const setSourceFilter = (value) => {
-    setSource(value);
-    router.get('/devices', { search, source: value, page: 1 }, { preserveState: true });
+    router.get('/devices', { search, page: 1 }, { preserveState: true });
   };
 
   return (
@@ -43,29 +36,6 @@ export default function DevicesIndex({ devices, pagination, filters, acs, flash 
     >
       <Head title="Devices" />
       <Flash flash={flash} />
-
-      {acs?.mode === 'dual' && (
-        <div className="mb-2 flex flex-wrap gap-1">
-          {[
-            { value: '', label: 'Semua' },
-            { value: 'myacs', label: 'MyACS' },
-            { value: 'genieacs', label: 'GenieACS' },
-          ].map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setSourceFilter(opt.value)}
-              className={`rounded-md px-2 py-1 text-[13px] font-medium transition ${
-                source === opt.value
-                  ? 'bg-brand-600 text-white'
-                  : 'bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
 
       <Panel className="mb-2">
         <form onSubmit={handleSearch} className="flex items-center gap-1.5 p-2">
@@ -90,7 +60,6 @@ export default function DevicesIndex({ devices, pagination, filters, acs, flash 
           <table className="ui-table">
             <thead>
               <tr>
-                {acs?.mode === 'dual' && <th>ACS</th>}
                 <th>Device ID</th>
                 <th>Serial</th>
                 <th>Manufacturer / Model</th>
@@ -112,18 +81,13 @@ export default function DevicesIndex({ devices, pagination, filters, acs, flash 
             <tbody>
               {devices.length === 0 ? (
                 <tr>
-                  <td colSpan={acs?.mode === 'dual' ? 17 : 16} className="ui-empty">
+                  <td colSpan={16} className="ui-empty">
                     Tidak ada device ditemukan
                   </td>
                 </tr>
               ) : (
                 devices.map((device) => (
                   <tr key={device.id}>
-                    {acs?.mode === 'dual' && (
-                      <td>
-                        <AcsBadge source={device.source} />
-                      </td>
-                    )}
                     <td>
                       <Link href={`/devices/${device.id}`} className="ui-link ui-mono">
                         {device.deviceId}
@@ -161,7 +125,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs, flash 
           <div className="flex gap-1">
             {pagination.page > 1 && (
               <Link
-                href={`/devices?page=${pagination.page - 1}&search=${filters.search || ''}&source=${filters.source || ''}`}
+                href={`/devices?page=${pagination.page - 1}&search=${filters.search || ''}`}
                 className="ui-btn-secondary"
               >
                 Prev
@@ -169,7 +133,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs, flash 
             )}
             {pagination.page < pagination.lastPage && (
               <Link
-                href={`/devices?page=${pagination.page + 1}&search=${filters.search || ''}&source=${filters.source || ''}`}
+                href={`/devices?page=${pagination.page + 1}&search=${filters.search || ''}`}
                 className="ui-btn-secondary"
               >
                 Next

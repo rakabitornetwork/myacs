@@ -339,4 +339,32 @@
   .ui-connected-card {
     @apply border-b border-zinc-100 px-3.5 py-3 last:border-b-0 md:hidden;
   }
+
+  .ui-optical-critical {
+    @apply font-semibold text-red-600;
+  }
+
+  .ui-optical-warning {
+    @apply font-semibold text-orange-600;
+  }
+
+  .ui-optical-normal {
+    @apply font-medium text-emerald-600;
+  }
+
+  .ui-optical-good {
+    @apply font-medium text-blue-600;
+  }
+
+  .ui-optical-strong {
+    @apply font-medium text-violet-600;
+  }
+
+  .ui-optical-cool {
+    @apply font-medium text-sky-600;
+  }
+
+  .ui-optical-neutral {
+    @apply text-zinc-800;
+  }
 }

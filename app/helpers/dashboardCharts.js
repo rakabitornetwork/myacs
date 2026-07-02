@@ -1,20 +1,12 @@
 import { flattenParameterMap } from './parameters.js';
 import { extractDeviceInfo } from './deviceInfo.js';
-
-const RX_BUCKETS = [
-  { key: 'critical', label: 'Kritis (< -28 dBm)', min: -Infinity, max: -28, color: '#ef4444' },
-  { key: 'warning', label: 'Lemah (-28 s/d -26)', min: -28, max: -26, color: '#f97316' },
-  { key: 'normal', label: 'Normal (-26 s/d -20)', min: -26, max: -20, color: '#22c55e' },
-  { key: 'good', label: 'Baik (-20 s/d -15)', min: -20, max: -15, color: '#3366ff' },
-  { key: 'strong', label: 'Kuat (> -15 dBm)', min: -15, max: Infinity, color: '#8b5cf6' },
-];
-
-const TEMP_BUCKETS = [
-  { key: 'cool', label: 'Dingin (< 40°C)', min: -Infinity, max: 40, color: '#38bdf8' },
-  { key: 'normal', label: 'Normal (40–50°C)', min: 40, max: 50, color: '#22c55e' },
-  { key: 'warm', label: 'Hangat (50–60°C)', min: 50, max: 60, color: '#f97316' },
-  { key: 'hot', label: 'Panas (> 60°C)', min: 60, max: Infinity, color: '#ef4444' },
-];
+import {
+  RX_BUCKETS,
+  TEMP_BUCKETS,
+  parseRxPowerDbm,
+  parseTemperatureC,
+  bucketize,
+} from './opticalStatus.js';
 
 const PON_MODE_ORDER = ['GPON', 'EPON', 'Ethernet', 'Unknown'];
 const PON_MODE_COLORS = {
@@ -36,25 +28,7 @@ const PON_MODE_PATHS = [
   'VirtualParameters.getPonMode',
 ];
 
-export function parseRxPowerDbm(raw) {
-  if (raw === undefined || raw === null || String(raw).trim() === '') return null;
-  const num = parseFloat(String(raw).replace(/[^\d.-]/g, ''));
-  if (Number.isNaN(num)) return null;
-  if (num < 0 && num > -60) return num;
-  const rounded = Math.round(num);
-  if (rounded > 0 && rounded < 10000) {
-    return -(10000 - rounded) / 571.5;
-  }
-  return num;
-}
-
-export function parseTemperatureC(raw) {
-  if (raw === undefined || raw === null || String(raw).trim() === '') return null;
-  const num = parseFloat(String(raw).replace(/[^\d.-]/g, ''));
-  if (Number.isNaN(num)) return null;
-  if (num > 500) return num / 256;
-  return num;
-}
+export { parseRxPowerDbm, parseTemperatureC } from './opticalStatus.js';
 
 export function detectPonMode(device) {
   const flat = flattenParameterMap(device?.parameters);
@@ -89,15 +63,6 @@ export function detectPonMode(device) {
   if (hasEthernet && !hasGponConfig && !hasEponConfig) return 'Ethernet';
 
   return 'Unknown';
-}
-
-function bucketize(value, buckets) {
-  if (value === null) return null;
-  for (const bucket of buckets) {
-    if (value >= bucket.min && value < bucket.max) return bucket;
-    if (bucket.max === Infinity && value >= bucket.min) return bucket;
-  }
-  return buckets[buckets.length - 1];
 }
 
 function initBucketCounts(buckets) {

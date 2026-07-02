@@ -1,4 +1,5 @@
 import { flattenParameterMap } from './parameters.js';
+import { classifyRxPower, classifyTemperature } from './opticalStatus.js';
 
 const PARAM_PATHS = {
   pppoeUsername: [
@@ -336,6 +337,8 @@ export function extractDeviceInfo(device) {
     temperatureRaw,
     rxPower: formatRxPower(rxPowerRaw),
     rxPowerRaw,
+    rxPowerStatus: classifyRxPower(rxPowerRaw),
+    temperatureStatus: classifyTemperature(temperatureRaw),
   };
 }
 

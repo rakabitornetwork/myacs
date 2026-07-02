@@ -13,8 +13,8 @@
       "_vendor-react--RMMiuuR.js"
     ]
   },
-  "_DeviceInfo-DmgYu5o-.js": {
-    "file": "assets/DeviceInfo-DmgYu5o-.js",
+  "_DeviceInfo-DnKV1Gff.js": {
+    "file": "assets/DeviceInfo-DnKV1Gff.js",
     "name": "DeviceInfo",
     "imports": [
       "_vendor-react--RMMiuuR.js"
@@ -99,7 +99,7 @@
     ]
   },
   "resources/js/Pages/Devices/Index.jsx": {
-    "file": "assets/Index-CHLuZ_T2.js",
+    "file": "assets/Index-DUFS6i4E.js",
     "name": "Index",
     "src": "resources/js/Pages/Devices/Index.jsx",
     "isDynamicEntry": true,
@@ -109,13 +109,13 @@
       "_Panel-BcNu8Zdm.js",
       "_Badge-Bynr7OHY.js",
       "_AcsBadge-BX9wZ-bO.js",
-      "_DeviceInfo-DmgYu5o-.js",
+      "_DeviceInfo-DnKV1Gff.js",
       "_vendor-icons-B8K8QbQU.js",
       "_Logo-ezlfwpG3.js"
     ]
   },
   "resources/js/Pages/Devices/Show.jsx": {
-    "file": "assets/Show-Bn73dFnr.js",
+    "file": "assets/Show-BjVH2liY.js",
     "name": "Show",
     "src": "resources/js/Pages/Devices/Show.jsx",
     "isDynamicEntry": true,
@@ -126,7 +126,7 @@
       "_Badge-Bynr7OHY.js",
       "_AcsBadge-BX9wZ-bO.js",
       "_Flash-CPN6PZ47.js",
-      "_DeviceInfo-DmgYu5o-.js",
+      "_DeviceInfo-DnKV1Gff.js",
       "_vendor-icons-B8K8QbQU.js",
       "_Logo-ezlfwpG3.js"
     ]
@@ -228,7 +228,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-D3LoMvCz.js",
+    "file": "assets/app-YCgJdB_J.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
@@ -250,7 +250,7 @@
       "resources/js/Pages/Users/Index.jsx"
     ],
     "css": [
-      "assets/app-BSgh2VHH.css"
+      "assets/app-G3xOHWaV.css"
     ]
   }
 }

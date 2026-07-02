@@ -26,6 +26,8 @@ describe('extractDeviceInfo', () => {
     assert.equal(info.ssidPassword, 'wifipass');
     assert.equal(info.rxPower, '-21.50 dBm');
     assert.equal(info.temperature, '45.0 °C');
+    assert.equal(info.rxPowerStatus.level, 'normal');
+    assert.equal(info.temperatureStatus.level, 'normal');
   });
 
   it('masks secrets', () => {

@@ -11,6 +11,7 @@ import { countPendingTasks } from '../tasks/queue.js';
 import { paramUpdatesFromMap } from '../../helpers/parameters.js';
 import { isBootEvent } from '../../helpers/cwmpEvents.js';
 import { releaseStaleRunningTasks, completeRebootTasksOnBoot, completePendingRebootTasksOnBoot } from '../tasks/lifecycle.js';
+import { queueDeviceInfoRefresh } from '../devices/infoRefresh.js';
 import CwmpSession from '../../models/CwmpSession.js';
 
 const parser = new XMLParser({
@@ -273,6 +274,7 @@ async function processInformBackground(deviceKey, info, clientIp, sessionId) {
     }
 
     await releaseStaleRunningTasks(deviceKey);
+    await queueDeviceInfoRefresh(device);
   } catch (err) {
     console.error(`[cwmp] ${deviceKey} inform background error:`, err.message);
   }

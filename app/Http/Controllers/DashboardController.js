@@ -20,6 +20,8 @@ import { validateConfig } from '../../config/validate.js';
 import config from '../../config/index.js';
 import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestCredentials, markConnectionRequestSent, retryWakeForPendingTasks } from '../../services/tasks/queue.js';
 import { parametersToEntries } from '../../helpers/parameters.js';
+import { extractDeviceInfo, getDeviceInfoParamPaths } from '../../helpers/deviceInfo.js';
+import { queueDeviceInfoRefresh } from '../../services/devices/infoRefresh.js';
 import {
   getConnectionRequestCredentials,
   connectionRequestCredentialStatus,
@@ -181,12 +183,14 @@ export async function devicesIndex(req, res) {
       serialNumber: d.serialNumber,
       manufacturer: d.manufacturer,
       model: d.model,
+      productClass: d.productClass,
       softwareVersion: d.softwareVersion,
       ipAddress: d.ipAddress,
       lastInform: d.lastInform,
       isOnline: d.isOnline,
       tags: d.tags || [],
       source: d.source || 'myacs',
+      info: extractDeviceInfo(d),
     })),
     pagination: {
       page,
@@ -235,6 +239,7 @@ export async function devicesShow(req, res) {
       tags: device.tags || [],
       events: device.events || [],
       parameters,
+      info: extractDeviceInfo(device),
       source: device.source || 'myacs',
       managedByMyacs: !isGenieacsDevice(device),
       canManage:
@@ -313,6 +318,25 @@ export async function createFactoryResetTask(req, res) {
     method: 'FactoryReset',
     payload: {},
   }, 'Factory reset');
+}
+
+export async function createRefreshInfoTask(req, res) {
+  const device = await Device.findById(req.params.id);
+  if (!device) return res.status(404).send('Device not found');
+
+  if (isGenieacsDevice(device)) {
+    return runGenieacsAction(device, req, res, () =>
+      genieacsGetParameterValues(device.deviceId, getDeviceInfoParamPaths()),
+    );
+  }
+
+  const queued = await queueDeviceInfoRefresh(device, { force: true });
+  if (!queued) {
+    return flashAndRedirect(req, res, device, 'error', 'Refresh info sudah antri atau baru dijalankan');
+  }
+
+  await wakeDeviceConnection(device);
+  return flashAndRedirect(req, res, device, 'success', 'Refresh info device diantrikan — tunggu beberapa detik');
 }
 
 export async function createGetParamsTask(req, res) {

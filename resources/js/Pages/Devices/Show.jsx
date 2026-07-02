@@ -6,6 +6,7 @@ import Badge from '@/Components/Badge';
 import AcsBadge from '@/Components/AcsBadge';
 import Flash from '@/Components/Flash';
 import { Panel, PanelHeader } from '@/Components/Panel';
+import { DeviceInfoGrid } from '@/Components/DeviceInfo';
 
 function formatDate(date) {
   if (!date) return '—';
@@ -96,6 +97,14 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
               </button>
               <button
                 type="button"
+                onClick={() => router.post(`/devices/${device.id}/refresh-info`)}
+                className="ui-btn-secondary"
+              >
+                <Search className="h-3 w-3" />
+                Refresh Info
+              </button>
+              <button
+                type="button"
                 onClick={() => router.post(`/devices/${device.id}/reboot`)}
                 className="ui-btn-danger"
               >
@@ -173,6 +182,16 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                 </div>
               ))}
             </dl>
+
+            <div className="mt-3 border-t border-zinc-100 pt-3">
+              <PanelHeader title="Info ONU" subtitle="PPPoE, WiFi, optical — dari parameter TR-069" />
+              <DeviceInfoGrid info={device.info} showSecrets={canWrite} />
+              {!device.info?.pppoeUsername && !device.info?.ssid && (
+                <p className="mt-2 text-[11px] text-zinc-500">
+                  Data belum tersedia. Klik <strong>Refresh Info</strong> untuk mengambil parameter dari ONU.
+                </p>
+              )}
+            </div>
 
             {device.connectionRequestUrl && (
               <div className="mt-2 rounded-md bg-zinc-50 px-2 py-1.5 ring-1 ring-zinc-100">

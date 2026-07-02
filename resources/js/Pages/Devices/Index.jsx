@@ -5,6 +5,7 @@ import AppLayout from '@/Components/AppLayout';
 import Badge from '@/Components/Badge';
 import AcsBadge from '@/Components/AcsBadge';
 import { Panel, PanelHeader } from '@/Components/Panel';
+import DeviceInfoCells from '@/Components/DeviceInfo';
 
 function formatDate(date) {
   if (!date) return '—';
@@ -91,6 +92,14 @@ export default function DevicesIndex({ devices, pagination, filters, acs }) {
                 <th>Device ID</th>
                 <th>Serial</th>
                 <th>Manufacturer / Model</th>
+                <th>Merk</th>
+                <th>Type</th>
+                <th>PPPoE</th>
+                <th>Pass PPPoE</th>
+                <th>SSID</th>
+                <th>Pass WiFi</th>
+                <th>RX</th>
+                <th>Suhu</th>
                 <th>Firmware</th>
                 <th>IP</th>
                 <th>Status</th>
@@ -100,7 +109,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs }) {
             <tbody>
               {devices.length === 0 ? (
                 <tr>
-                  <td colSpan={acs?.mode === 'dual' ? 8 : 7} className="ui-empty">
+                  <td colSpan={acs?.mode === 'dual' ? 16 : 15} className="ui-empty">
                     Tidak ada device ditemukan
                   </td>
                 </tr>
@@ -122,6 +131,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs }) {
                       <span className="text-zinc-800">{device.manufacturer || '—'}</span>
                       {device.model && <span className="text-zinc-400"> / {device.model}</span>}
                     </td>
+                    <DeviceInfoCells info={device.info} />
                     <td className="ui-mono text-zinc-500">{device.softwareVersion || '—'}</td>
                     <td className="ui-mono">{device.ipAddress || '—'}</td>
                     <td>

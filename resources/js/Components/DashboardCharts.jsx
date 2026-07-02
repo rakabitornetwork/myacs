@@ -15,9 +15,7 @@ function ChartTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
   return (
-    <div className="rounded-md border border-brand-200 px-2.5 py-1.5 text-[13px] shadow-sm"
-      style={{ background: 'linear-gradient(145deg, #ffffff 0%, #eef3ff 100%)' }}
-    >
+    <div className="ui-chart-tooltip">
       <p className="font-medium text-zinc-800">{item.name}</p>
       <p className="tabular-nums text-zinc-500">{item.count} device</p>
     </div>

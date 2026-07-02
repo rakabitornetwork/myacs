@@ -25,42 +25,62 @@
 
   body {
     @apply text-zinc-900 text-sm leading-normal;
-    background: linear-gradient(160deg, #e8ecf4 0%, #eef1f6 40%, #e4e9f2 100%);
+    background: linear-gradient(155deg, #c8d4ea 0%, #b8c8e8 35%, #a8b8de 70%, #9aacd4 100%);
     background-attachment: fixed;
   }
 
   ::selection {
-    @apply bg-brand-500/20 text-brand-900;
+    @apply bg-brand-500/30 text-brand-950;
   }
 }
 
 @layer components {
   .ui-panel {
-    @apply rounded-lg border shadow-[0_1px_2px_rgba(15,23,42,0.05),0_6px_20px_rgba(51,102,255,0.08)];
-    border-color: #c7d5f5;
-    background: linear-gradient(155deg, #ffffff 0%, #f3f7ff 38%, #e6edff 100%);
+    @apply rounded-lg border shadow-[0_2px_4px_rgba(15,23,42,0.08),0_8px_24px_rgba(51,102,255,0.18)];
+    border-color: #7da3f5;
+    background: linear-gradient(150deg, #d4e2ff 0%, #b8cdfc 42%, #9eb8ff 100%);
   }
 
   .ui-panel-header {
     @apply flex items-center justify-between border-b px-3.5 py-2.5;
-    border-color: #d4dff7;
-    background: linear-gradient(90deg, #e8efff 0%, #f5f8ff 55%, #ffffff 100%);
+    border-color: #6b93f0;
+    background: linear-gradient(90deg, #8eb8ff 0%, #6b93f0 38%, #a8c4ff 100%);
   }
 
   .ui-panel-title {
-    @apply text-xs font-semibold uppercase tracking-wider text-brand-800;
+    @apply text-xs font-bold uppercase tracking-wider text-brand-950;
   }
 
   .ui-mini-card {
-    @apply rounded-md border px-2.5 py-2 shadow-sm;
-    border-color: #cdd9f5;
-    background: linear-gradient(145deg, #f8faff 0%, #edf2ff 100%);
+    @apply rounded-md border px-2.5 py-2 shadow-md;
+    border-color: #7da3f5;
+    background: linear-gradient(145deg, #c5d8ff 0%, #a8c4ff 55%, #8eb8ff 100%);
   }
 
   .ui-inset-card {
-    @apply rounded-md border p-2 shadow-sm;
-    border-color: #d8e2f8;
-    background: linear-gradient(160deg, #f9fbff 0%, #eef3ff 100%);
+    @apply rounded-md border p-2 shadow-md;
+    border-color: #8eb8ff;
+    background: linear-gradient(160deg, #d9e6ff 0%, #bcd4ff 55%, #a8c4ff 100%);
+  }
+
+  .ui-banner-violet {
+    @apply rounded-lg border border-violet-400 px-3 py-2 text-xs text-violet-950 shadow-md;
+    background: linear-gradient(135deg, #ddd6fe 0%, #c4b5fd 45%, #a78bfa 100%);
+  }
+
+  .ui-banner-sky {
+    @apply mb-2 rounded-lg border border-sky-400 px-3 py-2 text-xs text-sky-950 shadow-md;
+    background: linear-gradient(135deg, #bae6fd 0%, #7dd3fc 50%, #38bdf8 100%);
+  }
+
+  .ui-banner-chip-violet {
+    @apply rounded border border-violet-400 px-2 py-1 shadow-sm;
+    background: linear-gradient(145deg, #e9d5ff 0%, #d8b4fe 100%);
+  }
+
+  .ui-banner-chip-sky {
+    @apply rounded border border-sky-400 px-2 py-1 shadow-sm;
+    background: linear-gradient(145deg, #bae6fd 0%, #7dd3fc 100%);
   }
 
   .ui-table-wrap {
@@ -72,73 +92,75 @@
   }
 
   .ui-table thead tr {
-    border-bottom: 1px solid #d4dff7;
-    background: linear-gradient(180deg, #edf2ff 0%, #e4ebff 100%);
+    border-bottom: 2px solid #6b93f0;
+    background: linear-gradient(180deg, #a8c4ff 0%, #8eb8ff 55%, #7da3f5 100%);
   }
 
   .ui-table th {
-    @apply px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wider text-brand-800 whitespace-nowrap;
+    @apply px-3.5 py-2 text-[11px] font-bold uppercase tracking-wider text-brand-950 whitespace-nowrap;
   }
 
   .ui-table td {
-    @apply px-3.5 py-2 text-[13px] text-zinc-700 border-b;
-    border-color: #e8eeff;
+    @apply px-3.5 py-2 text-[13px] text-zinc-800 border-b;
+    border-color: #bcd4ff;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
   }
 
   .ui-table tbody tr {
     @apply transition-colors;
   }
 
-  .ui-table tbody tr:hover {
-    background: linear-gradient(90deg, #f5f8ff 0%, #fafbff 100%);
+  .ui-table tbody tr:hover td {
+    background: linear-gradient(90deg, #d9e6ff 0%, #c5d8ff 100%);
   }
 
   .ui-input {
-    @apply w-full rounded-md border px-3 py-2 text-[13px] text-zinc-900 placeholder:text-zinc-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/15;
-    border-color: #c7d5f5;
-    background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+    @apply w-full rounded-md border px-3 py-2 text-[13px] text-zinc-900 placeholder:text-zinc-500 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500/25;
+    border-color: #7da3f5;
+    background: linear-gradient(180deg, #ffffff 0%, #dce8ff 100%);
   }
 
   .ui-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition;
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-semibold transition;
   }
 
   .ui-btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition text-white disabled:opacity-50;
-    background: linear-gradient(180deg, #3d73ff 0%, #1a4bff 55%, #1339eb 100%);
-    box-shadow: 0 1px 2px rgba(19, 57, 235, 0.25);
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-semibold transition text-white disabled:opacity-50;
+    background: linear-gradient(180deg, #5990ff 0%, #3366ff 40%, #1a4bff 100%);
+    box-shadow: 0 2px 6px rgba(19, 57, 235, 0.35);
   }
 
   .ui-btn-primary:hover {
-    background: linear-gradient(180deg, #4d7fff 0%, #224fff 55%, #1640f0 100%);
+    background: linear-gradient(180deg, #6b9fff 0%, #3d73ff 40%, #224fff 100%);
   }
 
   .ui-btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition text-zinc-700;
-    border: 1px solid #c7d5f5;
-    background: linear-gradient(180deg, #ffffff 0%, #eef3ff 100%);
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-semibold transition text-brand-950;
+    border: 1px solid #6b93f0;
+    background: linear-gradient(180deg, #e8efff 0%, #c5d8ff 55%, #a8c4ff 100%);
+    box-shadow: 0 1px 3px rgba(51, 102, 255, 0.15);
   }
 
   .ui-btn-secondary:hover {
-    background: linear-gradient(180deg, #f8faff 0%, #e3ebff 100%);
+    background: linear-gradient(180deg, #dce8ff 0%, #b8cdfc 55%, #9eb8ff 100%);
   }
 
   .ui-btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition text-white;
-    background: linear-gradient(180deg, #f59e0b 0%, #d97706 55%, #b45309 100%);
-    box-shadow: 0 1px 2px rgba(180, 83, 9, 0.2);
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-[13px] font-semibold transition text-white;
+    background: linear-gradient(180deg, #fb923c 0%, #ea580c 45%, #c2410c 100%);
+    box-shadow: 0 2px 6px rgba(194, 65, 12, 0.35);
   }
 
   .ui-btn-danger:hover {
-    background: linear-gradient(180deg, #fbbf24 0%, #ea8a0c 55%, #c45f0a 100%);
+    background: linear-gradient(180deg, #fdba74 0%, #f97316 45%, #ea580c 100%);
   }
 
   .ui-badge {
-    @apply inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide;
+    @apply inline-flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide;
   }
 
   .ui-link {
-    @apply font-medium text-brand-600 hover:text-brand-700 hover:underline underline-offset-2;
+    @apply font-semibold text-brand-800 hover:text-brand-950 hover:underline underline-offset-2;
   }
 
   .ui-mono {
@@ -146,46 +168,71 @@
   }
 
   .ui-stat {
-    @apply rounded-lg border flex items-center gap-3 px-3.5 py-2.5 shadow-[0_1px_2px_rgba(15,23,42,0.05),0_4px_14px_rgba(51,102,255,0.1)];
+    @apply rounded-lg border flex items-center gap-3 px-3.5 py-2.5 shadow-[0_2px_6px_rgba(15,23,42,0.1),0_6px_18px_rgba(51,102,255,0.2)];
   }
 
   .ui-stat-brand {
-    border-color: #a8bdf5;
-    background: linear-gradient(145deg, #eef4ff 0%, #d9e6ff 45%, #c5d8ff 100%);
+    border-color: #4d7fff;
+    background: linear-gradient(145deg, #bcd4ff 0%, #8eb8ff 42%, #5990ff 100%);
   }
 
   .ui-stat-green {
-    border-color: #86d9b3;
-    background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 45%, #a7f3d0 100%);
+    border-color: #10b981;
+    background: linear-gradient(145deg, #a7f3d0 0%, #6ee7b7 42%, #34d399 100%);
   }
 
   .ui-stat-amber {
-    border-color: #f5d08a;
-    background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 45%, #fde68a 100%);
+    border-color: #f59e0b;
+    background: linear-gradient(145deg, #fde68a 0%, #fcd34d 42%, #fbbf24 100%);
   }
 
   .ui-stat-red {
-    border-color: #f5a8a8;
-    background: linear-gradient(145deg, #fef2f2 0%, #fee2e2 45%, #fecaca 100%);
+    border-color: #ef4444;
+    background: linear-gradient(145deg, #fecaca 0%, #fca5a5 42%, #f87171 100%);
   }
 
   .ui-empty {
-    @apply px-3.5 py-10 text-center text-[13px] text-zinc-500;
+    @apply px-3.5 py-10 text-center text-[13px] font-medium text-zinc-700;
   }
 
   .ui-label {
-    @apply text-[11px] font-semibold uppercase tracking-wider text-zinc-500;
+    @apply text-[11px] font-bold uppercase tracking-wider text-brand-950;
   }
 
   .ui-meta {
-    @apply text-[11px] text-zinc-600;
+    @apply text-[11px] font-medium text-zinc-700;
   }
 
   .ui-text {
-    @apply text-[13px] text-zinc-800;
+    @apply text-[13px] font-medium text-zinc-900;
   }
 
   .ui-caption {
-    @apply text-[11px] italic text-zinc-500;
+    @apply text-[11px] italic text-zinc-600;
+  }
+
+  .ui-flash-success {
+    @apply mb-3 rounded-lg border border-emerald-500 px-3 py-2 text-[13px] font-medium text-emerald-950 shadow-md;
+    background: linear-gradient(135deg, #a7f3d0 0%, #6ee7b7 55%, #34d399 100%);
+  }
+
+  .ui-flash-warning {
+    @apply mb-3 rounded-lg border border-amber-500 px-3 py-2 text-[13px] font-medium text-amber-950 shadow-md;
+    background: linear-gradient(135deg, #fde68a 0%, #fcd34d 55%, #fbbf24 100%);
+  }
+
+  .ui-flash-error {
+    @apply mb-3 rounded-lg border border-red-500 px-3 py-2 text-[13px] font-medium text-red-950 shadow-md;
+    background: linear-gradient(135deg, #fecaca 0%, #fca5a5 55%, #f87171 100%);
+  }
+
+  .ui-chart-tooltip {
+    @apply rounded-md border border-brand-400 px-2.5 py-1.5 text-[13px] shadow-lg;
+    background: linear-gradient(145deg, #dce8ff 0%, #bcd4ff 100%);
+  }
+
+  .ui-app-header {
+    @apply sticky top-0 z-30 flex h-11 items-center gap-2.5 border-b border-brand-400 px-3.5 backdrop-blur-md lg:px-4;
+    background: linear-gradient(90deg, #c5d8ff 0%, #9eb8ff 45%, #b8cdfc 100%);
   }
 }

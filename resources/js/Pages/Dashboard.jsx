@@ -22,23 +22,17 @@ function DualAcsBanner({ acs }) {
   if (acs?.mode !== 'dual') return null;
 
   return (
-    <div className="mb-2 rounded-lg border border-violet-300 px-3 py-2 text-xs text-violet-950 shadow-sm"
-      style={{ background: 'linear-gradient(135deg, #f3e8ff 0%, #ede9fe 45%, #e0e7ff 100%)' }}
-    >
-      <strong className="text-violet-800">Mode Dual ACS</strong> — CPE terpisah:
+    <div className="ui-banner-violet mb-2">
+      <strong className="font-bold text-violet-950">Mode Dual ACS</strong> — CPE terpisah:
       <div className="mt-1.5 grid gap-1 sm:grid-cols-2">
-        <div className="rounded border border-violet-200 px-2 py-1"
-          style={{ background: 'linear-gradient(145deg, #faf5ff 0%, #f3e8ff 100%)' }}
-        >
-          <span className="font-medium text-violet-700">CPE lama → GenieACS</span>
+        <div className="ui-banner-chip-violet">
+          <span className="font-semibold text-violet-950">CPE lama → GenieACS</span>
           <p className="ui-mono mt-0.5 text-[11px] text-zinc-500">
             {acs.genieacsCwmpUrl || 'http://VPS:7547'}
           </p>
         </div>
-        <div className="rounded border border-sky-200 px-2 py-1"
-          style={{ background: 'linear-gradient(145deg, #f0f9ff 0%, #e0f2fe 100%)' }}
-        >
-          <span className="font-medium text-sky-700">CPE baru → MyACS</span>
+        <div className="ui-banner-chip-sky">
+          <span className="font-semibold text-sky-950">CPE baru → MyACS</span>
           <p className="ui-mono mt-0.5 break-all text-[11px] text-zinc-500">
             {acs.cwmpUrl || '—'}
           </p>
@@ -59,9 +53,7 @@ export default function Dashboard({ stats, charts, recentDevices, acs, system, f
 
       <DualAcsBanner acs={acs} />
       {acs?.mode === 'genieacs-panel' && (
-        <div className="mb-2 rounded-lg border border-sky-300 px-3 py-2 text-xs text-sky-950 shadow-sm"
-          style={{ background: 'linear-gradient(135deg, #e0f2fe 0%, #dbeafe 50%, #e0e7ff 100%)' }}
-        >
+        <div className="ui-banner-sky">
           Mode panel GenieACS — CWMP hanya di GenieACS. Device disinkronkan dari database{' '}
           <code className="ui-mono">genieacs</code>.
         </div>

@@ -103,9 +103,7 @@ export default function AppLayout({ children, title, actions }) {
       </aside>
 
       <div className="lg:pl-[13.5rem]">
-        <header className="sticky top-0 z-30 flex h-11 items-center gap-2.5 border-b border-brand-200/60 px-3.5 backdrop-blur-md lg:px-4"
-          style={{ background: 'linear-gradient(90deg, #ffffff 0%, #f5f8ff 50%, #eef3ff 100%)' }}
-        >
+        <header className="ui-app-header">
           <button
             type="button"
             className="rounded-md p-1 text-zinc-600 hover:bg-zinc-100 lg:hidden"

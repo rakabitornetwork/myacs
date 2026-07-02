@@ -204,7 +204,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
             </div>
 
             {device.connectionRequestUrl && (
-              <div className="mt-2 rounded-md bg-zinc-50 px-2 py-1.5 ring-1 ring-zinc-100">
+              <div className="mt-2 ui-mini-card">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                   Connection Request URL
                 </p>
@@ -215,7 +215,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
             )}
 
             {canAct && firmwareFiles.length > 0 && (
-              <div className="mt-2 flex items-end gap-1.5 rounded-md border border-zinc-100 bg-zinc-50/50 p-2">
+              <div className="mt-2 flex items-end gap-1.5 ui-inset-card">
                 <div className="min-w-0 flex-1">
                   <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                     Push Firmware
@@ -244,7 +244,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
             <Panel className="p-3">
               <PanelHeader title="Manual Tasks" subtitle="Get / Set parameter, upload & factory reset" />
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                <form onSubmit={submitGetParams} className="space-y-1.5 rounded-md border border-zinc-100 p-2">
+                <form onSubmit={submitGetParams} className="space-y-1.5 ui-inset-card">
                   <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                     <Search className="h-3.5 w-3.5" />
                     Get Parameter Values
@@ -260,7 +260,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                   </button>
                 </form>
 
-                <form onSubmit={submitGetParamNames} className="space-y-1.5 rounded-md border border-zinc-100 p-2">
+                <form onSubmit={submitGetParamNames} className="space-y-1.5 ui-inset-card">
                   <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                     <ListTree className="h-3.5 w-3.5" />
                     Get Parameter Names
@@ -284,7 +284,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                   </button>
                 </form>
 
-                <form onSubmit={submitSetParams} className="space-y-1.5 rounded-md border border-zinc-100 p-2">
+                <form onSubmit={submitSetParams} className="space-y-1.5 ui-inset-card">
                   <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                     <Settings2 className="h-3.5 w-3.5" />
                     Set Parameter Value
@@ -309,7 +309,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
 
               <form
                 onSubmit={submitUpload}
-                className="mt-2 flex flex-wrap items-end gap-1.5 rounded-md border border-zinc-100 p-2"
+                className="mt-2 flex flex-wrap items-end gap-1.5 ui-inset-card"
               >
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">

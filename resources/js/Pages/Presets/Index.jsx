@@ -37,7 +37,7 @@ export default function PresetsIndex({ presets }) {
               <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-zinc-500">
                 {preset.description || 'No description'}
               </p>
-              <div className="mt-2 flex items-center gap-3 border-t border-zinc-100 pt-2 text-[11px] text-zinc-400">
+              <div className="mt-2 flex items-center gap-3 border-t border-brand-100 pt-2 text-[11px] text-zinc-600">
                 <span className="tabular-nums">W:{preset.weight}</span>
                 <span className="tabular-nums">{preset.configurationsCount} cfg</span>
                 {preset.tags?.length > 0 && <span className="truncate">{preset.tags.join(', ')}</span>}

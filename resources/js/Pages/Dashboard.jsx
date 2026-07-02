@@ -22,16 +22,22 @@ function DualAcsBanner({ acs }) {
   if (acs?.mode !== 'dual') return null;
 
   return (
-    <div className="mb-2 rounded-md border border-violet-200 bg-gradient-to-r from-violet-50 to-sky-50 px-3 py-2 text-xs text-zinc-700">
+    <div className="mb-2 rounded-lg border border-violet-300 px-3 py-2 text-xs text-violet-950 shadow-sm"
+      style={{ background: 'linear-gradient(135deg, #f3e8ff 0%, #ede9fe 45%, #e0e7ff 100%)' }}
+    >
       <strong className="text-violet-800">Mode Dual ACS</strong> — CPE terpisah:
       <div className="mt-1.5 grid gap-1 sm:grid-cols-2">
-        <div className="rounded border border-violet-100 bg-white/80 px-2 py-1">
+        <div className="rounded border border-violet-200 px-2 py-1"
+          style={{ background: 'linear-gradient(145deg, #faf5ff 0%, #f3e8ff 100%)' }}
+        >
           <span className="font-medium text-violet-700">CPE lama → GenieACS</span>
           <p className="ui-mono mt-0.5 text-[11px] text-zinc-500">
             {acs.genieacsCwmpUrl || 'http://VPS:7547'}
           </p>
         </div>
-        <div className="rounded border border-sky-100 bg-white/80 px-2 py-1">
+        <div className="rounded border border-sky-200 px-2 py-1"
+          style={{ background: 'linear-gradient(145deg, #f0f9ff 0%, #e0f2fe 100%)' }}
+        >
           <span className="font-medium text-sky-700">CPE baru → MyACS</span>
           <p className="ui-mono mt-0.5 break-all text-[11px] text-zinc-500">
             {acs.cwmpUrl || '—'}
@@ -53,7 +59,9 @@ export default function Dashboard({ stats, charts, recentDevices, acs, system, f
 
       <DualAcsBanner acs={acs} />
       {acs?.mode === 'genieacs-panel' && (
-        <div className="mb-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
+        <div className="mb-2 rounded-lg border border-sky-300 px-3 py-2 text-xs text-sky-950 shadow-sm"
+          style={{ background: 'linear-gradient(135deg, #e0f2fe 0%, #dbeafe 50%, #e0e7ff 100%)' }}
+        >
           Mode panel GenieACS — CWMP hanya di GenieACS. Device disinkronkan dari database{' '}
           <code className="ui-mono">genieacs</code>.
         </div>
@@ -65,25 +73,25 @@ export default function Dashboard({ stats, charts, recentDevices, acs, system, f
         <Panel className="mb-2 p-3">
           <PanelHeader title="System Status" subtitle="Admin — kesehatan layanan & deploy" />
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Health</p>
-              <p className="mt-0.5 text-sm font-semibold capitalize text-zinc-800">{system.health}</p>
+            <div className="ui-mini-card">
+              <p className="ui-label">Health</p>
+              <p className="mt-0.5 text-sm font-semibold capitalize text-zinc-900">{system.health}</p>
             </div>
-            <div className="rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">MongoDB</p>
-              <p className="mt-0.5 text-sm font-semibold text-zinc-800">
+            <div className="ui-mini-card">
+              <p className="ui-label">MongoDB</p>
+              <p className="mt-0.5 text-sm font-semibold text-zinc-900">
                 {system.mongodb ? 'Connected' : 'Disconnected'}
               </p>
             </div>
-            <div className="rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">Panel URL</p>
-              <p className="ui-mono mt-0.5 text-[13px] text-zinc-700">
+            <div className="ui-mini-card">
+              <p className="ui-label">Panel URL</p>
+              <p className="ui-mono mt-0.5 text-[13px] text-zinc-800">
                 :{system.port} → {system.appUrl}
               </p>
             </div>
-            <div className="rounded-md border border-zinc-100 bg-zinc-50/80 px-2 py-1.5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">CWMP (CPE)</p>
-              <p className="ui-mono mt-0.5 break-all text-[11px] text-zinc-600">
+            <div className="ui-mini-card">
+              <p className="ui-label">CWMP (CPE)</p>
+              <p className="ui-mono mt-0.5 break-all text-[11px] text-zinc-700">
                 {system.cwmpUrl || '—'}
               </p>
             </div>

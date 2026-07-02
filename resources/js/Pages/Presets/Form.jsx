@@ -140,7 +140,7 @@ export default function PresetsForm({ preset, errors = {} }) {
             )}
             <div className="space-y-2">
               {data.configurations.map((cfg, i) => (
-                <div key={i} className="grid gap-2 rounded-md border border-zinc-100 bg-zinc-50/50 p-2 sm:grid-cols-12">
+                <div key={i} className="grid gap-2 ui-inset-card sm:grid-cols-12">
                   <select
                     className="ui-input sm:col-span-2"
                     value={cfg.type}

@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 /**
- * Inspect parameter TR-069 device di GenieACS MongoDB.
- * Jalankan di VPS (akses localhost MongoDB):
+ * Inspect parameter TR-069 device di GenieACS (MongoDB atau NBI HTTP).
  *
  *   node scripts/genieacs-inspect-device.js 20968a-mjm-01-cmhi202b8e62
- *
- * Env: GENIEACS_MONGODB_URI (default mongodb://127.0.0.1:27017/genieacs)
+ *   GENIEACS_NBI_URL=http://103.118.175.21:7557 node scripts/genieacs-inspect-device.js 20968a-mjm-01-cmhi202b8e62
  */
 import 'dotenv/config';
 import { inspectGenieacsDevice } from '../app/services/genieacs/importParams.js';
@@ -18,7 +16,9 @@ if (!deviceId) {
 }
 
 const uri = process.env.GENIEACS_MONGODB_URI || 'mongodb://127.0.0.1:27017/genieacs';
+const nbi = process.env.GENIEACS_NBI_URL || '(not set)';
 console.log(`GenieACS MongoDB: ${uri}`);
+console.log(`GenieACS NBI: ${nbi}`);
 console.log(`Device: ${deviceId}\n`);
 
 const result = await inspectGenieacsDevice(deviceId);

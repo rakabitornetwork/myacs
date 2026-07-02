@@ -8,6 +8,7 @@ const PARAM_PATHS = {
     'Device.PPP.Interface.1.Username',
     'VirtualParameters.pppUsername',
     'VirtualParameters.pppoeUsername',
+    'VirtualParameters.pppoeUsername2',
     'VirtualParameters.PPPoEUsername',
   ],
   pppoePassword: [
@@ -44,8 +45,11 @@ const PARAM_PATHS = {
     'VirtualParameters.wifipassword',
     'VirtualParameters.wifiPassword',
     'VirtualParameters.WiFiPassword',
+    'VirtualParameters.WlanPassword',
   ],
   temperature: [
+    'VirtualParameters.gettemp',
+    'InternetGatewayDevice.WANDevice.1.X_CMCC_EponInterfaceConfig.TransceiverTemperature',
     'InternetGatewayDevice.DeviceInfo.Temperature',
     'InternetGatewayDevice.X_CMHI_DeviceInfo.Temperature',
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.TransceiverTemperature',
@@ -55,6 +59,8 @@ const PARAM_PATHS = {
     'Device.Optical.Interface.1.Temperature',
   ],
   rxPower: [
+    'VirtualParameters.RXPower',
+    'InternetGatewayDevice.WANDevice.1.X_CMCC_EponInterfaceConfig.RXPower',
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.RXPower',
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.RxPower',
     'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.ReceivePower',
@@ -78,6 +84,7 @@ const PARAM_PATHS = {
 const FETCH_SUBTREES = [
   'InternetGatewayDevice.WANDevice.1.WANConnectionDevice.',
   'InternetGatewayDevice.LANDevice.1.WLANConfiguration.',
+  'InternetGatewayDevice.WANDevice.1.X_CMCC_EponInterfaceConfig.',
   'InternetGatewayDevice.WANDevice.1.X_CMHI_GponInterfaceConfig.',
   'InternetGatewayDevice.WANDevice.1.X_GponInterfaceConfig.',
   'InternetGatewayDevice.WANDevice.1.WANOpticalInterface.',
@@ -274,6 +281,17 @@ export function formatRxPower(value) {
   if (!value) return '';
   const num = parseFloat(String(value).replace(/[^\d.-]/g, ''));
   if (Number.isNaN(num)) return value;
+
+  if (num < 0 && num > -60) {
+    return `${num.toFixed(2)} dBm`;
+  }
+
+  const raw = Math.round(num);
+  if (raw > 0 && raw < 10000) {
+    const dbm = -(10000 - raw) / 571.5;
+    return `${dbm.toFixed(2)} dBm`;
+  }
+
   return `${num.toFixed(2)} dBm`;
 }
 
@@ -281,6 +299,11 @@ export function formatTemperature(value) {
   if (!value) return '';
   const num = parseFloat(String(value).replace(/[^\d.-]/g, ''));
   if (Number.isNaN(num)) return value;
+
+  if (num > 500) {
+    return `${(num / 256).toFixed(1)} °C`;
+  }
+
   return `${num.toFixed(1)} °C`;
 }
 

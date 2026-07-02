@@ -1,6 +1,6 @@
-/** Flatten GenieACS MongoDB device document → { path: value } */
+/** Flatten GenieACS MongoDB / NBI device document → { path: value } */
 
-const SKIP_KEYS = new Set(['_id', '_deviceId', '_lastInform', '_registered', '_tags', '_timestamp']);
+const SKIP_KEYS = new Set(['_id', '_deviceId', '_lastInform', '_registered', '_tags', '_timestamp', '_lastBootstrap', '_lastBoot']);
 
 export const INFO_PARAM_PATTERNS = [
   /wlanconfiguration\.\d+\.ssid$/i,
@@ -16,7 +16,9 @@ export const INFO_PARAM_PATTERNS = [
   /opticalsignallevel/i,
   /transceivertemperature/i,
   /gponinterfaceconfig/i,
+  /eponinterfaceconfig/i,
   /x_cmhi/i,
+  /x_cmcc/i,
   /x_gponinterfaceconfig/i,
   /x_alu_ontopticalparam/i,
   /wanopticalinterface/i,
@@ -32,10 +34,31 @@ function genieScalar(entry) {
   return null;
 }
 
+function flattenGenieacsNestedTree(input, prefix = '', out = {}) {
+  if (input === null || input === undefined) return out;
+
+  const scalar = genieScalar(input);
+  if (scalar !== null) {
+    if (prefix) out[prefix] = scalar;
+    return out;
+  }
+
+  if (typeof input !== 'object') return out;
+
+  for (const [key, val] of Object.entries(input)) {
+    if (key.startsWith('_')) continue;
+    const path = prefix ? `${prefix}.${key}` : key;
+    flattenGenieacsNestedTree(val, path, out);
+  }
+
+  return out;
+}
+
 export function flattenGenieacsDocument(doc = {}) {
   const flat = {};
+
   for (const [key, val] of Object.entries(doc)) {
-    if (key.startsWith('_') && SKIP_KEYS.has(key)) continue;
+    if (SKIP_KEYS.has(key)) continue;
     if (key.startsWith('_')) continue;
 
     const scalar = genieScalar(val);
@@ -44,10 +67,16 @@ export function flattenGenieacsDocument(doc = {}) {
       continue;
     }
 
-    if (val && typeof val === 'object' && '_value' in val) {
-      flat[key] = genieScalar(val);
+    if (key === 'InternetGatewayDevice' || key === 'VirtualParameters' || key === 'Device') {
+      flattenGenieacsNestedTree(val, key, flat);
+      continue;
+    }
+
+    if (val && typeof val === 'object') {
+      flattenGenieacsNestedTree(val, key, flat);
     }
   }
+
   return flat;
 }
 
@@ -81,11 +110,11 @@ export function categorizeInfoPaths(flat = {}) {
       groups.pppoePassword.push(path);
     } else if (lower.endsWith('.ssid') && !lower.includes('bssid')) {
       groups.ssid.push(path);
-    } else if (/keypassphrase|wpakeypassphrase|presharedkey|virtualparameters\.wifi/i.test(path)) {
+    } else if (/keypassphrase|wpakeypassphrase|presharedkey|virtualparameters\.wlan/i.test(path)) {
       groups.ssidPassword.push(path);
     } else if (/rxpower|receivepower|opticalsignallevel/i.test(path)) {
       groups.rxPower.push(path);
-    } else if (/temperature|transceivertemperature/i.test(path)) {
+    } else if (/temperature|transceivertemperature|virtualparameters\.gettemp/i.test(path)) {
       groups.temperature.push(path);
     } else {
       groups.other.push(path);

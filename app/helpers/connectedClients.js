@@ -35,6 +35,16 @@ export function formatLeaseTimeRemaining(value) {
     .trim();
 }
 
+export function formatAddressSource(value) {
+  if (!value) return '';
+  const v = String(value).trim();
+  const lower = v.toLowerCase();
+  if (lower === 'dhcp') return 'DHCP';
+  if (lower === 'static') return 'Static';
+  if (lower === 'autoip') return 'Auto IP';
+  return v;
+}
+
 export function formatInterfaceType(value) {
   if (!value) return '';
   const v = String(value).trim();
@@ -88,8 +98,14 @@ function setField(target, segment, value) {
     target.interfaceType = formatInterfaceType(value);
     return;
   }
-  if (key === 'devicetype' || key === 'xcmccdevicetype') {
-    target.deviceType = formatInterfaceType(value);
+  if (key === 'devicetype' || key === 'xcmccdevicetype' || key === 'xcuhosttype' || key === 'xcmhihosttype') {
+    const formatted = formatInterfaceType(value) || String(value).trim();
+    if (formatted) target.deviceType = formatted;
+    return;
+  }
+  if (key === 'layer2interface') {
+    const formatted = formatInterfaceType(value);
+    if (formatted && !target.interfaceType) target.interfaceType = formatted;
     return;
   }
   if (key === 'active') {
@@ -97,7 +113,7 @@ function setField(target, segment, value) {
     return;
   }
   if (key === 'addresssource') {
-    target.addressSource = String(value).trim();
+    target.addressSource = formatAddressSource(value) || String(value).trim();
     return;
   }
   if (key === 'leasetimeremaining' || key === 'leaseleft' || key === 'remaininglease') {

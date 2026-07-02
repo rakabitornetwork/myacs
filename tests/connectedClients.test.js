@@ -52,7 +52,7 @@ describe('extractConnectedClients', () => {
   it('formats interface type and lease text', async () => {
     const { formatInterfaceType, formatLeaseTimeRemaining } = await import('../app/helpers/connectedClients.js');
     assert.equal(formatInterfaceType('802.11'), 'WiFi');
-    assert.equal(formatInterfaceType('WIFI'), 'WiFi');
+    assert.equal(formatInterfaceType('WLAN'), 'WiFi');
     assert.equal(
       formatLeaseTimeRemaining('Remaining lease term23Hour48Minute33Second'),
       'Sisa lease: 23 jam 48 menit 33 detik',
@@ -74,6 +74,33 @@ describe('extractConnectedClients', () => {
     assert.equal(result.clients[0].ipAddress, '192.168.1.2');
     assert.equal(result.clients[0].macAddress, '86:35:ED:6D:07:DC');
     assert.equal(result.clients[0].interfaceType, 'WiFi');
+  });
+
+  it('parses sparse Host indexes with WLAN interface (CU/CMHI)', () => {
+    const result = extractConnectedClients({
+      parameters: {
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.3.HostName': 'vivo-Y17',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.3.IPAddress': '192.168.1.6',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.3.MACAddress': 'b8:d4:3e:d4:f5:9d',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.3.InterfaceType': 'WLAN',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.3.AddressSource': 'DHCP',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.4.HostName': 'OPPO-A3x',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.4.IPAddress': '192.168.1.2',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.4.MACAddress': '46:94:62:ed:ad:9f',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.4.InterfaceType': 'WLAN',
+        'InternetGatewayDevice.LANDevice.1.Hosts.Host.4.X_CU_Hosttype': 'Phone',
+      },
+    });
+
+    assert.equal(result.count, 2);
+    assert.equal(result.clients.length, 2);
+    const vivo = result.clients.find((c) => c.hostName === 'vivo-Y17');
+    const oppo = result.clients.find((c) => c.hostName === 'OPPO-A3x');
+    assert.equal(vivo?.ipAddress, '192.168.1.6');
+    assert.equal(vivo?.macAddress, 'B8:D4:3E:D4:F5:9D');
+    assert.equal(vivo?.interfaceType, 'WiFi');
+    assert.equal(vivo?.addressSource, 'DHCP');
+    assert.equal(oppo?.interfaceType, 'Phone');
   });
 
   it('falls back to TotalAssociations when list is empty', () => {

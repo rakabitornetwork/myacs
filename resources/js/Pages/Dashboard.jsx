@@ -108,7 +108,7 @@ export default function Dashboard({ stats, charts, recentDevices, acs, system, f
         </Panel>
       )}
 
-      <div className="grid grid-cols-2 gap-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 md:gap-2">
         <StatCard label="Total Devices" value={stats.devices} icon={Router} />
         {acs?.mode === 'dual' ? (
           <>

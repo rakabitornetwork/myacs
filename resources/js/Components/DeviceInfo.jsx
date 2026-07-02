@@ -36,7 +36,7 @@ export function DeviceInfoGrid({ info, showSecrets = true }) {
   ];
 
   return (
-    <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+    <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-2 md:gap-x-4 md:gap-y-2 lg:grid-cols-4">
       {rows.map(([label, value, note]) => (
         <div key={label}>
           <dt className="ui-label">{label}</dt>

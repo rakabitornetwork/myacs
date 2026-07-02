@@ -27,14 +27,14 @@ export default function StatCard({ label, value, icon: Icon, color = 'brand', su
   return (
     <div className={`ui-stat ${tone.card}`}>
       {Icon && (
-        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${tone.icon}`}>
-          <Icon className="h-4 w-4" strokeWidth={2.5} />
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md md:h-8 md:w-8 ${tone.icon}`}>
+          <Icon className="h-5 w-5 md:h-4 md:w-4" strokeWidth={2.5} />
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className={`truncate text-[11px] font-bold uppercase tracking-wider ${tone.label}`}>{label}</p>
-        <p className="text-xl font-bold tabular-nums tracking-tight text-zinc-950">{value}</p>
-        {sub && <p className="text-[11px] font-semibold text-zinc-800">{sub}</p>}
+        <p className={`ui-stat-label ${tone.label}`}>{label}</p>
+        <p className="ui-stat-value">{value}</p>
+        {sub && <p className="text-sm font-semibold text-zinc-800 md:text-[11px]">{sub}</p>}
       </div>
     </div>
   );

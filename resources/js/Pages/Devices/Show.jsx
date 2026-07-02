@@ -101,7 +101,7 @@ function DeviceActions({ device, canAct, canDelete, isGenieacs, acs, layout = 'd
         <button
           type="button"
           onClick={handleDelete}
-          className={mobile ? 'ui-btn-danger col-span-2 w-full justify-center' : 'ui-btn-danger'}
+          className={mobile ? 'ui-btn-delete col-span-2 w-full justify-center' : 'ui-btn-delete'}
         >
           <Trash2 className={icon} />
           {mobile ? 'Hapus' : 'Delete'}

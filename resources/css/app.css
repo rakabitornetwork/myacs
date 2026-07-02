@@ -180,8 +180,17 @@
     font-size: 15px;
   }
 
+  .ui-btn-delete {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-red-700/20 bg-red-600 px-4 py-2.5 font-medium text-white transition hover:bg-red-700 md:min-h-0 md:px-3 md:py-2;
+    font-size: 15px;
+  }
+
   @media (min-width: 768px) {
     .ui-btn-danger {
+      font-size: 13px;
+    }
+
+    .ui-btn-delete {
       font-size: 13px;
     }
   }

@@ -50,7 +50,7 @@
   }
 
   .ui-panel-header {
-    @apply flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 md:px-3.5 md:py-2.5;
+    @apply flex flex-col items-start gap-1 border-b border-zinc-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2 md:px-3.5 md:py-2.5;
     background: linear-gradient(90deg, #f5f7fb 0%, #f9fafb 55%, #ffffff 100%);
   }
 
@@ -306,5 +306,33 @@
 
   .ui-stat-label {
     @apply truncate text-xs font-medium uppercase tracking-wider text-zinc-500 md:text-[11px];
+  }
+
+  .ui-alert-amber {
+    @apply mb-3 rounded-lg border border-amber-200/80 bg-amber-50/90 px-3.5 py-2.5 text-[15px] text-amber-900 md:mb-2 md:px-3 md:py-2 md:text-xs;
+  }
+
+  .ui-alert-violet {
+    @apply mb-3 rounded-lg border border-violet-200/80 bg-violet-50/90 px-3.5 py-2.5 text-[15px] text-violet-900 md:mb-2 md:px-3 md:py-2 md:text-xs;
+  }
+
+  .ui-device-action-grid {
+    @apply mb-3 grid grid-cols-2 gap-2 md:hidden;
+  }
+
+  .ui-device-action-grid .ui-btn {
+    @apply w-full justify-center;
+  }
+
+  .ui-device-action-grid .ui-btn span {
+    @apply truncate;
+  }
+
+  .ui-param-card {
+    @apply border-b border-zinc-100 px-3.5 py-3 last:border-b-0 md:hidden;
+  }
+
+  .ui-task-item {
+    @apply px-3.5 py-3 md:px-3 md:py-2;
   }
 }

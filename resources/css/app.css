@@ -367,4 +367,8 @@
   .ui-optical-neutral {
     @apply text-zinc-800;
   }
+
+  .ui-optical-value {
+    @apply inline-block whitespace-nowrap;
+  }
 }

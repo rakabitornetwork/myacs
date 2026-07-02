@@ -24,8 +24,8 @@ describe('extractDeviceInfo', () => {
     assert.equal(info.pppoePassword, 'secret123');
     assert.equal(info.ssid, 'MyWiFi');
     assert.equal(info.ssidPassword, 'wifipass');
-    assert.equal(info.rxPower, '-21.50 dBm');
-    assert.equal(info.temperature, '45.0 °C');
+    assert.equal(info.rxPower, `-21.50\u00A0dBm`);
+    assert.equal(info.temperature, `45.0\u00A0°C`);
     assert.equal(info.rxPowerStatus.level, 'normal');
     assert.equal(info.temperatureStatus.level, 'normal');
   });
@@ -48,7 +48,7 @@ describe('extractDeviceInfo', () => {
     });
     assert.equal(info.ssid, 'WiFi-CMHI');
     assert.equal(info.ssidPassword, 'pass1234');
-    assert.equal(info.rxPower, '-22.30 dBm');
+    assert.equal(info.rxPower, `-22.30\u00A0dBm`);
   });
 
   it('fetch paths use subtrees only', async () => {

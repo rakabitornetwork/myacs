@@ -69,13 +69,13 @@ describe('genieacsParams', () => {
     });
     assert.equal(info.pppoeUsername, 'demo@xpon');
     assert.equal(info.ssid, 'DEMO XPON');
-    assert.equal(info.rxPower, '-17.18 dBm');
-    assert.equal(info.temperature, '55.0 °C');
+    assert.equal(info.rxPower, `-17.18\u00A0dBm`);
+    assert.equal(info.temperature, `55.0\u00A0°C`);
   });
 
   it('converts CMCC raw optical values', () => {
-    assert.equal(formatRxPower('191'), '-17.16 dBm');
-    assert.equal(formatTemperature('14183'), '55.4 °C');
+    assert.equal(formatRxPower('191'), `-17.16\u00A0dBm`);
+    assert.equal(formatTemperature('14183'), `55.4\u00A0°C`);
   });
 
   it('categorizes paths for inspection script', () => {

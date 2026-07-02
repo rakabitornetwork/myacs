@@ -284,16 +284,16 @@ export function formatRxPower(value) {
   if (Number.isNaN(num)) return value;
 
   if (num < 0 && num > -60) {
-    return `${num.toFixed(2)} dBm`;
+    return `${num.toFixed(2)}\u00A0dBm`;
   }
 
   const raw = Math.round(num);
   if (raw > 0 && raw < 10000) {
     const dbm = -(10000 - raw) / 571.5;
-    return `${dbm.toFixed(2)} dBm`;
+    return `${dbm.toFixed(2)}\u00A0dBm`;
   }
 
-  return `${num.toFixed(2)} dBm`;
+  return `${num.toFixed(2)}\u00A0dBm`;
 }
 
 export function formatTemperature(value) {
@@ -302,10 +302,10 @@ export function formatTemperature(value) {
   if (Number.isNaN(num)) return value;
 
   if (num > 500) {
-    return `${(num / 256).toFixed(1)} °C`;
+    return `${(num / 256).toFixed(1)}\u00A0°C`;
   }
 
-  return `${num.toFixed(1)} °C`;
+  return `${num.toFixed(1)}\u00A0°C`;
 }
 
 export function extractDeviceInfo(device) {

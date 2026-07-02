@@ -9,7 +9,7 @@ function OpticalValue({ value, status }) {
 
   const cls = status?.textClass || 'text-zinc-800';
   return (
-    <span className={`tabular-nums ${cls}`} title={status?.label || undefined}>
+    <span className={`ui-optical-value tabular-nums ${cls}`} title={status?.label || undefined}>
       {value}
     </span>
   );
@@ -25,10 +25,10 @@ export default function DeviceInfoCells({ info, showSecrets = false }) {
       <td className="ui-mono">{showSecrets ? cell(i.pppoePassword) : cell(i.pppoePasswordMasked)}</td>
       <td className="ui-mono">{cell(i.ssid)}</td>
       <td className="ui-mono">{showSecrets ? cell(i.ssidPassword) : cell(i.ssidPasswordMasked)}</td>
-      <td>
+      <td className="whitespace-nowrap">
         <OpticalValue value={i.rxPower} status={i.rxPowerStatus} />
       </td>
-      <td>
+      <td className="whitespace-nowrap">
         <OpticalValue value={i.temperature} status={i.temperatureStatus} />
       </td>
     </>
@@ -58,7 +58,7 @@ export function DeviceInfoGrid({ info, showSecrets = true }) {
       {rows.map(([label, value, note, status]) => (
         <div key={label}>
           <dt className="ui-label">{label}</dt>
-          <dd className="mt-0.5 break-all ui-text">
+          <dd className={`mt-0.5 ui-text ${label === 'RX Power' || label === 'Temperature' ? 'whitespace-nowrap' : 'break-all'}`}>
             {label === 'RX Power' || label === 'Temperature' ? (
               <OpticalValue value={value} status={status} />
             ) : (

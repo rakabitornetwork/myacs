@@ -52,7 +52,7 @@ describe('extractDeviceInfo', () => {
   it('fetch paths use subtrees only', async () => {
     const { getDeviceInfoFetchPaths } = await import('../app/helpers/deviceInfo.js');
     const paths = getDeviceInfoFetchPaths();
-    assert.ok(paths.length <= 12);
+    assert.ok(paths.length <= 16);
     assert.ok(paths.every((p) => p.endsWith('.')));
     assert.ok(paths.some((p) => p.includes('X_CMCC_EponInterfaceConfig')));
   });

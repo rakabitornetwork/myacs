@@ -21,7 +21,8 @@ import config from '../../config/index.js';
 import { createTaskForDevice, wakeDeviceConnection, queueFetchConnectionRequestCredentials, markConnectionRequestSent, retryWakeForPendingTasks } from '../../services/tasks/queue.js';
 import { parametersToEntries } from '../../helpers/parameters.js';
 import { extractDeviceInfo, getDeviceInfoFetchPaths } from '../../helpers/deviceInfo.js';
-import { queueDeviceInfoRefresh } from '../../services/devices/infoRefresh.js';
+import { extractConnectedClients } from '../../helpers/connectedClients.js';
+import { queueDeviceInfoRefresh, getDeviceRefreshFetchPaths } from '../../services/devices/infoRefresh.js';
 import { importGenieacsParamsForDevice } from '../../services/genieacs/importParams.js';
 import {
   getConnectionRequestCredentials,
@@ -245,6 +246,7 @@ export async function devicesShow(req, res) {
       events: device.events || [],
       parameters,
       info: extractDeviceInfo(device),
+      connectedClients: extractConnectedClients(device),
       source: device.source || 'myacs',
       managedByMyacs: !isGenieacsDevice(device),
       canManage:
@@ -331,7 +333,7 @@ export async function createRefreshInfoTask(req, res) {
 
   if (isGenieacsDevice(device)) {
     return runGenieacsAction(device, req, res, () =>
-      genieacsGetParameterValues(device.deviceId, getDeviceInfoFetchPaths()),
+      genieacsGetParameterValues(device.deviceId, getDeviceRefreshFetchPaths()),
     );
   }
 

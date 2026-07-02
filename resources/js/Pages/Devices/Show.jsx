@@ -17,6 +17,7 @@ import AcsBadge from '@/Components/AcsBadge';
 import Flash from '@/Components/Flash';
 import { Panel, PanelHeader } from '@/Components/Panel';
 import { DeviceInfoGrid } from '@/Components/DeviceInfo';
+import ConnectedClients from '@/Components/ConnectedClients';
 
 function formatDate(date) {
   if (!date) return '—';
@@ -241,6 +242,14 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
                   WiFi/optical belum lengkap? Klik <strong>Refresh</strong>, tunggu ~30 detik, lalu muat ulang halaman.
                 </p>
               )}
+            </div>
+
+            <div className="mt-4 border-t border-zinc-100 pt-4 md:mt-3 md:pt-3">
+              <PanelHeader
+                title="Perangkat Terhubung"
+                subtitle="Klien WiFi/LAN di belakang ONU — dari Hosts & AssociatedDevice TR-069"
+              />
+              <ConnectedClients data={device.connectedClients} />
             </div>
 
             {device.connectionRequestUrl && (

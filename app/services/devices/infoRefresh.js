@@ -1,8 +1,15 @@
 import Task from '../../models/Task.js';
 import { getDeviceInfoFetchPaths, deviceInfoIsComplete, extractDeviceInfo } from '../../helpers/deviceInfo.js';
+import { getConnectedClientsFetchPaths } from '../../helpers/connectedClients.js';
 
 const REFRESH_TASK_NAME = 'Refresh device info';
 const REFRESH_COOLDOWN_MS = parseInt(process.env.DEVICE_INFO_REFRESH_COOLDOWN_MS || '1800000', 10);
+
+function getDeviceRefreshFetchPaths() {
+  return [...new Set([...getDeviceInfoFetchPaths(), ...getConnectedClientsFetchPaths()])];
+}
+
+export { getDeviceRefreshFetchPaths };
 
 export async function queueDeviceInfoRefresh(device, { force = false } = {}) {
   if (!device?.deviceId || device.source === 'genieacs') return false;
@@ -30,7 +37,7 @@ export async function queueDeviceInfoRefresh(device, { force = false } = {}) {
     deviceId: device.deviceId,
     name: REFRESH_TASK_NAME,
     method: 'GetParameterValues',
-    payload: { names: getDeviceInfoFetchPaths() },
+    payload: { names: getDeviceRefreshFetchPaths() },
     priority: 1,
   });
 

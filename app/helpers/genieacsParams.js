@@ -23,6 +23,10 @@ export const INFO_PARAM_PATTERNS = [
   /x_alu_ontopticalparam/i,
   /wanopticalinterface/i,
   /deviceinfo\.temperature$/i,
+  /hosts\.host\.\d+/i,
+  /associateddevice\.\d+/i,
+  /hostnumberofentries/i,
+  /totalassociations$/i,
   /^virtualparameters\./i,
 ];
 

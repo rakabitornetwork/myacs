@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   ListTree,
   Upload,
+  Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/Components/AppLayout';
@@ -36,11 +37,20 @@ function formatParamValue(value) {
   return String(value);
 }
 
-function DeviceActions({ device, canAct, isGenieacs, acs, layout = 'desktop' }) {
+function DeviceActions({ device, canAct, canDelete, isGenieacs, acs, layout = 'desktop' }) {
   const mobile = layout === 'mobile';
   const btn = mobile ? 'ui-btn-secondary w-full justify-center' : 'ui-btn-secondary';
   const danger = mobile ? 'ui-btn-danger w-full justify-center' : 'ui-btn-danger';
   const icon = 'h-4 w-4 shrink-0 md:h-3.5 md:w-3.5';
+
+  const handleDelete = () => {
+    const msg = isGenieacs
+      ? `Hapus "${device.deviceId}" dari MyACS?\n\nDevice masih ada di GenieACS bisa muncul lagi saat sync.`
+      : `Hapus permanen "${device.deviceId}" dari MyACS?\n\nTask dan riwayat terkait juga dihapus.`;
+    if (window.confirm(msg)) {
+      router.delete(`/devices/${device.id}`);
+    }
+  };
 
   return (
     <>
@@ -86,6 +96,16 @@ function DeviceActions({ device, canAct, isGenieacs, acs, layout = 'desktop' }) 
             Reboot
           </button>
         </>
+      ) : null}
+      {canDelete ? (
+        <button
+          type="button"
+          onClick={handleDelete}
+          className={mobile ? 'ui-btn-danger col-span-2 w-full justify-center' : 'ui-btn-danger'}
+        >
+          <Trash2 className={icon} />
+          {mobile ? 'Hapus' : 'Delete'}
+        </button>
       ) : null}
     </>
   );
@@ -151,6 +171,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
           <DeviceActions
             device={device}
             canAct={canAct}
+            canDelete={auth?.canManage}
             isGenieacs={isGenieacs}
             acs={acs}
             layout="desktop"
@@ -165,6 +186,7 @@ export default function DevicesShow({ device, tasks, firmwareFiles = [], flash, 
         <DeviceActions
           device={device}
           canAct={canAct}
+          canDelete={auth?.canManage}
           isGenieacs={isGenieacs}
           acs={acs}
           layout="mobile"

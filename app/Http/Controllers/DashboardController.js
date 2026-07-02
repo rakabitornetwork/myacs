@@ -1,6 +1,7 @@
 import Device from '../../models/Device.js';
 import Task from '../../models/Task.js';
 import Fault from '../../models/Fault.js';
+import CwmpSession from '../../models/CwmpSession.js';
 import Preset from '../../models/Preset.js';
 import AcsFile from '../../models/AcsFile.js';
 import { sendConnectionRequest } from '../../services/connectionRequest.js';
@@ -183,6 +184,9 @@ export async function devicesIndex(req, res) {
     Device.countDocuments(filter),
   ]);
 
+  const flash = req.session.flash || null;
+  delete req.session.flash;
+
   return req.inertia.render('Devices/Index', {
     devices: devices.map((d) => ({
       id: d._id.toString(),
@@ -207,6 +211,7 @@ export async function devicesIndex(req, res) {
     },
     filters: { search, source },
     acs: acsInfoForClient(),
+    flash,
   });
 }
 
@@ -276,6 +281,30 @@ export async function devicesShow(req, res) {
     acs: acsInfoForClient(),
     crCredentials: connectionRequestCredentialStatus(device),
   });
+}
+
+export async function deleteDevice(req, res) {
+  const device = await Device.findById(req.params.id);
+  if (!device) return res.status(404).send('Device not found');
+
+  const { deviceId } = device;
+  const wasGenieacs = isGenieacsDevice(device);
+
+  await Promise.all([
+    Task.deleteMany({ deviceId }),
+    Fault.deleteMany({ deviceId }),
+    CwmpSession.deleteMany({ deviceId }),
+  ]);
+  await Device.findByIdAndDelete(device._id);
+
+  req.session.flash = {
+    type: 'success',
+    message: wasGenieacs
+      ? `Device ${deviceId} dihapus dari MyACS. Jika masih ada di GenieACS dan sync aktif, bisa muncul lagi.`
+      : `Device ${deviceId} berhasil dihapus dari MyACS.`,
+  };
+
+  return res.redirect('/devices');
 }
 
 export async function tasksIndex(req, res) {

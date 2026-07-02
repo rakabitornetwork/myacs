@@ -5,6 +5,7 @@ import AppLayout from '@/Components/AppLayout';
 import Badge from '@/Components/Badge';
 import AcsBadge from '@/Components/AcsBadge';
 import { Panel, PanelHeader } from '@/Components/Panel';
+import Flash from '@/Components/Flash';
 import DeviceInfoCells from '@/Components/DeviceInfo';
 
 function formatDate(date) {
@@ -17,7 +18,7 @@ function formatDate(date) {
   });
 }
 
-export default function DevicesIndex({ devices, pagination, filters, acs }) {
+export default function DevicesIndex({ devices, pagination, filters, acs, flash }) {
   const [search, setSearch] = useState(filters.search || '');
   const [source, setSource] = useState(filters.source || '');
 
@@ -41,6 +42,7 @@ export default function DevicesIndex({ devices, pagination, filters, acs }) {
       }
     >
       <Head title="Devices" />
+      <Flash flash={flash} />
 
       {acs?.mode === 'dual' && (
         <div className="mb-2 flex flex-wrap gap-1">

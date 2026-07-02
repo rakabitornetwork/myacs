@@ -33,6 +33,8 @@ router.post('/devices/:id/tasks/set-parameters', requireAuth, requireWrite, Dash
 router.post('/devices/:id/tasks/upload', requireAuth, requireWrite, DashboardController.createUploadTask);
 router.post('/devices/:id/connection-request', requireAuth, requireWrite, DashboardController.connectionRequest);
 router.post('/devices/:id/firmware', requireAuth, requireWrite, DashboardController.createDownloadTask);
+router.delete('/devices/:id', requireAuth, requireManage, DashboardController.deleteDevice);
+router.post('/devices/:id/delete', requireAuth, requireManage, DashboardController.deleteDevice);
 router.get('/tasks', requireAuth, DashboardController.tasksIndex);
 router.get('/tasks/pending', requireAuth, requireWrite, DashboardController.tasksPendingHtml);
 router.post('/tasks/:id/cancel', requireAuth, requireWrite, DashboardController.cancelTask);
